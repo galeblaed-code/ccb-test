@@ -4136,6 +4136,17 @@ img[src*="ゼネラルデビル"]{object-fit:fill!important;}
 #tf-fx .tf-text{position:absolute;left:16px;right:16px;bottom:7%;text-align:center;color:#ffe9b8;font-family:serif;text-shadow:0 2px 8px #000,0 0 18px rgba(255,170,60,.6);opacity:0}
 #tf-fx .tf-title{font-size:clamp(28px,6vw,54px);letter-spacing:.3em;font-weight:bold}
 #tf-fx .tf-line{font-size:clamp(14px,2.2vw,20px);margin-top:8px;line-height:1.6}
+/* 愛の為に（2026-10-07 隆基「王は黒騎士に討たれた。それは愛の証明。とか意味深な言葉で」）：王が討たれる場面 */
+#rg-fx{position:fixed;inset:0;z-index:9000;pointer-events:auto;overflow:hidden;background:rgba(4,0,2,0)}
+#rg-fx .rg-card{position:absolute;left:50%;top:42%;width:min(22vw,190px);aspect-ratio:1184/1664;margin-left:calc(min(22vw,190px)/-2);margin-top:calc(min(22vw,190px)*1664/1184/-2);background-size:cover;background-position:center;border-radius:10px}
+#rg-fx .rg-bk{box-shadow:0 0 34px rgba(120,0,30,.9)}
+#rg-fx .rg-king{box-shadow:0 0 30px rgba(255,220,140,.55)}
+#rg-fx .rg-half{position:absolute;inset:0;background-size:200% 100%;background-repeat:no-repeat;border-radius:10px}
+#rg-fx .rg-slash{position:absolute;left:50%;top:42%;width:min(46vw,420px);height:5px;margin-left:calc(min(46vw,420px)/-2);background:linear-gradient(90deg,transparent,#ffd9de 30%,#ff2a4a 50%,#ffd9de 70%,transparent);box-shadow:0 0 18px #ff2a4a,0 0 40px #a0001c;transform:rotate(-32deg) scaleX(0);opacity:0;pointer-events:none}
+#rg-fx .rg-red{position:absolute;inset:0;background:radial-gradient(circle at 50% 42%,rgba(160,0,28,.55),rgba(40,0,6,0) 60%);opacity:0;pointer-events:none}
+#rg-fx .rg-text{position:absolute;left:16px;right:16px;bottom:9%;text-align:center;color:#f3e2e6;font-family:'Hiragino Mincho ProN','Yu Mincho',serif;text-shadow:0 2px 8px #000,0 0 18px rgba(170,0,40,.7)}
+#rg-fx .rg-title{font-size:clamp(28px,6vw,54px);letter-spacing:.4em;font-weight:bold;color:#ffd0d8;opacity:0}
+#rg-fx .rg-line{font-size:clamp(16px,2.6vw,24px);margin-top:10px;line-height:1.7;letter-spacing:.12em;opacity:0}
 #gs-fx{position:fixed;inset:0;z-index:10050;background:radial-gradient(circle at 50% 40%,rgba(60,20,10,.92),rgba(0,0,0,.97));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .5s}
 #gs-fx.out{opacity:0}
 #gs-fx .gs-flash{position:absolute;inset:0;background:#fff2d0;animation:gsFlash 1.1s ease-out forwards;pointer-events:none}
@@ -9419,13 +9430,15 @@ function handleMonsterEnter(side,m){
     const kg=pd.monsterField.find(slot=>slot&&slot.id==='king');
     if(bk&&kg&&!bk.aiNoTameniUsed){
       bk.aiNoTameniUsed=true;
-      discoverRole('aiNoTameni',side);
+      // 王が討たれる場面を見せてから役の知らせ（2026-10-07 隆基）
+      try{ queueRegicideFx(side,()=>discoverRole('aiNoTameni',side)); }catch(e){ discoverRole('aiNoTameni',side); }
+      try{ recEvent(side,'role','愛の為に：王は、黒騎士に討たれた。それは、愛の証明だった'); }catch(e){}
       const kgSlot=pd.monsterField.indexOf(kg);
       pd.graveyard.push({uid:kg.uid,id:kg.id,def:kg.def,maxHp:kg.maxHp});
       pd.monsterField[kgSlot]=null;
       bk.maxHp+=80; bk.hp+=80;
       bk.def=Object.assign({},bk.def,{atk:bk.def.atk+50});
-      log((side==='p'?'':'[敵] ')+'愛の為に：キングが墓場へ——ブラックナイト HP+80 / ATK+50','gold');
+      log((side==='p'?'':'[敵] ')+'愛の為に：王は、黒騎士に討たれた——ブラックナイト HP+80 / ATK+50','gold');
       renderAll();
     }
   }
@@ -14078,6 +14091,61 @@ function queueTransformFx(t,side,after){
   G._fxN=(G._fxN||0)+1; const my=G._fxN;
   const prev=G._fxHold||Promise.resolve();
   const p=prev.then(()=>Promise.race([playTransformFx(t,side),new Promise(r=>setTimeout(r,7000))])).catch(()=>{}).then(()=>{ try{ if(after) after(); }catch(e){} if(G&&G._fxN===my) G._fxHold=null; });
+  G._fxHold=p;
+}
+// 愛の為に：黒騎士が王を討つ場面。黒騎士が王へ踏み込み、一閃、王のカードが裂けて落ちる。言葉は一行ずつ
+const REGICIDE_LINES=['王は、黒騎士に討たれた。','それは、愛の証明だった。'];
+function playRegicideFx(side){
+  return new Promise(resolve=>{
+    let done=false; const finish=()=>{ if(done) return; done=true; try{ ov.remove(); }catch(e){} resolve(); };
+    const ov=document.createElement('div'); ov.id='rg-fx';
+    const imgOf=id=>(CARD_ASSETS[id]&&CARD_ASSETS[id].img)?'url("'+CARD_ASSETS[id].img+'")':'none';
+    ov.innerHTML='<div class="rg-red"></div><div class="rg-card rg-king"></div><div class="rg-card rg-bk"></div><div class="rg-slash"></div>'+
+      '<div class="rg-text"><div class="rg-title">愛 の 為 に</div>'+REGICIDE_LINES.map(l=>'<div class="rg-line">'+escHtml((side==='p'?'':'［敵］')+l)+'</div>').join('')+'</div>';
+    document.body.appendChild(ov);
+    const kg=ov.querySelector('.rg-king'), bk=ov.querySelector('.rg-bk'), sl=ov.querySelector('.rg-slash'), red=ov.querySelector('.rg-red');
+    kg.style.backgroundImage=imgOf('king'); bk.style.backgroundImage=imgOf('blackknight');
+    ov.addEventListener('click',finish);
+    const gap=Math.min(window.innerWidth*0.2,230);
+    const A=(el,kf,o)=>el.animate(kf,Object.assign({fill:'forwards',easing:'ease-out'},o));
+    A(ov,[{background:'rgba(4,0,2,0)'},{background:'rgba(4,0,2,.86)'}],{duration:500});
+    A(kg,[{transform:`translate(${gap}px,0) scale(.9)`,opacity:0},{transform:`translate(${gap}px,0) scale(1)`,opacity:1}],{duration:700});
+    A(bk,[{transform:`translate(${-gap}px,0) scale(.9)`,opacity:0},{transform:`translate(${-gap}px,0) scale(1)`,opacity:1}],{duration:700});
+    // 踏み込み
+    setTimeout(()=>{ if(done) return;
+      A(bk,[{transform:`translate(${-gap}px,0) scale(1)`},{transform:`translate(${gap*0.35}px,-6px) scale(1.08)`}],{duration:260,easing:'cubic-bezier(.7,0,1,1)'});
+    },1100);
+    // 一閃
+    setTimeout(()=>{ if(done) return;
+      try{ playUiSe('clash'); }catch(e){}
+      sl.style.left='calc(50% + '+gap+'px)';
+      A(sl,[{transform:'rotate(-32deg) scaleX(0)',opacity:1},{transform:'rotate(-32deg) scaleX(1)',opacity:1,offset:.4},{transform:'rotate(-32deg) scaleX(1.1)',opacity:0}],{duration:520});
+      A(red,[{opacity:0},{opacity:1,offset:.2},{opacity:.55}],{duration:900});
+      A(ov,[{transform:'translate(0,0)'},{transform:'translate(-10px,6px)'},{transform:'translate(9px,-7px)'},{transform:'translate(0,0)'}],{duration:300,easing:'linear',fill:'none'});
+      // 王のカードが斜めに裂けて落ちる
+      const r=kg.getBoundingClientRect(), R=ov.getBoundingClientRect(); kg.style.visibility='hidden';
+      [['polygon(0 0,100% 0,100% 28%,0 72%)',-1],['polygon(0 72%,100% 28%,100% 100%,0 100%)',1]].forEach(([clip,dir])=>{
+        const h=document.createElement('div'); h.className='rg-card rg-king';
+        Object.assign(h.style,{left:(r.left-R.left)+'px',top:(r.top-R.top)+'px',margin:'0',width:r.width+'px',height:r.height+'px',backgroundImage:imgOf('king'),clipPath:clip});
+        ov.appendChild(h);
+        A(h,[{transform:'translate(0,0) rotate(0)',opacity:1,filter:'grayscale(0)'},{transform:`translate(${dir*18}px,${dir>0?60:-10}px) rotate(${dir*6}deg)`,opacity:1,filter:'grayscale(.7) brightness(.7)',offset:.35},{transform:`translate(${dir*40}px,${dir>0?240:140}px) rotate(${dir*14}deg)`,opacity:0,filter:'grayscale(1) brightness(.4)'}],{duration:1900,easing:'cubic-bezier(.4,0,.8,.6)'});
+      });
+      A(bk,[{transform:`translate(${gap*0.35}px,-6px) scale(1.08)`},{transform:'translate(0,-10px) scale(1.12)'}],{duration:900,delay:500,easing:'ease-in-out'});
+    },1380);
+    // 言葉
+    const tt=ov.querySelector('.rg-title'), lines=[...ov.querySelectorAll('.rg-line')];
+    setTimeout(()=>{ if(done) return; A(tt,[{opacity:0,letterSpacing:'.8em'},{opacity:1,letterSpacing:'.4em'}],{duration:700}); },2300);
+    lines.forEach((el,i)=>setTimeout(()=>{ if(done) return; A(el,[{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'translateY(0)'}],{duration:700}); },3100+i*1500));
+    const end=3100+lines.length*1500+1600;
+    setTimeout(()=>{ if(done) return; A(ov,[{opacity:1},{opacity:0}],{duration:500}); },end);
+    setTimeout(finish,end+520);
+  });
+}
+function queueRegicideFx(side,after){
+  if(typeof document==='undefined'||!document.body){ if(after) after(); return; }
+  G._fxN=(G._fxN||0)+1; const my=G._fxN;
+  const prev=G._fxHold||Promise.resolve();
+  const p=prev.then(()=>Promise.race([playRegicideFx(side),new Promise(r=>setTimeout(r,9500))])).catch(()=>{}).then(()=>{ try{ if(after) after(); }catch(e){} if(G&&G._fxN===my) G._fxHold=null; });
   G._fxHold=p;
 }
 function checkTransforms(side){
@@ -22900,10 +22968,10 @@ function roleMergedAway(side,id,test){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.1</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.1%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.2</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.2%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.1";
+  var FORM="", PRE={}, V="0.1.2";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
