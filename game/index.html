@@ -1736,6 +1736,18 @@ body{
 .dice-window.beast-mode .dice-beast-rolls{
   display:flex;
 }
+/* 2026-10-08 隆基「2回目のダイスロールの下半分が消えてる」：並べる場所が約200pxで、2個目以降が切れていた。
+   ダイスが2個以上なら、枠を横長（左にダイス、右に回数と出目）にして全部収める。並べる場所も少し広げる */
+.dice-window.beast-mode .dice-beast-rolls{top:56px;bottom:46px;justify-content:center;overflow:visible;}
+.dice-beast-rolls:has(.dice-beast-roll + .dice-beast-roll + .dice-beast-roll){gap:6px;}
+.dice-beast-rolls:has(.dice-beast-roll + .dice-beast-roll + .dice-beast-roll) .dice-beast-roll{padding:4px 10px;grid-template-columns:46px 1fr;}
+.dice-beast-rolls:has(.dice-beast-roll + .dice-beast-roll + .dice-beast-roll) .dice-beast-roll .sprite-die{width:46px!important;height:46px!important;}
+.dice-beast-rolls:has(.dice-beast-roll + .dice-beast-roll) .dice-beast-roll{display:grid;grid-template-columns:58px 1fr;grid-template-rows:auto auto;column-gap:10px;row-gap:2px;align-items:center;padding:6px 10px;}
+.dice-beast-rolls:has(.dice-beast-roll + .dice-beast-roll) .dice-beast-roll .sprite-die{width:58px;height:58px;grid-column:1;grid-row:1 / 3;}
+.dice-beast-rolls:has(.dice-beast-roll + .dice-beast-roll) .dice-beast-roll-label{grid-column:2;grid-row:1;}
+.dice-beast-rolls:has(.dice-beast-roll + .dice-beast-roll) .dice-beast-roll .sprite-die{grid-row:1 / 2!important;}
+.dice-beast-rolls:has(.dice-beast-roll + .dice-beast-roll) .dice-beast-roll-label{align-self:center;}
+.dice-beast-rolls:has(.dice-beast-roll + .dice-beast-roll) .dice-beast-roll-value{grid-column:1 / 3;grid-row:2;font-size:12px;white-space:nowrap;text-align:center;}
 .dice-beast-roll{
   display:flex;
   flex-direction:column;
@@ -23180,12 +23192,12 @@ function playSpriteFrames(el,g,total){
 animateEffectSprite=function(el,meta,dur){ return playSpriteFrames(el,meta,dur); };
 function fxDuration(g,total){ return total||Math.min(2000,Math.max(650,g.frames*FX_FRAME_MS)); }
 // 一つの場所に一つだけ出す
-showCenterEffect=function(imgSrc,el){
+showCenterEffect=function(imgSrc,el,sizePx){
   if(!imgSrc) return;
   loadEffectSpriteMeta(imgSrc).then(g=>{
     const d=document.createElement('div');
     d.className='fx-sprite'; d.dataset.src=imgSrc;
-    const big=g.fw>=600, base=big?Math.min(560,window.innerWidth*0.6):Math.min(300,window.innerWidth*0.5);
+    const big=g.fw>=600, base=sizePx||(big?Math.min(560,window.innerWidth*0.6):Math.min(300,window.innerWidth*0.5));
     const w=base, h=base*g.fh/g.fw;
     let cx=window.innerWidth/2, cy=window.innerHeight/2;
     if(el){ const r=el.getBoundingClientRect(); if(r.width>0&&r.height>0){ cx=r.left+r.width/2; cy=r.top+r.height/2; } }
@@ -23227,6 +23239,21 @@ showUltimaEffect=function(){
   stages.forEach((src,i)=>setTimeout(()=>{ if(eRow) showAreaEffect(src,eRow,1,stageDur); if(pRow) showAreaEffect(src,pRow,1,stageDur); },i*stageDur));
 };
 
+// 召喚獣の技も一か所に一つだけ（2026-10-08 隆基「召喚獣の技が画面上に上下二段。2回目のダイスロールの下半分が消えてる」）
+//   以前は 狙った場所＋相手の列＋自分の列 の三か所に出していて、下の段がダイスの窓（2個目の目）に重なっていた。
+//   ダイスの窓が開いていれば、窓の中の召喚獣の絵の上に、絵の幅で出す（ダイスの目には重ねない）
+showBeastEffect=function(id,el){
+  playBattleSe(BEAST_SE,id);
+  const img=BEAST_EFFECT_IMG[id];
+  if(!img) return;
+  setTimeout(()=>{   // ダイスの窓はこのすぐ後に開くので、一拍待ってから場所を決める
+    const ov=document.getElementById('dice-ov'), card=document.getElementById('dice-card-img');
+    if(ov&&ov.classList.contains('show')&&card){ const r=card.getBoundingClientRect(); if(r.width>0){ showCenterEffect(img,card,r.width); return; } }
+    const row=document.querySelector('.e-field-row .m-row');
+    showCenterEffect(img,el||row,BEAST_BOTH_FIELDS.has(id)?Math.min(600,window.innerWidth*0.62):null);
+  },40);
+};
+
 </script>
 
 <style id="public-test-badge">
@@ -23234,10 +23261,10 @@ showUltimaEffect=function(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.8</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.8%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.9</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.9%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.8";
+  var FORM="", PRE={}, V="0.1.9";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
