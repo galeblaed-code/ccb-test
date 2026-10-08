@@ -1594,6 +1594,11 @@ body{
   mix-blend-mode:screen;
   animation:centerEffectFx .76s cubic-bezier(.12,.82,.22,1) 1 forwards;
 }
+
+/* スプライトどおりのエフェクト（2026-10-08）：拡大縮小で揺らさず、コマ送りに任せる。出入りだけ薄く */
+.fx-sprite{position:fixed;pointer-events:none;z-index:9995;background-repeat:no-repeat;transform:translate(-50%,-50%);mix-blend-mode:screen;animation:fxSpriteFade var(--fxdur,900ms) linear 1 forwards}
+.fx-sprite.area{z-index:9993}
+@keyframes fxSpriteFade{0%{opacity:0}6%{opacity:1}88%{opacity:1}100%{opacity:0}}
 @keyframes centerEffectFx{
   0%  {opacity:0;transform:translate(-50%,-50%) scale(.38);}
   20% {opacity:1;transform:translate(-50%,-50%) scale(1.14);}
@@ -23141,6 +23146,87 @@ function rebelPairOn(side){
   // HPバーの札の「迷宮の檻」表示は installBeastHpView で出す
 })();
 
+// ══════════════════════════════════════════════════════
+//   エフェクトはスプライトどおりのアニメーションで（2026-10-08 隆基）
+//   「一個のエフェクトを複数コピーして流すのはかっこよくない」→ 一つの絵を、コマ割りどおりに一コマずつ再生する。
+//   コマの大きさは絵ごとに解析して表にした（縦横比からの当て推量はやめる）。末尾の空のコマは除いてある。
+//   1コマ70ms（最短0.65秒・最長2秒）。EFFECT_GRID[絵] = [列, 行, 使うコマ数, コマ幅, コマ高]。コマは左上から右へ、行が終わったら次の行へ
+// ══════════════════════════════════════════════════════
+const EFFECT_GRID={"エフェクト/HPUP.png": [10, 1, 10, 240, 240], "エフェクト/HPダウン.png": [10, 1, 10, 240, 240], "エフェクト/アルテマ/アルテマ１.webp": [5, 5, 25, 640, 480], "エフェクト/アルテマ/アルテマ２.webp": [5, 5, 25, 1280, 960], "エフェクト/アルテマ/アルテマ３.webp": [5, 5, 25, 640, 480], "エフェクト/アルテマ/アルテマ４.webp": [5, 5, 25, 1280, 960], "エフェクト/アルテマ/アルテマ５.webp": [5, 2, 10, 640, 480], "エフェクト/アルテマ/アルテマ６.webp": [5, 2, 10, 1280, 960], "エフェクト/アレイズ.png": [1, 9, 9, 320, 120], "エフェクト/アースウォール.png": [1, 8, 8, 640, 240], "エフェクト/エクスプロージョン.png": [2, 8, 15, 640, 480], "エフェクト/ケアル.png": [8, 1, 8, 120, 120], "エフェクト/ケアルラ.png": [8, 1, 8, 240, 240], "エフェクト/コウモリ.png": [10, 1, 10, 240, 240], "エフェクト/ゴブリンパンチ.png": [9, 1, 9, 240, 240], "エフェクト/サンダガ.png": [1, 5, 5, 640, 240], "エフェクト/サンダー.png": [8, 1, 8, 240, 240], "エフェクト/セイレーンの歌.png": [1, 15, 15, 320, 120], "エフェクト/デス.png": [8, 1, 8, 240, 240], "エフェクト/バイオ.png": [1, 8, 8, 320, 120], "エフェクト/バブル.png": [8, 1, 8, 240, 240], "エフェクト/ビッグバンアタック.webp": [5, 4, 20, 640, 480], "エフェクト/ファイア.png": [8, 1, 8, 240, 240], "エフェクト/ファイガ.png": [1, 8, 8, 640, 240], "エフェクト/ファイラ.png": [8, 1, 8, 240, 240], "エフェクト/フェニックスファイア.webp": [2, 10, 20, 640, 480], "エフェクト/フラッシュインパクト.png": [1, 15, 12, 640, 480], "エフェクト/フラッシュインパクト.png": [1, 15, 12, 640, 480], "エフェクト/フラッシュ上昇.png": [9, 1, 8, 120, 120], "エフェクト/フラッシュ落下.png": [9, 1, 8, 120, 120], "エフェクト/ブラッド.png": [5, 1, 5, 240, 240], "エフェクト/ブリザガ.png": [1, 8, 8, 640, 240], "エフェクト/ブリザド.png": [8, 1, 8, 240, 240], "エフェクト/ブリザラ.png": [1, 8, 8, 640, 240], "エフェクト/ポイゾナ.png": [8, 1, 8, 120, 120], "エフェクト/メガフレア.png": [1, 24, 23, 640, 240], "エフェクト/リジェネ.png": [8, 1, 7, 240, 240], "エフェクト/レイズ.png": [8, 1, 7, 120, 120], "エフェクト/ロック.png": [8, 1, 8, 240, 240], "エフェクト/光あれ.png": [2, 8, 15, 640, 480], "エフェクト/叩きつけ攻撃.png": [5, 2, 10, 320, 240], "エフェクト/召喚.png": [1, 7, 6, 640, 240], "エフェクト/呪いの炎.png": [10, 1, 10, 240, 240], "エフェクト/呪いの炎大.png": [10, 1, 10, 240, 240], "エフェクト/大海嘯.png": [1, 9, 9, 640, 240], "エフェクト/奇跡の光.webp": [5, 4, 20, 640, 480], "エフェクト/幻惑.png": [8, 1, 8, 240, 240], "エフェクト/幻惑の蝶.webp": [5, 5, 25, 640, 480], "エフェクト/振り払い攻撃.png": [5, 2, 10, 640, 480], "エフェクト/斬撃.png": [5, 1, 5, 120, 120], "エフェクト/斬撃大.png": [5, 1, 5, 240, 240], "エフェクト/毒攻撃.png": [8, 1, 8, 120, 120], "エフェクト/氷撃.png": [8, 1, 8, 240, 240], "エフェクト/爆発.png": [7, 1, 7, 240, 240], "エフェクト/爆発大.png": [5, 1, 5, 240, 240], "エフェクト/爆破小.png": [8, 1, 8, 240, 240], "エフェクト/爆裂.png": [1, 9, 9, 640, 240], "エフェクト/爪攻撃.png": [5, 2, 8, 240, 240], "エフェクト/牙攻撃.png": [5, 2, 8, 240, 240], "エフェクト/紫上昇小.png": [7, 1, 7, 120, 120], "エフェクト/紫落下小.png": [7, 1, 7, 120, 120], "エフェクト/絶対零度.png": [2, 5, 10, 640, 480], "エフェクト/臭い息.png": [8, 1, 8, 120, 120], "エフェクト/落下大.png": [7, 1, 7, 240, 240], "エフェクト/裁きの光.webp": [3, 10, 27, 640, 480], "エフェクト/輝きに帰す.png": [2, 8, 15, 640, 480], "エフェクト/閃光花火中.png": [5, 1, 5, 120, 120], "エフェクト/閃光花火小.png": [9, 1, 9, 120, 120], "エフェクト/雷神の怒り.png": [2, 8, 15, 640, 480], "エフェクト/魅了.png": [8, 1, 8, 120, 120], "エフェクト/魅了大.png": [8, 1, 8, 240, 240], "エフェクト/魔法陣大.png": [14, 1, 14, 240, 240], "エフェクト/魔法陣小.png": [14, 1, 14, 120, 120]};
+const FX_FRAME_MS=70;
+function fxGrid(src){
+  const g=EFFECT_GRID[src];
+  if(g) return {cols:g[0],rows:g[1],frames:g[2],fw:g[3],fh:g[4]};
+  return null;
+}
+loadEffectSpriteMeta=function(src){
+  const g=fxGrid(src);
+  if(g) return Promise.resolve(g);
+  return new Promise(res=>{ const im=new Image(); im.onload=()=>{ const w=im.naturalWidth||1,h=im.naturalHeight||1,hz=w>=h,n=Math.max(1,Math.round(hz?w/h:h/w));
+    res(hz?{cols:n,rows:1,frames:n,fw:w/n,fh:h}:{cols:1,rows:n,frames:n,fw:w,fh:h/n}); }; im.onerror=()=>res({cols:1,rows:1,frames:1,fw:1,fh:1}); im.src=src; });
+};
+// 一コマずつ送る。total を渡せばその長さに収める（なければ 1コマ 55ms）
+function playSpriteFrames(el,g,total){
+  el.style.backgroundImage=cssImageUrl(el.dataset.src);
+  el.style.backgroundSize=(g.cols*100)+'% '+(g.rows*100)+'%';
+  const ms=total?Math.max(24,total/g.frames):FX_FRAME_MS;
+  let k=0;
+  const show=()=>{ const r=Math.floor(k/g.cols), c=k%g.cols;
+    el.style.backgroundPosition=(g.cols>1?c/(g.cols-1)*100:0)+'% '+(g.rows>1?r/(g.rows-1)*100:0)+'%'; };
+  show();
+  const t=setInterval(()=>{ k++; if(k>=g.frames){ clearInterval(t); return; } show(); },ms);
+  return ms*g.frames;
+}
+animateEffectSprite=function(el,meta,dur){ return playSpriteFrames(el,meta,dur); };
+function fxDuration(g,total){ return total||Math.min(2000,Math.max(650,g.frames*FX_FRAME_MS)); }
+// 一つの場所に一つだけ出す
+showCenterEffect=function(imgSrc,el){
+  if(!imgSrc) return;
+  loadEffectSpriteMeta(imgSrc).then(g=>{
+    const d=document.createElement('div');
+    d.className='fx-sprite'; d.dataset.src=imgSrc;
+    const big=g.fw>=600, base=big?Math.min(560,window.innerWidth*0.6):Math.min(300,window.innerWidth*0.5);
+    const w=base, h=base*g.fh/g.fw;
+    let cx=window.innerWidth/2, cy=window.innerHeight/2;
+    if(el){ const r=el.getBoundingClientRect(); if(r.width>0&&r.height>0){ cx=r.left+r.width/2; cy=r.top+r.height/2; } }
+    Object.assign(d.style,{left:cx+'px',top:cy+'px',width:w+'px',height:h+'px'});
+    const total=fxDuration(g);
+    d.style.setProperty('--fxdur',total+'ms');
+    document.body.appendChild(d);
+    playSpriteFrames(d,g,total);
+    setTimeout(()=>d.remove(),total+60);
+  });
+};
+// 全体攻撃：その列の上に、一つの絵を大きく一回だけ（以前は同じ絵を4〜7枚ばらまいていた）。count は使わない
+showAreaEffect=function(imgSrc,rowEl,count,dur){
+  if(!imgSrc||!rowEl) return;
+  const r=rowEl.getBoundingClientRect();
+  if(r.width===0||r.height===0) return;
+  rowEl.style.transition='filter 0.08s';
+  rowEl.style.filter='brightness(2.0) saturate(1.6)';
+  setTimeout(()=>{ rowEl.style.filter='brightness(1.1)'; setTimeout(()=>{ rowEl.style.filter=''; rowEl.style.transition=''; },250); },160);
+  loadEffectSpriteMeta(imgSrc).then(g=>{
+    const d=document.createElement('div');
+    d.className='fx-sprite area'; d.dataset.src=imgSrc;
+    const ar=g.fh/g.fw;
+    let w=g.fw>=600?r.width*1.02:Math.min(r.width*0.62,r.height*1.7);
+    let h=w*ar; if(h>r.height*2.2){ h=r.height*2.2; w=h/ar; }
+    Object.assign(d.style,{left:(r.left+r.width/2)+'px',top:(r.top+r.height/2)+'px',width:w+'px',height:h+'px'});
+    const total=fxDuration(g,dur&&dur!==880?dur:0);
+    d.style.setProperty('--fxdur',total+'ms');
+    document.body.appendChild(d);
+    playSpriteFrames(d,g,total);
+    setTimeout(()=>d.remove(),total+60);
+  });
+};
+// アルテマ：6枚の絵を順番に、それぞれ一回ずつ
+showUltimaEffect=function(){
+  const stages=['エフェクト/アルテマ/アルテマ１.webp','エフェクト/アルテマ/アルテマ２.webp','エフェクト/アルテマ/アルテマ３.webp','エフェクト/アルテマ/アルテマ４.webp','エフェクト/アルテマ/アルテマ５.webp','エフェクト/アルテマ/アルテマ６.webp'];
+  const stageDur=620;
+  const eRow=document.querySelector('.e-field-row .m-row'), pRow=document.querySelector('.p-field-row .m-row');
+  stages.forEach((src,i)=>setTimeout(()=>{ if(eRow) showAreaEffect(src,eRow,1,stageDur); if(pRow) showAreaEffect(src,pRow,1,stageDur); },i*stageDur));
+};
+
 </script>
 
 <style id="public-test-badge">
@@ -23148,10 +23234,10 @@ function rebelPairOn(side){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.7</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.7%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.8</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.8%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.7";
+  var FORM="", PRE={}, V="0.1.8";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
