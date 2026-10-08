@@ -5418,12 +5418,23 @@ function playBattleSe(seMap,id,maxMs=1800){
   }catch(e){}
 }
 
+// 2026-10-08 隆基「SEが鳴りっぱなし。ゲームが進んでも鳴り続けてる」：
+//   効果音の中に雷雨（81秒）・たき火（60秒）など長い環境音があり、ここには止める仕組みがなかった。
+//   どの効果音も ONE_SHOT_MAX_MS で、0.4秒かけて小さくして止める
+const ONE_SHOT_MAX_MS=2400, ONE_SHOT_FADE_MS=400;
 function playOneShotAudio(audio,volume){
   if(!audio) return;
   try{
     const tap=audio.cloneNode(true);
+    tap.loop=false;
     tap.volume=volume==null?audio.volume:volume;
     tap.play().catch(()=>{});
+    const v0=tap.volume, steps=8;
+    setTimeout(()=>{
+      if(tap.paused||tap.ended) return;
+      let k=0; const t=setInterval(()=>{ k++; try{ tap.volume=Math.max(0,v0*(1-k/steps)); }catch(e){}
+        if(k>=steps){ clearInterval(t); try{ tap.pause(); tap.currentTime=0; }catch(e){} } },ONE_SHOT_FADE_MS/steps);
+    },ONE_SHOT_MAX_MS);
   }catch(e){}
 }
 
@@ -23137,10 +23148,10 @@ function rebelPairOn(side){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.6</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.6%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.7</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.7%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.6";
+  var FORM="", PRE={}, V="0.1.7";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
