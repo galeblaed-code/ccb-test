@@ -9165,6 +9165,13 @@ function crystalLevelBonus(level){
 function crystalLevelLabel(level){
   return level>=4?'CRYSTAL LV MAX':'CRYSTAL LV '+(level||1);
 }
+// クリスタルLvでクリスタルの最大HPが上がる（2026-10-08 隆基）：Lv2・Lv3・MAX で最大 +1000 ずつ（表示値。内部は+100）。
+//   上がるのは上限だけで、今のHPは回復しない（回復魔法や役で埋める余地）
+const CRYSTAL_MAX_PER_LV=100;
+function crystalMaxOf(pd){
+  if(!pd) return CRYSTAL_MAX;
+  return CRYSTAL_MAX+(crystalLevelFromKills(pd.monsterKills||0)-1)*CRYSTAL_MAX_PER_LV;
+}
 
 function makeMonsterInst(cardId, 暴発=false, side=null){
   const def=MD[cardId];
@@ -9333,7 +9340,7 @@ function handleMonsterEnter(side,m){
       const pd=side==='p'?G.p:G.e;
       if(!pd.roleOnce.unmeiNoTenbin){
         pd.roleOnce.unmeiNoTenbin=true; discoverRole('unmeiNoTenbin',side);
-        const b=pd.crystalHp; pd.crystalHp=Math.min(500,pd.crystalHp+80);
+        const b=pd.crystalHp; pd.crystalHp=Math.min(crystalMaxOf(pd),pd.crystalHp+80);
         log((side==='p'?'あなた':'敵')+'の運命の天秤！ 生まれたばかりの光が混沌を退けた——自クリスタル +'+(pd.crystalHp-b),'gold');
       }
       renderAll();
@@ -10130,7 +10137,7 @@ function showOpeningTutorial(){
        portraits:['UI素材/案内人表情1.png','UI素材/案内人表情4.png','UI素材/案内人表情7.png','UI素材/案内人表情3.png']},
       {step:'2 / 4', title:'召喚ダイヤと召喚獣', body:'モンスターを撃破するたびに召喚ダイヤが貯まります。\nダイヤは魔法使用時に1個、召喚獣の顕現時に必要数を消費します。\nダイヤが一定数になると、召喚獣があなたの意思と無関係に顕現します。',
        portraits:['UI素材/案内人表情5.png','UI素材/案内人表情２.png','UI素材/案内人表情6.png','UI素材/案内人表情9.png','UI素材/案内人表情8.png']},
-      {step:'3 / 4', title:'クリスタルLv', body:'敵モンスターを3体倒すたびにクリスタルLvが上がります。\n以後ドローされるモンスターはHPとATKが上がります。\nただし、強い牙は失敗や暴走で自分にも向きます。',
+      {step:'3 / 4', title:'クリスタルLv', body:'敵モンスターを3体倒すたびにクリスタルLvが上がります。\n以後ドローされるモンスターはHPとATKが上がり、クリスタルの最大HPも上がります（回復はしません）。\nただし、強い牙は失敗や暴走で自分にも向きます。',
        portraits:['UI素材/案内人表情7.png','UI素材/案内人表情9.png','UI素材/案内人表情２.png','UI素材/案内人表情6.png']},
       {step:'4 / 4', title:'開幕ルール', body:'両者が最初のモンスターを1体ずつ配置します。\nサイコロで先攻後攻を決め、先攻の1手目から攻撃も魔法もできます。\nただし出目しだいで、牙は自分にも向きます。',
        portraits:['UI素材/案内人表情3.png','UI素材/案内人表情4.png','UI素材/案内人表情9.png','UI素材/案内人表情1.png']},
@@ -11109,7 +11116,7 @@ function applyMagicBacklash(side,def,result){
     log((side==='p'?'':'[敵] ')+def.name+' 暴発：次ターン主行動スキップ','bad');
   }
   if(result.enemyCrystalHeal){
-    defPd.crystalHp=Math.min(CRYSTAL_MAX,defPd.crystalHp+result.enemyCrystalHeal);
+    defPd.crystalHp=Math.min(crystalMaxOf(defPd),defPd.crystalHp+result.enemyCrystalHeal);
     log((side==='p'?'':'[敵] ')+def.name+' 暴発：相手クリスタル +'+result.enemyCrystalHeal,'bad');
   }
   if(result.selfPoison){
@@ -11123,7 +11130,7 @@ function applyMagicBacklash(side,def,result){
   if(result.enemyAllHeal){
     defPd.monsterField.forEach(m=>{if(m)m.hp=Math.min(m.maxHp,m.hp+result.enemyAllHeal);});
     defPd.beasts.activeHp=Math.min(defPd.beasts.activeMaxHp,defPd.beasts.activeHp+result.enemyAllHeal);
-    defPd.crystalHp=Math.min(CRYSTAL_MAX,defPd.crystalHp+result.enemyAllHeal);
+    defPd.crystalHp=Math.min(crystalMaxOf(defPd),defPd.crystalHp+result.enemyAllHeal);
     log((side==='p'?'':'[敵] ')+def.name+' 失敗：敵側全体 HP/クリスタル +'+result.enemyAllHeal,'bad');
   }
   if(result.globalMonsterWipe){
@@ -12650,8 +12657,8 @@ function applyOnceEffects(side,o,label){
   if(o.beastDmg){ const b=od.beasts; if(b.activeId){ b.activeHp-=o.beastDmg; parts.push((b.summoned?'':'待機中の')+'召喚獣 '+BD[b.activeId].name+' に '+o.beastDmg); try{ showBeastDamage(os,o.beastDmg); }catch(e){} if(b.activeHp<=0){ try{ animateBeastBurst(os); }catch(e){} beastDie(os); } } else parts.push('相手に召喚獣はいなかった'); }
   if(o.beastHalve){ const b=od.beasts; if(b.activeId){ const before=b.activeHp; b.activeHp=Math.max(1,Math.ceil(b.activeHp/2)); parts.push((b.summoned?'':'待機中の')+'召喚獣 '+BD[b.activeId].name+' のHPを半分に（'+before+'→'+b.activeHp+'）'); try{ showBeastDamage(os,before-b.activeHp); }catch(e){} } else parts.push('相手に召喚獣はいなかった'); }
   if(o.castUltima){ if(G.ultima){ parts.push('すでにアレア・ヤクタが発動している'); } else { startUltimaCountdown(side); parts.push('アレア・ヤクタが発動した——天の賽が投げられた'); } }
-  if(o.feast){ pd.crystalHp=CRYSTAL_MAX; parts.push('自クリスタルが全回復'); if(pd.beasts.activeId){ pd.beasts.activeHp=pd.beasts.activeMaxHp; pd.beasts.hpWarnLevel=0; parts.push('召喚獣 '+BD[pd.beasts.activeId].name+' が全回復'); } }
-  if(o.selfCrystalHeal){ pd.crystalHp=Math.min(CRYSTAL_MAX,pd.crystalHp+o.selfCrystalHeal); parts.push('自クリスタル +'+o.selfCrystalHeal); }
+  if(o.feast){ pd.crystalHp=crystalMaxOf(pd); parts.push('自クリスタルが全回復'); if(pd.beasts.activeId){ pd.beasts.activeHp=pd.beasts.activeMaxHp; pd.beasts.hpWarnLevel=0; parts.push('召喚獣 '+BD[pd.beasts.activeId].name+' が全回復'); } }
+  if(o.selfCrystalHeal){ pd.crystalHp=Math.min(crystalMaxOf(pd),pd.crystalHp+o.selfCrystalHeal); parts.push('自クリスタル +'+o.selfCrystalHeal); }
   // 2026-10-05 ゲイルの指摘で整理した役のための効果
   if(o.beastHeal){ const b=pd.beasts; if(b.activeId&&b.activeHp<b.activeMaxHp){ b.activeHp=Math.min(b.activeMaxHp,b.activeHp+o.beastHeal); b.hpWarnLevel=0; parts.push('召喚獣 '+BD[b.activeId].name+' HP +'+o.beastHeal); } }
   if(o.beastFullHeal){ const b=pd.beasts; if(b.activeId){ b.activeHp=b.activeMaxHp; b.hpWarnLevel=0; b.berserk=false; parts.push('召喚獣 '+BD[b.activeId].name+' のHPが全快'); } else parts.push('癒やす召喚獣がいなかった'); }
@@ -12673,7 +12680,7 @@ function applyOnceEffects(side,o,label){
   }
   if(o.extraAction){ pd._bonusActions=(pd._bonusActions||0)+o.extraAction; parts.push('次の自分のターン、行動が '+o.extraAction+' 回増える'); }
   // GPP：自分のクリスタルの残りを売上に見立てて粗利率を出し、25%ごとに召喚ダイヤ+1（最大+4）
-  if(o.grossMargin){ const rate=Math.max(0,Math.min(100,Math.round(pd.crystalHp/CRYSTAL_MAX*100))); const n=Math.min(4,Math.floor(rate/25)); for(let k=0;k<n;k++) grantPts(side,1); parts.push('粗利率 '+rate+'%——召喚ダイヤ +'+n); }
+  if(o.grossMargin){ const rate=Math.max(0,Math.min(100,Math.round(pd.crystalHp/crystalMaxOf(pd)*100))); const n=Math.min(4,Math.floor(rate/25)); for(let k=0;k<n;k++) grantPts(side,1); parts.push('粗利率 '+rate+'%——召喚ダイヤ +'+n); }
   // GDP：デッキの残りが多いほど、召喚ダイヤ（6枚ごとに+1、最大+4）
   if(o.gdp){ const k=(pd.deck||[]).filter(c=>c&&c.type==='monster').length, n=Math.min(4,Math.floor(k/6)); for(let q=0;q<n;q++) grantPts(side,1); parts.push('国内総生産：デッキ残り'+k+'枚——召喚ダイヤ +'+n); }
   if(o.warCry){ let n=0; pd.monsterField.forEach(x=>{ if(x&&x.hp>0){ x.def=Object.assign({},x.def,{atk:(x.def.atk||0)+o.warCry}); n++; } }); parts.push('味方'+n+'体の攻撃 +'+o.warCry+'（ずっと）'); }
@@ -14442,7 +14449,7 @@ function applyKindRoleRegen(side){
 
   // ===== グリンブルスティ（2026-10-04）：豊穣。場にいる間、自分のターンの始めに自クリスタル+20・味方全体HP+20 =====
   if(!isPreparationRound()&&G.phase==='battle'&&pd.beasts.summoned&&pd.beasts.activeId==='grimbulsti'){
-    pd.crystalHp=Math.min(CRYSTAL_MAX,pd.crystalHp+20);
+    pd.crystalHp=Math.min(crystalMaxOf(pd),pd.crystalHp+20);
     pd.monsterField.forEach(m=>{ if(m&&m.hp>0) m.hp=Math.min(m.maxHp,m.hp+20); });
     log(pre+'【豊穣】グリンブルスティの黄金の毛が光る。自クリスタル +20、味方全体 HP +20','good');
   }
@@ -14843,7 +14850,7 @@ function applyKindRoleRegen(side){
   {
     const _pre=(side==='p'?'あなた':'敵')+'の';
     const _heal=(ids,amt)=>{let n=0;pd.monsterField.forEach(m=>{if(m&&ids.includes(m.id)&&m.hp>0&&m.hp<m.maxHp){m.hp=Math.min(m.maxHp,m.hp+amt);n++;}});return n;};
-    const _cry=amt=>{const b=pd.crystalHp;pd.crystalHp=Math.min(500,pd.crystalHp+amt);return pd.crystalHp-b;};
+    const _cry=amt=>{const b=pd.crystalHp;pd.crystalHp=Math.min(crystalMaxOf(pd),pd.crystalHp+amt);return pd.crystalHp-b;};
     if(hasChichiNoSenaka(side)){ discoverRole('chichiNoSenaka',side); if(_heal(['fatetwins'],15)) log(_pre+'父の背中：運命の双子 HP +15','good'); }
     if(hasHahaNoKomoriuta(side)){ discoverRole('hahaNoKomoriuta',side); const c=_cry(15); _heal(['whitewitch','fatetwins'],15); log(_pre+'母の子守唄：自クリスタル +'+c+'、僧侶と双子 HP +15','good'); }
     if(hasShugoKishi(side)){ discoverRole('shugoKishi',side); if(_heal(['fatetwins'],20)) log(_pre+'守護騎士：運命の双子 HP +20','good'); }
@@ -15122,7 +15129,7 @@ function applyKindRoleRegen(side){
   }
   // 砂上の楼閣：闇の再生——毎ターン自クリスタル +10
   if(hasSunaShiroDarkRegen(side)){
-    pd.crystalHp=Math.min(500,(pd.crystalHp||0)+5);
+    pd.crystalHp=Math.min(crystalMaxOf(pd),(pd.crystalHp||0)+5);
     log((side==='p'?'あなた':'敵')+'の闇の再生：破滅に抗うクリスタル +5','good');
   }
   // 黄泉の使者：三将HP再生 + 召喚ダイヤ1個奪取
@@ -15205,7 +15212,7 @@ function applyKindRoleRegen(side){
         m.hp=Math.min(m.maxHp,m.hp+50);
         healCount++;
       });
-      pd.crystalHp=Math.min(CRYSTAL_MAX,pd.crystalHp+50);
+      pd.crystalHp=Math.min(crystalMaxOf(pd),pd.crystalHp+50);
       if(pd.beasts.activeId) pd.beasts.activeHp=Math.min(pd.beasts.activeMaxHp,pd.beasts.activeHp+50);
       const bname=pd.beasts.activeId?(BD[pd.beasts.activeId]&&BD[pd.beasts.activeId].name)||pd.beasts.activeId:'';
       log('宝石喰い！ ダイヤ1消費→味方'+healCount+'体+クリスタル'+(bname?'+'+bname:'')+'をHP +50回復','good');
@@ -15464,7 +15471,7 @@ function applyKindRoleRegen(side){
     const ownReturned=returnRandomGraveToDeckForRole(side,'鎮魂祈祷');
     if(ownReturned){
       const ownPdCK=side==='p'?G.p:G.e;
-      ownPdCK.crystalHp=Math.min(CRYSTAL_MAX,ownPdCK.crystalHp+25);
+      ownPdCK.crystalHp=Math.min(crystalMaxOf(ownPdCK),ownPdCK.crystalHp+25);
       log((side==='p'?'あなた':'敵')+'の鎮魂祈祷：自クリスタル HP +25','good');
       returnRandomGraveToDeckForRole(side==='p'?'e':'p','鎮魂祈祷の余波');
     }
@@ -15741,7 +15748,7 @@ function applyKindRoleRegen(side){
 	      discoverRole('seishouKitou',side);
 	      const _skHeal=pd.crystalHp<=250?40:25;
 	      const _skBefore=pd.crystalHp;
-	      pd.crystalHp=Math.min(500,pd.crystalHp+_skHeal);
+	      pd.crystalHp=Math.min(crystalMaxOf(pd),pd.crystalHp+_skHeal);
 	      const _skActual=pd.crystalHp-_skBefore;
 	      if(_skActual>0) log((side==='p'?'あなた':'敵')+'の聖晶祈祷！ 白き祈りが魔力をクリスタルへ還す — 自クリスタル +'+_skActual,'good');
 	    }
@@ -15758,7 +15765,7 @@ function applyKindRoleRegen(side){
 	    if(hasUketsugaretaHikari(side)){
       discoverRole('uketsugaretaHikari',side);
       const _ukBefore=pd.crystalHp;
-      pd.crystalHp=Math.min(500,pd.crystalHp+20);
+      pd.crystalHp=Math.min(crystalMaxOf(pd),pd.crystalHp+20);
       const _ukHeal=pd.crystalHp-_ukBefore;
       if(_ukHeal>0) log((side==='p'?'あなた':'敵')+'の受け継がれる光！ 小さな光がクリスタルを照らす — 自クリスタル +'+_ukHeal,'good');
     }
@@ -15766,7 +15773,7 @@ function applyKindRoleRegen(side){
 	    if(hasWhiteHeart(side)){
       discoverRole('whiteHeart',side);
       const _whBefore=pd.crystalHp;
-      pd.crystalHp=Math.min(500,pd.crystalHp+30);
+      pd.crystalHp=Math.min(crystalMaxOf(pd),pd.crystalHp+30);
       const _whHeal=pd.crystalHp-_whBefore;
       if(_whHeal>0) log((side==='p'?'あなた':'敵')+'のメディア！ 僧侶の祈りがクリスタルを癒した — 自クリスタル +'+_whHeal,'good');
     }
@@ -15803,7 +15810,7 @@ function applyKindRoleRegen(side){
     if(hasRedCure(side)){
       discoverRole('redCure',side);
       const _before=pd.crystalHp;
-      pd.crystalHp=Math.min(500,pd.crystalHp+25);
+      pd.crystalHp=Math.min(crystalMaxOf(pd),pd.crystalHp+25);
       const _healed=pd.crystalHp-_before;
       if(_healed>0) log((side==='p'?'あなた':'敵')+'のメディア！ 光がクリスタルを癒した — 自クリスタル +'+_healed,'good');
     }
@@ -17549,15 +17556,15 @@ function healOwnBeast(side,amount,label){
 
 function healOwnCrystal(side,amount,label){
   const pd=side==='p'?G.p:G.e;
-  if(!pd||amount<=0||pd.crystalHp>=500) return 0;
+  if(!pd||amount<=0||pd.crystalHp>=crystalMaxOf(pd)) return 0;
   const before=pd.crystalHp;
-  pd.crystalHp=Math.min(500,pd.crystalHp+amount);
+  pd.crystalHp=Math.min(crystalMaxOf(pd),pd.crystalHp+amount);
   const actual=pd.crystalHp-before;
   if(actual<=0) return 0;
   playUiSe('healBonus');
   const crystal=document.querySelector(side==='p'?'.player-crystal':'.enemy-crystal');
   if(crystal) showAreaEffect('エフェクト/ケアルラ.png',crystal,2,760);
-  log(label+'：クリスタル HP +'+actual+'（'+pd.crystalHp+'/500）','good');
+  log(label+'：クリスタル HP +'+actual+'（'+pd.crystalHp+'/'+crystalMaxOf(pd)+'）','good');
   return actual;
 }
 
@@ -17726,7 +17733,7 @@ function enemyChooseGuard(attacker,targetType){
   if(targetType==='crystal'){
     if(attacker&&attacker.def&&attacker.def.skyRaid) return -1;   // 空からの急襲はガードできない
     // guard if crystal is below 35% or this hit would deal 15%+ of crystal HP
-    if(G.e.crystalHp<=CRYSTAL_MAX*0.35) return bestGuard;
+    if(G.e.crystalHp<=crystalMaxOf(G.e)*0.35) return bestGuard;
     if(atkVal>=G.e.crystalHp*0.15) return bestGuard;
     return -1;
   }
@@ -18028,7 +18035,9 @@ function grantMonsterKillPts(side,amount=monsterKillPts()){
   if(afterLv>beforeLv){
     const bonus=crystalLevelBonus(afterLv);
     log((side==='p'?'あなた':'敵')+'のクリスタルが '+crystalLevelLabel(afterLv)+' へ上昇！ 以後ドローされるモンスター HP +'+bonus.hp+' / ATK +'+bonus.atk,'gold');
-    showCenterNotice(afterLv>=4?'CRYSTAL LV MAX':'CRYSTAL LV '+afterLv,(side==='p'?'あなた':'敵')+'：後続モンスター強化',side,860);
+    log((side==='p'?'あなた':'敵')+'のクリスタル 最大HP +'+(afterLv-beforeLv)*CRYSTAL_MAX_PER_LV+'（最大 '+dn(crystalMaxOf(pd))+'）','gold');
+    showCenterNotice(afterLv>=4?'CRYSTAL LV MAX':'CRYSTAL LV '+afterLv,(side==='p'?'あなた':'敵')+'：後続モンスター強化・クリスタル最大HP '+dn(crystalMaxOf(pd)),side,860);
+    try{ renderAll(); }catch(e){}
   }
   grantPts(side,amount,'モンスター撃破');
   playUiSe('ko');
@@ -20430,15 +20439,15 @@ function renderMagicDeckStack(side,count){
 }
 
 function renderCrystal(side,pd){
-  const pct=Math.max(0,pd.crystalHp/CRYSTAL_MAX*100);
+  const pct=Math.max(0,pd.crystalHp/crystalMaxOf(pd)*100);
   document.getElementById(side+'-cfill').style.width=pct+'%';
   const shownHp=Math.max(0,pd.crystalHp);
   const cVal=document.getElementById(side+'-cval');
   const cNow=document.getElementById(side+'-cnow');
   const cMax=document.getElementById(side+'-cmax');
-  if(cVal) cVal.setAttribute('aria-label',(side==='p'?'自分':'敵')+'クリスタルHP '+dn(shownHp)+' / '+dn(CRYSTAL_MAX));
+  if(cVal) cVal.setAttribute('aria-label',(side==='p'?'自分':'敵')+'クリスタルHP '+dn(shownHp)+' / '+dn(crystalMaxOf(pd)));
   if(cNow) cNow.textContent=dn(shownHp);
-  if(cMax) cMax.textContent=dn(CRYSTAL_MAX);
+  if(cMax) cMax.textContent=dn(crystalMaxOf(pd));
   const el=document.querySelector(side==='p'?'.player-crystal':'.enemy-crystal');
   if(el){
     el.classList.toggle('cracked',pct<=60);
@@ -21286,7 +21295,7 @@ const TUT_STEPS=[
   {id:'afterAtk',     step:'4 / 6', portrait:'UI素材/案内人.webp',
    msg:'ダイスが攻撃を決めました！\n左下の魔法手札バーの光るカードをクリックすると魔法を使えます。\n魔法カード行使は別行動です。\n使用するかの判断とタイミングは貴方次第。チャンスは1ゲームに6回です。\n（召喚ダイヤを1個消費。1ターンに1枚まで）', hint:'magic-hand-bar', next:'crystalLv'},
   {id:'crystalLv',    step:'5 / 6', portrait:'UI素材/案内人表情9.png',
-   msg:'敵を倒し続けるとクリスタルLvが上がります。\n後からドローするモンスターは強くなりますが、失敗や暴走で自分に向く牙も鋭くなります。\nLvアップは安全な有利ではなく、戦場の危険度上昇です。', hint:null},
+   msg:'敵を倒し続けるとクリスタルLvが上がります。\n後からドローするモンスターは強くなりますが、失敗や暴走で自分に向く牙も鋭くなります。\nクリスタルの最大HPは上がりますが、回復はしません。\nLvアップは安全な有利ではなく、戦場の危険度上昇です。', hint:null},
   {id:'firstRoleFound',step:'役発見！', portrait:'UI素材/案内人表情7.png',
    msg:'役が発動しました！\nモンスターの組み合わせが物語を生み出す——\nこれがクリスタルカードバトルの醍醐味です！', hint:null},
   {id:'endTip',       step:'6 / 6', portrait:'UI素材/案内人表情9.png',
@@ -21607,7 +21616,7 @@ function coachTurnStart(){
   coachTip('battle');
   if(G.p.beasts.summonPts>=1&&!G.p.beasts.summoned) coachTip('diamond');
   if(G.p.beasts.summonPts>=1&&G.p.magicHand&&G.p.magicHand.length) coachTip('magic');
-  if(G.p.crystalHp<=CRYSTAL_MAX/2) coachTip('lowCrystal');
+  if(G.p.crystalHp<=crystalMaxOf(G.p)/2) coachTip('lowCrystal');
 }
 function coachOnEvent(side,kind,text,data){
   if(kind==='transform') coachTip('transform');
@@ -22993,10 +23002,10 @@ const BACKLASH_MAXIMS={
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.3</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.3%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.4</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.4%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.3";
+  var FORM="", PRE={}, V="0.1.4";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
