@@ -1599,6 +1599,18 @@ body{
 .fx-sprite{position:fixed;pointer-events:none;z-index:9995;background-repeat:no-repeat;transform:translate(-50%,-50%);mix-blend-mode:screen;animation:fxSpriteFade var(--fxdur,900ms) linear 1 forwards}
 .fx-sprite.area{z-index:9993}
 @keyframes fxSpriteFade{0%{opacity:0}6%{opacity:1}88%{opacity:1}100%{opacity:0}}
+
+/* 試合終了の幕（2026-10-08 隆基「試合終了時にも開幕と同じく音で知らせて、物語の幕は閉じた、勝ち負けの理由を掲示して終了」） */
+#curtain-ov{position:fixed;inset:0;z-index:2147480000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:rgba(3,2,6,0);pointer-events:auto;font-family:'Hiragino Mincho ProN','Yu Mincho',serif;text-align:center;padding:16px;transition:background .6s}
+#curtain-ov.on{background:rgba(3,2,6,.88)}
+#curtain-ov .cv-main{font-size:clamp(28px,5vw,54px);color:#f1e6c8;letter-spacing:.32em;text-shadow:0 2px 10px #000,0 0 26px rgba(240,210,140,.35);opacity:0;transform:translateY(8px);transition:opacity .9s,transform .9s}
+#curtain-ov .cv-reason{font-size:clamp(18px,2.8vw,30px);letter-spacing:.16em;opacity:0;transform:translateY(8px);transition:opacity .8s,transform .8s;text-shadow:0 2px 8px #000}
+#curtain-ov .cv-reason.win{color:#ffd27a}
+#curtain-ov .cv-reason.lose{color:#ff9a8a}
+#curtain-ov .cv-reason.draw{color:#d8d8e8}
+#curtain-ov .cv-result{font-size:clamp(14px,1.8vw,18px);color:#b9b2a0;letter-spacing:.3em;opacity:0;transition:opacity .8s}
+#curtain-ov .show{opacity:1;transform:none}
+#curtain-ov.out{opacity:0;transition:opacity .6s}
 @keyframes centerEffectFx{
   0%  {opacity:0;transform:translate(-50%,-50%) scale(.38);}
   20% {opacity:1;transform:translate(-50%,-50%) scale(1.14);}
@@ -23254,6 +23266,69 @@ showBeastEffect=function(id,el){
   },40);
 };
 
+// ══════════════════════════════════════════════════════
+//   試合終了の幕（2026-10-08 隆基）
+//   終了の音（開幕でデッキ編成から試合に入る時と同じ「対戦カード表示」の音）→「物語の幕は、閉じた。」→ 勝ち負けの理由 → 結果の画面
+//   理由は負けた側を主語にする：クリスタルは砕かれた／神は、すべて討ち取られた／陣営の兵が尽きた／三・六・九
+//   神殺し・三・六・九の演出がある時は、それが終わってから幕を下ろす。クリックで飛ばせる
+// ══════════════════════════════════════════════════════
+function endReasonText(win,msg){
+  const m=String(msg||'');
+  if(win==null) return {cls:'draw',reason:'両軍のクリスタルが、同時に砕けた',result:'引き分け'};
+  const loser=win?'e':'p', winner=win?'p':'e';
+  const spect=G&&G.spectate;
+  const nm=s=>spect?announcementOwner(s):(s==='p'?'あなた':'敵');
+  const L=nm(loser);
+  let reason;
+  if(/三・六・九/.test(m)) reason='三・六・九——'+L+'の神が、三柱とも消え去った';
+  else if(/召喚獣/.test(m)) reason=L+'の神は、すべて討ち取られた';
+  else if(/戦力が尽き/.test(m)) reason=L+'の陣営の兵が尽きた';
+  else if(/クリスタル/.test(m)) reason=L+'のクリスタルは砕かれた';
+  else reason=m;
+  const result=spect?(nm(winner)+'の勝利'):(win?'勝利':'敗北');
+  return {cls:spect?'win':(win?'win':'lose'),reason,result};
+}
+function playEndCurtain(win,msg){
+  return new Promise(resolve=>{
+    const t=endReasonText(win,msg);
+    const ov=document.createElement('div'); ov.id='curtain-ov';
+    ov.innerHTML='<div class="cv-main">物語の幕は、閉じた。</div><div class="cv-reason '+t.cls+'">'+escHtml(t.reason)+'</div><div class="cv-result">'+escHtml(t.result)+'</div>';
+    document.body.appendChild(ov);
+    let done=false; const finish=()=>{ if(done) return; done=true; ov.classList.add('out'); setTimeout(()=>{ try{ ov.remove(); }catch(e){} resolve(); },600); };
+    ov.addEventListener('click',finish);
+    try{ builderSe('done',0.7); }catch(e){}
+    // 幕が下りたら、バトルラインに残っている知らせは片付ける
+    try{ if(typeof BT!=='undefined'){ BT.q.length=0; } document.querySelectorAll('.battle-ticker').forEach(e=>e.classList.remove('show')); }catch(e){}
+    requestAnimationFrame(()=>ov.classList.add('on'));
+    setTimeout(()=>ov.querySelector('.cv-main').classList.add('show'),250);
+    setTimeout(()=>ov.querySelector('.cv-reason').classList.add('show'),1700);
+    setTimeout(()=>ov.querySelector('.cv-result').classList.add('show'),2500);
+    setTimeout(finish,4600);
+  });
+}
+(function installEndCurtain(){
+  const go=gameOver;
+  gameOver=function(win,msg){
+    const was=G&&G.phase;
+    const r=go.apply(this,arguments);
+    try{
+      if(was!=='gameover'&&G&&G.phase==='gameover'&&typeof document!=='undefined'){
+        const gv=document.getElementById('go-ov');
+        if(gv){
+          gv.classList.remove('show');
+          const t0=Date.now();
+          // 神殺し・三・六・九の演出中（結果の画面が隠されている間）は待つ
+          (function wait(){
+            if(gv.style.visibility==='hidden'&&Date.now()-t0<30000){ setTimeout(wait,150); return; }
+            playEndCurtain(win,msg).then(()=>gv.classList.add('show'));
+          })();
+        }
+      }
+    }catch(e){}
+    return r;
+  };
+})();
+
 </script>
 
 <style id="public-test-badge">
@@ -23261,10 +23336,10 @@ showBeastEffect=function(id,el){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.9</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.9%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.10</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.10%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.9";
+  var FORM="", PRE={}, V="0.1.10";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
