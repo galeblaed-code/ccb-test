@@ -6699,7 +6699,7 @@ function monsterRoleText(id){
     assassin:'屋根を渡る暗殺者。反撃を受けない（カウンター持ちを殴っても返されない）',
     frogprince:'王冠をかぶった蛙の剣士。呪いの身でも剣は鈍らない',
     deathcrab:'毒々しい甲殻の大蟹。硬く、殴られると鋏で返す（カウンター50）',
-    flowermantis:'花に化ける蟷螂。花の陰から獲物を狩る',
+    flowermantis:'花に化ける蟷螂。花の陰から獲物を狩る。蟷螂の斧：顕現した召喚獣への攻撃は2倍、相手の召喚獣のHPが多いほどさらに鋭い（最大2.5倍）',
     myconid:'歩く茸。胞子で敵を蝕む。置き土産：倒されると胞子から次が芽吹く（デッキから1枚引いて場に出す）',
     moneychanger:'天秤を持つ両替商。場にいる間、毎ターン自軍の墓場のモンスター1体を引き取って消去し、召喚ダイヤ1個と交換する。戦う力は弱い',
     mercenary:'狼の頭を持つ傭兵。殴られたら返す（カウンター30）。置き土産：倒されると次の傭兵が雇われて来る',
@@ -6768,7 +6768,7 @@ function monsterRoleText(id){
     blackgob:  '黒棍棒と悪知恵の総攻撃。ダイヤ奪取も得意',
     chimera2:  '毒炎複合の多頭咆哮。三頭で全体を焼く',
     irongiant: 'ハイランド陸軍の旧式の巨大兵器。リモコンで動く。超高HP。鉄壁粉砕で召喚獣にも衝撃',
-    minotaur:  '突進斧の超高火力。迷宮崩壊で全体衝撃',
+    minotaur:  '突進斧の超高火力。迷宮崩壊で全体衝撃。迷宮の檻：召喚獣に攻撃が当たると、その召喚獣は次の番に動けない（暴走もしない）',
     kraken:    '締め上げ弱体と大渦拘束。高HP壁役',
     dullahan:  '黒剣・暗黒剣・死告剣の超高火力。墓場で強化される',
     nightmare: 'ナイトメアホールで全体弱体。悪夢疾走で高単体火力。呪い：魔法で倒されると、倒した側のデッキからランダムに2枚を墓場へ送る',
@@ -9935,7 +9935,7 @@ const AI_FACTIONS={
     name:'厄災狩り', style:'hunter', strictPool:true,   // 2026-10-03 隆基案：召喚獣狙いの短期決戦
     motto:'城は後でいい。先に厄災の首を落とせ。',
     // 相手の召喚獣を3体とも倒して勝つことだけを狙う。厄災狩りの者・召喚獣に効く役の部品・召喚獣を殴れる力自慢でデッキを組む
-    pool:['templar','blackmage','samurai','ninja','yojimbo','muramasa','frogprince','dragonslave','gladiator','swordsman','redmage','pope','acolyte','sage','arbiter','oldman','relic','minotaur','gigas','knight','paladin','blacksmith'],
+    pool:['templar','blackmage','samurai','ninja','yojimbo','muramasa','frogprince','dragonslave','gladiator','swordsman','redmage','pope','acolyte','sage','arbiter','oldman','relic','minotaur','gigas','knight','paladin','blacksmith','flowermantis'],
     beasts:['odin','ifrit','ramuh','titan','bahamut'],
     magic:['thunder','fire','firaga','thundaga','haste','blizzaga'],
     members:[
@@ -9943,6 +9943,7 @@ const AI_FACTIONS={
       {name:'妖刀使い',     fav:['muramasa','samurai','ninja','yojimbo','samurai'], beast:'ifrit', magic:['firaga']},
       {name:'竜殺しの王子', fav:['frogprince','dragonslave','gladiator','swordsman','redmage'], beast:'ramuh', magic:['haste']},
       {name:'剣聖の弟子',   fav:['oldman','relic','blackmage','blackmage','sage'], beast:'titan', magic:['thunder']},
+      {name:'叛逆の徒',     fav:['flowermantis','flowermantis','minotaur','minotaur','templar'], beast:'bahamut', magic:['haste']},   // 2026-10-08 蟷螂の斧・迷宮の檻
     ],
   },
   aragami:{
@@ -10300,6 +10301,7 @@ async function startPlayerTurn(){
   G.p.monsterField.forEach(m=>{ if(m){ m.暴発=false; m.凍結中=false; if(m.frozen){ m.暴発=true; m.凍結中=true; m.frozen=false; } } });
   G.p.beasts.actedThisTurn=false;
   G.p.beasts.adventAvail=false;
+  applyLabyrinthCage('p');
 
   document.getElementById('backlash-badge').className='backlash-badge';
 
@@ -12010,6 +12012,9 @@ function chainStep(side,roleId){
 //  方針（2026-09-29 隆基）：定番の役は効果を薄く、レアな役・連鎖は戦況を一気に書き換えるくらい
 // ══════════════════════════════════════════════════════
 const EXTRA_ROLES=[
+  // 叛逆の徒（2026-10-08 隆基「召喚獣攻撃特化の役かカード」）：神に挑む弱者と、神に呪われた者
+  {id:'xHangyakuNoTo',name:'叛逆の徒',reading:'ハンギャクノト',cards:[['flowermantis'],['minotaur']],aura:{flowermantis:{atk:30},minotaur:{atk:30}},
+   meaning:'一匹は、神に斧を振り上げた蟷螂。一頭は、神の呪いで生まれ、迷宮に閉じ込められた牛頭。笑われた者と、呪われた者。神に借りがあるのは、どちらも同じだ。',desc:'フラワーマンティスとミノタウロスが同時に場にいる。場にいる間、両者の攻撃 +30。2体とも、召喚獣への攻撃が外れても反動を受けない。',hint:'神に笑われた者と、神に呪われた者'},
   // ── 良い役 ──
   {id:'xSoraNoHaken',name:'空の覇権争い',reading:'ソラノハケン',cards:[['griffin'],['harpy']],aura:{griffin:{atk:80},harpy:{atk:80}},
    meaning:'鷲獅子と鳥女が同じ空を飛ぶ。互いを嫌いながら、同じ獲物を狙う。',desc:'グリフォンとハーピーが同時に場にいる。場にいる間、両者の攻撃 +80。',hint:'空の二つの影が、同じ獲物を狙う'},
@@ -18885,6 +18890,8 @@ async function meltdownAutoAttack(side){
   const b=pd.beasts;
   if(!b.summoned||!b.activeId) return;
   if(b.activeHp>b.activeMaxHp*MELTDOWN_THRESHOLD) return;
+  // 迷宮の檻に閉じ込められている間は、暴走もできない（2026-10-08）
+  if((b.cagedTurns||0)>0||b._cagedNow){ log('【迷宮の檻】'+(side==='p'?'あなたの':'敵の')+BD[b.activeId].name+' は迷宮の中で暴れている——外には届かない','gold'); return; }
   const bDef={...BD[b.activeId]}; bDef.atk=calcBeastAtk(side,bDef);
   const defSide=side==='p'?'e':'p';
   const defPd=side==='p'?G.e:G.p;
@@ -19043,6 +19050,7 @@ function beastDie(side){
 	  pd.beasts.reraise=false;
 	  pd.beasts.berserk=false;
 	  pd.beasts.hpWarnLevel=0;
+	  pd.beasts.cagedTurns=0; pd.beasts._cagedNow=false;
 
   log((side==='e'?'敵の ':'')+nextDef.name+' 登場。継承Pt:'+inheritPts,side==='e'?'enemy':'gold');
   checkSummonWarning(side,0);
@@ -19655,6 +19663,7 @@ async function runEnemyTurn(){
   G.e.monsterField.forEach(m=>{ if(m){ m.暴発=false; m.凍結中=false; if(m.frozen){ m.暴発=true; m.凍結中=true; m.frozen=false; if(typeof log==='function') log('[敵] '+m.def.name+' は凍りついて動けない。','gold'); } } });
   G.e.beasts.actedThisTurn=false;
   G.e.beasts.adventAvail=false;
+  applyLabyrinthCage('e');
   await delay(300);
 
   if(checkWin()) return;
@@ -23046,13 +23055,79 @@ const BEAST_ATK_MULT=1.5;
         if(bar&&!bar.querySelector('.beast-hpnum')){
           const n=document.createElement('div'); n.className='beast-hpnum';
           // 数字は内部値のまま書く（画面の数字10倍は、HP の後ろの数字を自動で直す仕組みに任せる）
-          n.innerHTML='<span class="bh-tag">'+(b.summoned?'HP':'待機HP')+'</span>'+Math.max(0,b.activeHp)+' / '+b.activeMaxHp;
+          const caged=(b.cagedTurns>0||b._cagedNow);
+          n.innerHTML='<span class="bh-tag"'+(caged?' style="color:#ffb0b0"':'')+'>'+(caged?'迷宮の檻・HP':b.summoned?'HP':'待機HP')+'</span>'+Math.max(0,b.activeHp)+' / '+b.activeMaxHp;
           bar.appendChild(n);
         }
       }
     }catch(e){}
     return r;
   };
+})();
+
+// ══════════════════════════════════════════════════════
+//   神の化身に挑む者たち（2026-10-08 隆基「召喚獣攻撃特化の役かカード欲しい」→「全部入れてみて」）
+//   蟷螂の斧（フラワーマンティス）：顕現した召喚獣への攻撃 ×(2＋0.5×相手召喚獣のHP割合)。強い神ほど斧が鋭い
+//   迷宮の檻（ミノタウロス）：召喚獣に当たると、その召喚獣は次の番に動けない（暴走もしない）
+//   叛逆の徒（両者そろう）：2体とも、召喚獣への攻撃が外れても反動を受けない
+// ══════════════════════════════════════════════════════
+function applyLabyrinthCage(side){
+  const b=(side==='p'?G.p:G.e).beasts; if(!b) return;
+  if((b.cagedTurns||0)>0&&b.activeId&&b.summoned){
+    b.cagedTurns--; b._cagedNow=true; b.actedThisTurn=true; b.adventAvail=false;
+    const nm=BD[b.activeId].name;
+    log('【迷宮の檻】'+(side==='p'?'あなたの':'敵の')+nm+' は迷宮に閉じ込められ、この番は動けない','gold');
+    try{ btPush(side,nm+' は迷宮の檻の中——この番は動けない','loss'); }catch(e){}
+  } else { b.cagedTurns=0; b._cagedNow=false; }
+}
+function rebelPairOn(side){
+  const f=(side==='p'?G.p:G.e).monsterField;
+  return f.some(x=>x&&x.hp>0&&x.id==='flowermantis')&&f.some(x=>x&&x.hp>0&&x.id==='minotaur');
+}
+(function installGodDefiers(){
+  const core=applyAttackResolveCore;
+  applyAttackResolveCore=async function(side,attacker,result,targetType,targetSlot){
+    const defPd=side==='p'?G.e:G.p, id=attacker&&attacker.id, pre=side==='p'?'':'[敵] ';
+    const aegis=defPd.monsterField.some(x=>x&&x.hp>0&&x.id==='aegis')&&result&&!result.aoeEnemy;
+    const atBeast=targetType==='beast'&&!aegis&&defPd.beasts&&defPd.beasts.activeId;
+    if(atBeast&&result){
+      // 叛逆の徒：外れても反動なし
+      if((id==='flowermantis'||id==='minotaur')&&!isEffectiveOutcome(result)&&rebelPairOn(side)&&((result.selfDmg||0)>0||(result.enemyPt||0)>0)){
+        log(pre+'【叛逆の徒】'+attacker.def.name+'の一撃は外れた。だが、神に挑んだ者は退かない（反動なし）','gold');
+        result=Object.assign({},result,{selfDmg:0,enemyPt:0});
+      }
+      // 蟷螂の斧
+      if(id==='flowermantis'&&defPd.beasts.summoned&&result.atk>0&&isEffectiveOutcome(result)){
+        const ratio=Math.max(0,defPd.beasts.activeHp)/Math.max(1,defPd.beasts.activeMaxHp);
+        const mul=2+0.5*ratio, nb=Math.round(result.atk*mul);
+        log(pre+'【蟷螂の斧】'+attacker.def.name+'が神に斧を振り上げた——'+result.atk+'→'+nb+'（×'+mul.toFixed(2)+'）','gold');
+        try{ btPush(side,'蟷螂の斧——神に斧を振り上げた','gold'); }catch(e){}
+        result=Object.assign({},result,{atk:nb});
+      }
+    }
+    const ret=await core.call(this,side,attacker,result,targetType,targetSlot);
+    // 迷宮の檻
+    try{
+      if(atBeast&&id==='minotaur'&&result&&result.atk>0&&isEffectiveOutcome(result)&&defPd.beasts.activeId&&defPd.beasts.summoned&&defPd.beasts.activeHp>0){
+        defPd.beasts.cagedTurns=1;
+        const nm=BD[defPd.beasts.activeId].name;
+        log(pre+'【迷宮の檻】ミノタウロスが'+nm+'を迷宮に閉じ込めた——次の番、'+nm+'は動けない','gold');
+        try{ btPush(side,'迷宮の檻——'+nm+'を閉じ込めた','gold'); }catch(e){}
+        try{ recEvent(side,'role','迷宮の檻：ミノタウロスが'+nm+'を迷宮に閉じ込めた'); }catch(e){}
+        renderAll();
+      }
+    }catch(e){}
+    return ret;
+  };
+  // AI：神に挑む者は、顕現した召喚獣がいれば召喚獣を狙う
+  const choose=enemyChooseAttackTarget;
+  enemyChooseAttackTarget=function(em){
+    if(em&&(em.id==='flowermantis'||em.id==='minotaur')&&em.def.canAtkBeast&&!em.def.noAttack&&G.p.beasts.summoned&&G.p.beasts.activeId&&!(G.p.beasts.cagedTurns>0&&em.id==='minotaur')){
+      if(!(canMonsterAttackCrystal('e',em)&&aiKillProb(em,'crystal',G.p.crystalHp+(G.p.shield||0))>=0.5)) return {type:'beast',idx:-1};
+    }
+    return choose.apply(this,arguments);
+  };
+  // HPバーの札の「迷宮の檻」表示は installBeastHpView で出す
 })();
 
 </script>
@@ -23062,10 +23137,10 @@ const BEAST_ATK_MULT=1.5;
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.5</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.5%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.6</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.6%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.5";
+  var FORM="", PRE={}, V="0.1.6";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
