@@ -1883,6 +1883,9 @@ body{
   object-fit:cover;
   display:block;
 }
+.magic-cast-desc{position:relative;left:50%;transform:translateX(-50%);width:max-content;margin:6px 0 0;max-width:min(400px,42vw);color:#f3ead2;font-size:16px;font-weight:600;line-height:1.6;background:rgba(12,9,5,.88);border:1px solid rgba(214,168,71,.65);border-radius:6px;padding:7px 11px;text-align:left;opacity:0;transition:opacity .25s;box-shadow:0 4px 14px rgba(0,0,0,.6)}
+.magic-cast-desc:empty{display:none}
+.magic-cast-ov.reveal .magic-cast-desc{opacity:1}
 .magic-cast-label{
   margin-top:8px;
   min-height:22px;
@@ -4827,6 +4830,7 @@ img[src*="ゼネラルデビル"]{object-fit:fill!important;}
       </div>
     </div>
     <div class="magic-cast-label" id="magic-cast-label"></div>
+    <div class="magic-cast-desc" id="magic-cast-desc"></div>
   </div>
 </div>
 
@@ -9226,7 +9230,7 @@ function crystalLevelLabel(level){
   return level>=4?'CRYSTAL LV MAX':'CRYSTAL LV '+(level||1);
 }
 // クリスタルLvでクリスタルの最大HPが上がる（2026-10-08 隆基）：Lv2・Lv3・MAX で最大 +1000 ずつ（表示値。内部は+100）。
-//   上がるのは上限だけで、今のHPは回復しない（回復魔法や役で埋める余地）
+//   2026-10-09 から、今のHPも同じだけ回復する（grantMonsterKillPts）
 const CRYSTAL_MAX_PER_LV=100;
 function crystalMaxOf(pd){
   if(!pd) return CRYSTAL_MAX;
@@ -10198,7 +10202,7 @@ function showOpeningTutorial(){
        portraits:['UI素材/案内人表情1.png','UI素材/案内人表情4.png','UI素材/案内人表情7.png','UI素材/案内人表情3.png']},
       {step:'2 / 4', title:'召喚ダイヤと召喚獣', body:'モンスターを撃破するたびに召喚ダイヤが貯まります。\nダイヤは魔法使用時に1個、召喚獣の顕現時に必要数を消費します。\nダイヤが一定数になると、召喚獣があなたの意思と無関係に顕現します。',
        portraits:['UI素材/案内人表情5.png','UI素材/案内人表情２.png','UI素材/案内人表情6.png','UI素材/案内人表情9.png','UI素材/案内人表情8.png']},
-      {step:'3 / 4', title:'クリスタルLv', body:'敵モンスターを3体倒すたびにクリスタルLvが上がります。\n以後ドローされるモンスターはHPとATKが上がり、クリスタルの最大HPも上がります（回復はしません）。\nただし、強い牙は失敗や暴走で自分にも向きます。',
+      {step:'3 / 4', title:'クリスタルLv', body:'敵モンスターを3体倒すたびにクリスタルLvが上がります。\n以後ドローされるモンスターはHPとATKが上がり、クリスタルの最大HPも上がって、その分回復します。\nただし、強い牙は失敗や暴走で自分にも向きます。',
        portraits:['UI素材/案内人表情7.png','UI素材/案内人表情9.png','UI素材/案内人表情２.png','UI素材/案内人表情6.png']},
       {step:'4 / 4', title:'開幕ルール', body:'両者が最初のモンスターを1体ずつ配置します。\nサイコロで先攻後攻を決め、先攻の1手目から攻撃も魔法もできます。\nただし出目しだいで、牙は自分にも向きます。',
        portraits:['UI素材/案内人表情3.png','UI素材/案内人表情4.png','UI素材/案内人表情9.png','UI素材/案内人表情1.png']},
@@ -18100,7 +18104,10 @@ function grantMonsterKillPts(side,amount=monsterKillPts()){
   if(afterLv>beforeLv){
     const bonus=crystalLevelBonus(afterLv);
     log((side==='p'?'あなた':'敵')+'のクリスタルが '+crystalLevelLabel(afterLv)+' へ上昇！ 以後ドローされるモンスター HP +'+bonus.hp+' / ATK +'+bonus.atk,'gold');
-    log((side==='p'?'あなた':'敵')+'のクリスタル 最大HP +'+(afterLv-beforeLv)*CRYSTAL_MAX_PER_LV+'（最大 '+dn(crystalMaxOf(pd))+'）','gold');
+    // 2026-10-09 隆基「レベルアップと同時にHP回復がいいかも」：最大HPと同じだけ、今のHPも回復する
+    { const up=(afterLv-beforeLv)*CRYSTAL_MAX_PER_LV, b0=pd.crystalHp; pd.crystalHp=Math.min(crystalMaxOf(pd),pd.crystalHp+up);
+      log((side==='p'?'あなた':'敵')+'のクリスタル 最大HP +'+up+'・HP +'+(pd.crystalHp-b0)+'（最大 '+dn(crystalMaxOf(pd))+'）','gold');
+      try{ btPush(side,'クリスタル '+crystalLevelLabel(afterLv)+'——最大HPと今のHPが上がった','gold'); }catch(e){} }
     showCenterNotice(afterLv>=4?'CRYSTAL LV MAX':'CRYSTAL LV '+afterLv,(side==='p'?'あなた':'敵')+'：後続モンスター強化・クリスタル最大HP '+dn(crystalMaxOf(pd)),side,860);
     try{ renderAll(); }catch(e){}
   }
@@ -18147,7 +18154,7 @@ function animateElementHit(el){
 // 画面に出る文字を見張り、「攻撃・HP・ダメージ・回復・クリスタル・残」などに付いた数字だけを10倍にして見せる
 const DISP_SCALE=10;
 function dn(n){ return Math.round((+n||0)*DISP_SCALE); }
-const _SC_KEY=/(ATK|HP|攻撃力?|ダメージ|回復|残|クリスタル|体力|威力|反撃|吸収|DMG|毒|全体|にも|自傷)$/;
+const _SC_KEY=/(ATK|HP|攻撃力?|ダメージ|回復|残|クリスタル|体力|威力|反撃|吸収|DMG|毒|全体|にも|自傷|火炎|氷結|雷撃)$/;   // 2026-10-09 火炎・氷結・雷撃（特大火炎380 など）も
 const _SC_NEXT=/^\s*(の大ダメージ|の?ダメージ|ダメ|回復)/;
 const _SC_BAD_NEXT=/^\s*(%|％|倍|体|個|ターン|回|枚|翻|巡|番|人|秒|つ|種|割|枠|段|F|px|em|ms|日|年|月|位|点|文字|行|試合|件|手|戦|勝|敗|ヶ|か所|箇所|柱|頁|本|匹|頭|騎|名|代|才|歳|%)/;
 const _SC_FRAC=/(ATK|HP|攻撃力?|クリスタル|体力)[^\n<>]{0,24}[（(]\s*$/;
@@ -21364,7 +21371,7 @@ const TUT_STEPS=[
   {id:'afterAtk',     step:'4 / 6', portrait:'UI素材/案内人.webp',
    msg:'ダイスが攻撃を決めました！\n左下の魔法手札バーの光るカードをクリックすると魔法を使えます。\n魔法カード行使は別行動です。\n使用するかの判断とタイミングは貴方次第。チャンスは1ゲームに6回です。\n（召喚ダイヤを1個消費。1ターンに1枚まで）', hint:'magic-hand-bar', next:'crystalLv'},
   {id:'crystalLv',    step:'5 / 6', portrait:'UI素材/案内人表情9.png',
-   msg:'敵を倒し続けるとクリスタルLvが上がります。\n後からドローするモンスターは強くなりますが、失敗や暴走で自分に向く牙も鋭くなります。\nクリスタルの最大HPは上がりますが、回復はしません。\nLvアップは安全な有利ではなく、戦場の危険度上昇です。', hint:null},
+   msg:'敵を倒し続けるとクリスタルLvが上がります。\n後からドローするモンスターは強くなりますが、失敗や暴走で自分に向く牙も鋭くなります。\nクリスタルの最大HPも上がり、その分回復します。\nLvアップは安全な有利ではなく、戦場の危険度上昇です。', hint:null},
   {id:'firstRoleFound',step:'役発見！', portrait:'UI素材/案内人表情7.png',
    msg:'役が発動しました！\nモンスターの組み合わせが物語を生み出す——\nこれがクリスタルカードバトルの醍醐味です！', hint:null},
   {id:'endTip',       step:'6 / 6', portrait:'UI素材/案内人表情9.png',
@@ -23329,6 +23336,25 @@ function playEndCurtain(win,msg){
   };
 })();
 
+// 魔法を使う前に、どんな効果かを見せる（2026-10-09 隆基「名前だけだと何の魔法だっけ？になる」）
+//   カードを表に返した時、カードの下に説明を出し、読めるだけ待ってからダイスへ（説明の長さに合わせて 1.2〜2.8秒）
+(function installMagicDescAnnounce(){
+  const sh=showMagicCastCard;
+  showMagicCastCard=function(def,side){
+    const r=sh.apply(this,arguments);
+    try{ const d=document.getElementById('magic-cast-desc'); if(d) d.textContent=(def&&def.desc)||''; }catch(e){}
+    return r;
+  };
+  const rv=revealMagicCastCard;
+  revealMagicCastCard=async function(def,side){
+    await rv.apply(this,arguments);
+    const n=String((def&&def.desc)||'').length;
+    if(n) await delay(Math.min(2800,Math.max(1200,900+n*28)));
+  };
+  const hd=hideMagicCastCard;
+  hideMagicCastCard=function(){ const r=hd.apply(this,arguments); try{ const d=document.getElementById('magic-cast-desc'); if(d) d.textContent=''; }catch(e){} return r; };
+})();
+
 </script>
 
 <style id="public-test-badge">
@@ -23336,10 +23362,10 @@ function playEndCurtain(win,msg){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.10</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.10%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.11</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.11%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.10";
+  var FORM="", PRE={}, V="0.1.11";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
