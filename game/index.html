@@ -9939,6 +9939,8 @@ const AI_FACTIONS={
       {name:'黒騎士の崇拝者', fav:['blackknight','dullahan','nightmare'],beast:'odin',      magic:['ultima']},
       {name:'天空の詩人',     fav:['griffin','harpy','chocobo','ahriman'],beast:'leviathan', magic:['thundaga']},
       {name:'竜の叙事詩',     fav:['dragon','chaosdragon','behemoth','doublehead'],   beast:'bahamut',   magic:['firaga']},
+      // 2026-10-10 隆基「帳簿狂い作って」：珍事【死者の帳簿】だけを狙う。試合の始めに相手のデッキを読み、相手が2枚入れたカードを自分も2枚入れる
+      {name:'帳簿狂い',       fav:['moneychanger','graverobber'], ledger:true,       beast:'phoenix',   magic:['arise']},
     ],
   },
   collector:{
@@ -23490,6 +23492,36 @@ function checkDeadLedger(side){
   applyOnceEffects=function(side,o){ const r=ao.apply(this,arguments); if(o&&o.cemeteryLaunder) checkDeadLedger(side); return r; };
 })();
 
+// 帳簿狂い（浪漫党）：試合の始め（最初の開幕配置の前）に相手のデッキを読み、相手が2枚入れたカードを1つ選んで自分も2枚にそろえる。
+//   ねらいは珍事【死者の帳簿】（自分の2枚＋相手の墓場から奪った2枚＝4枚）。相手に2枚入りのカードがなければ、普通に戦う
+(function installLedgerMadman(){
+  function ledgerSide(pd){ const f=AI_FACTIONS[pd&&pd.faction]; const m=f&&f.members[pd.factionMember]; return !!(m&&m.ledger); }
+  function tune(side){
+    const pd=side==='p'?G.p:G.e, od=side==='p'?G.e:G.p;
+    if(!ledgerSide(pd)) return;
+    const keep=new Set(['moneychanger','graverobber']);
+    const cnt={}; od.deck.forEach(c=>{ if(c&&c.type==='monster') cnt[c.id]=(cnt[c.id]||0)+1; });
+    const cands=Object.keys(cnt).filter(id=>cnt[id]>=2&&!keep.has(id)&&MD[id]&&!TRANSFORM_ONLY.includes(id));
+    if(!cands.length) return;
+    const target=cands[Math.floor(Math.random()*cands.length)];
+    let have=pd.deck.filter(c=>c&&c.type==='monster'&&c.id===target).length;
+    while(have<2){
+      const i=pd.deck.findIndex(c=>c&&c.type==='monster'&&!keep.has(c.id)&&c.id!==target);
+      if(i<0) break;
+      pd.deck.splice(i,1,{type:'monster',id:target}); have++;
+    }
+    pd.deck=shuffle(pd.deck); pd._ledgerTarget=target;
+    const nm=MD[target].name;
+    log('['+factionMemberName(side)+'] 相手の名簿を読んだ——狙いは「'+nm+'」','gold');
+    try{ btPush(side,'帳簿狂い「狙いは'+nm+'。四人目まで、帳簿に書き込む」'); }catch(e){}
+  }
+  const oc=openingCallFor;
+  openingCallFor=async function(side){
+    try{ if(G&&!G._ledgerRead){ G._ledgerRead=true; tune('p'); tune('e'); } }catch(e){}
+    return oc.apply(this,arguments);
+  };
+})();
+
 </script>
 
 <style id="public-test-badge">
@@ -23497,10 +23529,10 @@ function checkDeadLedger(side){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.14</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.14%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.15</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.15%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.14";
+  var FORM="", PRE={}, V="0.1.15";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
