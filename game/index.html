@@ -1619,6 +1619,13 @@ body{
 .field-wrapper .m-card.stolen-card{position:relative}
 .field-wrapper .m-card.stolen-card::after{content:'';position:absolute;inset:-3px;border:2px solid rgba(120,195,255,.95);border-radius:8px;box-shadow:0 0 12px rgba(60,160,255,.9),inset 0 0 10px rgba(60,160,255,.5);pointer-events:none;animation:stolenPulse 1.4s ease-in-out infinite;z-index:3}
 @keyframes stolenPulse{0%,100%{opacity:.55}50%{opacity:1}}
+
+/* ドラッグ攻撃（2026-10-10）：重ねている相手を強く光らせる。スマホでは引っ張っても画面がスクロールしないように */
+.drop-over{outline:4px solid #ff4a4a!important;outline-offset:3px;filter:brightness(1.3) drop-shadow(0 0 18px rgba(255,60,60,1))!important}
+.offer-ghost.over-target{opacity:.42!important}
+.field-wrapper .m-card.drop-over{position:relative}
+.field-wrapper .m-card.drop-over::before{content:'';position:absolute;inset:-5px;border:3px solid #ff4a4a;border-radius:9px;box-shadow:0 0 18px rgba(255,60,60,.95),inset 0 0 12px rgba(255,60,60,.5);pointer-events:none;z-index:5}
+.p-field-row .m-card{touch-action:none}
 @keyframes centerEffectFx{
   0%  {opacity:0;transform:translate(-50%,-50%) scale(.38);}
   20% {opacity:1;transform:translate(-50%,-50%) scale(1.14);}
@@ -10447,24 +10454,39 @@ function showOfferingTargets(){
   setBtns(btns);
 }
 
+// 2026-10-10 隆基「カードを引っ張って召喚獣に食わせる動作が気持ちいいから攻撃にも使いたい。カードをスワイプして攻撃したい対象に重ねると攻撃」
+//   自分のモンスターを引っ張る → 攻撃できる相手（敵のモンスター・召喚獣・クリスタル）が赤く光る → その上で離すと攻撃。
+//   自分の召喚獣の上で離すと鎮めの供物（今まで通り）。少ししか動かさなければ、ふつうのクリック
 (function setupOfferingDrag(){
   let drag=null, suppressClick=false;
-  const canNow=()=>playerActionReady()&&canOffer('p');
   const beastRow=()=>document.getElementById('p-beast-row');
-  const overBeast=(x,y)=>{ const r=beastRow()&&beastRow().getBoundingClientRect(); return !!r&&x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom; };
+  const inside=(el,x,y)=>{ const r=el&&el.getBoundingClientRect(); return !!r&&r.width>0&&x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom; };
+  // その攻撃役で狙える相手の一覧 [{kind,slot,el}]
+  function attackTargets(m){
+    const out=[];
+    if(!m||m.def.noAttack||isPreparationRound()||G.p.mainActionsRem<=0||G.p.actedUIDs.has(m.uid)||m.暴発) return out;
+    G.e.monsterField.forEach((em,i)=>{ if(!em||m.def.noMonsterTarget||(m.id==='dragoon'&&em.id==='blackknight')) return; const el=document.getElementById('e-m-'+i); if(el) out.push({kind:'monster',slot:i,el}); });
+    if(m.def.canAtkBeast&&(G.e.beasts.summoned||(m.def.beastHunter&&G.e.beasts.activeId))){ const el=document.getElementById('e-beast-row'); if(el) out.push({kind:'beast',slot:-1,el}); }
+    if(canMonsterAttackCrystal('p',m)){ const el=document.querySelector('.enemy-crystal'); if(el) out.push({kind:'crystal',slot:-1,el}); }
+    return out;
+  }
+  const canOfferNow=()=>playerActionReady()&&canOffer('p');
   const cleanup=()=>{
     if(!drag) return;
     if(drag.ghost) drag.ghost.remove();
     if(drag.src) drag.src.classList.remove('offer-src');
+    (drag.targets||[]).forEach(t=>t.el.classList.remove('target-hover','drop-over'));
     const br=beastRow(); if(br) br.classList.remove('offer-ready','offer-over');
     drag=null;
   };
   document.addEventListener('pointerdown',e=>{
     const card=e.target.closest&&e.target.closest('.m-card');
-    if(!card||!/^p-m-\d$/.test(card.id)||!canNow()) return;
-    const idx=+card.id.slice(4);
-    if(!G.p.monsterField[idx]) return;
-    drag={idx,src:card,x0:e.clientX,y0:e.clientY,ghost:null};
+    if(!card||!/^p-m-\d$/.test(card.id)||!G||G.phase!=='battle'||!playerActionReady()||isCardModalOpen()) return;
+    const idx=+card.id.slice(4), m=G.p.monsterField[idx];
+    if(!m) return;
+    const targets=attackTargets(m), offer=canOfferNow();
+    if(!targets.length&&!offer) return;
+    drag={idx,src:card,x0:e.clientX,y0:e.clientY,ghost:null,targets,offer,over:null};
   });
   document.addEventListener('pointermove',e=>{
     if(!drag) return;
@@ -10475,21 +10497,36 @@ function showOfferingTargets(){
       g.style.width=r.width+'px'; g.style.height=r.height+'px';
       document.body.appendChild(g); drag.ghost=g;
       drag.src.classList.add('offer-src');
-      const br=beastRow(); if(br) br.classList.add('offer-ready');
-      setInfo('<b>鎮めの供物</b>：召喚獣のエリアで離すと、このモンスターを捧げる（HP +'+offeringHeal(G.p.monsterField[drag.idx])+'）。');
+      if(G.mode==='targeting'){ G.selSlot=-1; G.mode='idle'; document.querySelectorAll('.target-hover').forEach(el=>el.classList.remove('target-hover')); }
+      drag.targets.forEach(t=>t.el.classList.add('target-hover'));
+      const br=beastRow(); if(drag.offer&&br) br.classList.add('offer-ready');
+      const m=G.p.monsterField[drag.idx];
+      setInfo('<b>'+m.def.name+'</b>：狙う相手の上で離すと攻撃'+(drag.offer?'。自分の召喚獣の上で離すと鎮めの供物（HP +'+offeringHeal(m)+'）':'')+'。');
     }
     drag.ghost.style.left=e.clientX+'px'; drag.ghost.style.top=e.clientY+'px';
-    const br=beastRow(); if(br) br.classList.toggle('offer-over',overBeast(e.clientX,e.clientY));
+    const hit=drag.targets.find(t=>inside(t.el,e.clientX,e.clientY))||null;
+    drag.targets.forEach(t=>t.el.classList.toggle('drop-over',t===hit));
+    drag.ghost.classList.toggle('over-target',!!hit);
+    const br=beastRow(); if(br&&drag.offer) br.classList.toggle('offer-over',!hit&&inside(br,e.clientX,e.clientY));
+    drag.over=hit;
     e.preventDefault();
   },{passive:false});
   document.addEventListener('pointerup',e=>{
     if(!drag) return;
-    const started=!!drag.ghost, idx=drag.idx, hit=started&&overBeast(e.clientX,e.clientY);
+    const started=!!drag.ghost, idx=drag.idx, hit=started?(drag.targets.find(t=>inside(t.el,e.clientX,e.clientY))||null):null;
+    const offerHit=started&&drag.offer&&!hit&&inside(beastRow(),e.clientX,e.clientY);
     cleanup();
     if(!started) return;             // 動かしていなければ普通のクリックとして扱う
     suppressClick=true; setTimeout(()=>{ suppressClick=false; },0);
-    if(hit&&canNow()&&G.p.monsterField[idx]){ clearSel(); doOffering('p',idx); finishMainAction(); }
-    else showMainActionBtns();
+    if(offerHit&&canOfferNow()&&G.p.monsterField[idx]){ clearSel(); doOffering('p',idx); finishMainAction(); return; }
+    if(hit&&playerActionReady()&&G.p.monsterField[idx]){
+      G.selSlot=idx; G.mode='targeting';
+      if(hit.kind==='monster') doAttackMonster(hit.slot);
+      else if(hit.kind==='beast') doAttackBeast();
+      else doAttackCrystal();
+      return;
+    }
+    showMainActionBtns();
   });
   document.addEventListener('pointercancel',cleanup);
   // 画像の標準ドラッグが割り込むと pointerup が来なくなるので止める
@@ -23544,10 +23581,10 @@ function checkDeadLedger(side){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.18</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.18%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.19</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.19%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.18";
+  var FORM="", PRE={}, V="0.1.19";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
