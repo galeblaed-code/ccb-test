@@ -23502,6 +23502,9 @@ function checkDeadLedger(side){
 (function installDeadLedgerWatch(){
   const ao=applyOnceEffects;
   applyOnceEffects=function(side,o){ const r=ao.apply(this,arguments); if(o&&o.cemeteryLaunder) checkDeadLedger(side); return r; };
+  // 奪った直後だけでなく、墓荒らしが自分の墓場から戻した時などにも4枚になりうるので、画面を更新するたびに数え直す（奪ったことがある陣営だけ）
+  const ra=renderAll;
+  renderAll=function(){ const r=ra.apply(this,arguments); try{ if(G&&G.phase!=='gameover'){ if(G.p&&G.p._stolenCards) checkDeadLedger('p'); if(G.e&&G.e._stolenCards) checkDeadLedger('e'); } }catch(e){} return r; };
 })();
 
 // 帳簿狂い（浪漫党）：試合の始め（最初の開幕配置の前）に相手のデッキを読み、相手が2枚入れたカードを1つ選んで自分も2枚にそろえる。
@@ -23541,10 +23544,10 @@ function checkDeadLedger(side){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.16</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.16%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.17</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.17%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.16";
+  var FORM="", PRE={}, V="0.1.17";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
