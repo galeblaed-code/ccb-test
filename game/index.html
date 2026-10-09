@@ -6760,7 +6760,7 @@ function monsterRoleText(id){
     deathcrab:'毒々しい甲殻の大蟹。硬く、殴られると鋏で返す（カウンター50）',
     flowermantis:'花に化ける蟷螂。花の陰から獲物を狩る。蟷螂の斧：顕現した召喚獣への攻撃は2倍、相手の召喚獣のHPが多いほどさらに鋭い（最大2.5倍）',
     myconid:'歩く茸。胞子で敵を蝕む。置き土産：倒されると胞子から次が芽吹く（デッキから1枚引いて場に出す）',
-    moneychanger:'天秤を持つ両替商。場にいる間、毎ターン自軍の墓場のモンスター1体を引き取って消去し、召喚ダイヤ1個と交換する。戦う力は弱い',
+    moneychanger:'天秤を持つ両替商。場にいる間、毎ターン自軍の墓場のモンスター1体を引き取って消去し、召喚ダイヤ1個と交換する。戦う力は弱い。闇の商売の輪：倒されると、デッキから墓荒らしが後を継ぐ',
     mercenary:'狼の頭を持つ傭兵。殴られたら返す（カウンター30）。置き土産：倒されると次の傭兵が雇われて来る',
     cook:'鎧を着た蛙の料理人。攻撃が当たると、味方に料理を振る舞う（味方回復30）',
     lightningbear:'雷をまとう大熊。ダイス2個で暴れる。雷の毛皮が逆立つと、敵全体に雷が落ちる',
@@ -6812,7 +6812,7 @@ function monsterRoleText(id){
     megalodon:'船をも喰らう太古の大鮫。深海の渦で敵全体を呑み込む。呪い：魔法で倒されると、倒した側のデッキからランダムに2枚を墓場へ送る',
     swordsman:'身の丈ほどの大剣を操る剣士。月影の太刀は鋭い',
     gladiator:'闘技場の豹頭の戦士。盾で身を守りつつ、喝采を浴びると召喚ダイヤを得る',
-    graverobber:'戦う力は皆無。場に出ると自分の墓場からモンスター2体をデッキに戻す（シャッフル）。死霊系と並ぶと「死者への冒涜」',
+    graverobber:'戦う力は皆無。場に出ると自分の墓場からモンスター2体をデッキに戻す（シャッフル）。死霊系と並ぶと「死者への冒涜」。闇の商売の輪：倒されると、デッキから武器商人が後を継ぐ',
     platoon:'旗を掲げて進む歩兵の小隊。単独ではかなり弱い。だが役がそろうと化ける（騎士・聖騎士・守るべき者の前で）。突撃陣形で敵全体を押す。置き土産：倒されると後続の部隊が来る（デッキから1枚引いて場に出す）',
     archer:'森に潜む射手の群れ。矢の雨で敵全体を射抜く',
     leafraven:'古い遺跡に棲む鴉。木の葉に紛れて敵の力を削ぎ、凶兆の羽でダイヤを攫う。置き土産：倒されると凶兆が次を呼ぶ（デッキから1枚引いて場に出す）',
@@ -14150,6 +14150,16 @@ function checkDeathDraws(side){
           try{ recEvent(side,'role','闇の取引先：武器商人が倒れ、'+nm.def.name+'が後始末に来た'); }catch(e){}
           handleMonsterEnter(side,nm); }
         else log('【闇の取引先】'+who+'の武器商人が倒れた。取引先は、誰も来なかった',''); }
+      // 闇の商売の輪（2026-10-10 隆基）：武器商人 → 両替商 → 墓荒らし → 武器商人。倒れると、輪の次の者がデッキから来る
+      //   （武器商人は上の【闇の取引先】：場にどちらかがいれば、そろう方を呼ぶ）
+      if(g&&!g.noKill&&(g.id==='moneychanger'||g.id==='graverobber')){
+        const want=g.id==='moneychanger'?'graverobber':'armsdealer', slot=pd.monsterField.findIndex(x=>!x), ci=pd.deck.findIndex(c=>c&&c.type==='monster'&&c.id===want);
+        if(slot>=0&&ci>=0){ const card=pd.deck.splice(ci,1)[0]; try{ addReveal(side,card,'forced-draw'); }catch(e){}
+          const nm=makeMonsterInst(card.id,false,side); pd.monsterField[slot]=nm; markMonsterFlip(side,slot);
+          log('【闇の商売の輪】'+who+'の'+MD[g.id].name+'が倒れた——'+nm.def.name+'が後を継いだ','gold');
+          try{ btPush(side,'闇の商売の輪——'+nm.def.name+'が後を継いだ','gold'); }catch(e){}
+          try{ recEvent(side,'role','闇の商売の輪：'+MD[g.id].name+'が倒れ、'+nm.def.name+'が後を継いだ'); }catch(e){}
+          handleMonsterEnter(side,nm); } }
       if(!g||g.noKill||!MD[g.id]||!MD[g.id].deathDraw) return;
       const slot=pd.monsterField.findIndex(x=>!x);
       if(slot<0) return;
@@ -23581,10 +23591,10 @@ function checkDeadLedger(side){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.19</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.19%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.20</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.20%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.19";
+  var FORM="", PRE={}, V="0.1.20";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
