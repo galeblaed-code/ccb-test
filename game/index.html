@@ -6809,7 +6809,7 @@ function monsterRoleText(id){
     platoon:'旗を掲げて進む歩兵の小隊。単独ではかなり弱い。だが役がそろうと化ける（騎士・聖騎士・守るべき者の前で）。突撃陣形で敵全体を押す。置き土産：倒されると後続の部隊が来る（デッキから1枚引いて場に出す）',
     archer:'森に潜む射手の群れ。矢の雨で敵全体を射抜く',
     leafraven:'古い遺跡に棲む鴉。木の葉に紛れて敵の力を削ぎ、凶兆の羽でダイヤを攫う。置き土産：倒されると凶兆が次を呼ぶ（デッキから1枚引いて場に出す）',
-    armsdealer:'戦場を渡り歩く商人。戦う力は弱いが、商売で召喚ダイヤを稼ぐ',
+    armsdealer:'戦場を渡り歩く商人。戦う力は弱いが、商売で召喚ダイヤを稼ぐ。闇の取引先：倒されると、デッキから両替商か墓荒らしを場に呼ぶ（場にどちらかがいれば、そろう方を呼ぶ）',
     madking:'悪魔に囁かれた王。場に出ると同時に、デッキから1枚を呼び寄せる。呼ばれたのが魔族なら、その場で襲いかかる。デッキ編成には現れない',
     prince:'玉座に座る若き継承者。場に出ると同時にデッキから1枚を呼び寄せ、それが王国の者ならその場で斬りかかる。王の器を示せば、自らを癒やし召喚ダイヤを得る。デッキ編成には現れない',
     relic:'場にいる間、味方全員の攻撃 +50。モンスターは狙えない。奇数：敵クリスタルと敵召喚獣に大ダメージ／偶数：自クリスタルと自召喚獣に大ダメージ（どちらも倒しきれず、最悪HP1で止まる）',
@@ -9940,7 +9940,7 @@ const AI_FACTIONS={
       {name:'天空の詩人',     fav:['griffin','harpy','chocobo','ahriman'],beast:'leviathan', magic:['thundaga']},
       {name:'竜の叙事詩',     fav:['dragon','chaosdragon','behemoth','doublehead'],   beast:'bahamut',   magic:['firaga']},
       // 2026-10-10 隆基「帳簿狂い作って」：珍事【死者の帳簿】だけを狙う。試合の始めに相手のデッキを読み、相手が2枚入れたカードを自分も2枚入れる
-      {name:'帳簿狂い',       fav:['moneychanger','graverobber'], ledger:true,       beast:'phoenix',   magic:['arise']},
+      {name:'帳簿狂い',       fav:['moneychanger','graverobber','armsdealer'], ledger:true,       beast:'phoenix',   magic:['arise']},
     ],
   },
   collector:{
@@ -14101,6 +14101,18 @@ function checkDeathDraws(side){
       if(g&&!g.noKill&&g.id==='pirate'){ const mi=pd.monsterField.findIndex(x=>x&&x.hp>0&&x.id==='mermaid'); if(mi>=0){ let n=0; pd.monsterField.forEach(x=>{ if(x&&x.hp>0){ x.hp=Math.min(x.maxHp,x.hp+60); n++; } }); pd.deck.push({type:'monster',id:'mermaid'}); pd.deck=shuffle(pd.deck); pd.monsterField[mi]=null; log('【哀しき海の恋物語】'+who+'の海賊が倒れた——人魚は弔いの歌を歌い（味方'+n+'体 HP+60）、海へ帰っていった','gold'); try{ recEvent(side,'role','哀しき海の恋物語：海賊が倒れ、人魚は歌を残して海へ帰った'); }catch(e){} } }
       if(g&&!g.noKill&&g.id==='blacklobster'){ const os=side==='p'?'e':'p', od2=os==='p'?G.p:G.e; let n=0; od2.monsterField.forEach(x=>{ if(x&&x.hp>0){ x.hp=Math.min(x.maxHp,x.hp+40); n++; } }); log('【ご馳走】'+who+'のブラックロブスターが倒れた——'+(os==='p'?'あなた':'敵')+'の'+n+'体がありついた。美味かった（HP+40）','gold'); }
       if(g&&!g.noKill&&g.id==='lardfish'){ let n=0; pd.monsterField.forEach(x=>{ if(x&&x.hp>0){ x.hp=Math.min(x.maxHp,x.hp+40); n++; } }); log('【脂の恵み】'+who+'のラードフィッシュが倒れ、その脂が味方'+n+'体を癒した（HP+40）','gold'); }
+      // 闇の取引先（2026-10-10 隆基）：武器商人が倒れると、デッキから両替商か墓荒らしが後始末に来る。場にどちらかがいれば、そろう方を呼ぶ
+      if(g&&!g.noKill&&g.id==='armsdealer'){ const slot=pd.monsterField.findIndex(x=>!x);
+        const onF=id=>pd.monsterField.some(x=>x&&x.hp>0&&x.id===id), inD=id=>pd.deck.some(c=>c&&c.type==='monster'&&c.id===id);
+        let want=onF('moneychanger')&&inD('graverobber')?'graverobber':onF('graverobber')&&inD('moneychanger')?'moneychanger':null;
+        if(!want){ const c=['moneychanger','graverobber'].filter(inD); want=c.length?c[Math.floor(Math.random()*c.length)]:null; }
+        if(slot>=0&&want){ const ci=pd.deck.findIndex(c=>c&&c.type==='monster'&&c.id===want); const card=pd.deck.splice(ci,1)[0]; try{ addReveal(side,card,'forced-draw'); }catch(e){}
+          const nm=makeMonsterInst(card.id,false,side); pd.monsterField[slot]=nm; markMonsterFlip(side,slot);
+          log('【闇の取引先】'+who+'の武器商人が倒れた——帳簿を受け取りに、'+nm.def.name+'がやって来た','gold');
+          try{ btPush(side,'闇の取引先——'+nm.def.name+'が帳簿を受け取りに来た','gold'); }catch(e){}
+          try{ recEvent(side,'role','闇の取引先：武器商人が倒れ、'+nm.def.name+'が後始末に来た'); }catch(e){}
+          handleMonsterEnter(side,nm); }
+        else log('【闇の取引先】'+who+'の武器商人が倒れた。取引先は、誰も来なかった',''); }
       if(!g||g.noKill||!MD[g.id]||!MD[g.id].deathDraw) return;
       const slot=pd.monsterField.findIndex(x=>!x);
       if(slot<0) return;
@@ -23499,7 +23511,7 @@ function checkDeadLedger(side){
   function tune(side){
     const pd=side==='p'?G.p:G.e, od=side==='p'?G.e:G.p;
     if(!ledgerSide(pd)) return;
-    const keep=new Set(['moneychanger','graverobber']);
+    const keep=new Set(['moneychanger','graverobber','armsdealer']);
     const cnt={}; od.deck.forEach(c=>{ if(c&&c.type==='monster') cnt[c.id]=(cnt[c.id]||0)+1; });
     const cands=Object.keys(cnt).filter(id=>cnt[id]>=2&&!keep.has(id)&&MD[id]&&!TRANSFORM_ONLY.includes(id));
     if(!cands.length) return;
@@ -23529,10 +23541,10 @@ function checkDeadLedger(side){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.15</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.15%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.16</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.16%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.15";
+  var FORM="", PRE={}, V="0.1.16";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
