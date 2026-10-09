@@ -6716,7 +6716,7 @@ function monsterRoleText(id){
     heart:     '攻撃しながら仲間を回復。女王の加護で大回復',
     diamond:   'ダイヤ獲得と奪取を両立。トランプ役構築の軸',
     queen:     '攻撃しながら仲間を大回復。女王の号令で弱体も付与',
-    zombie:    '毒噛みで継続毒。不死の執念で自己回復',
+    zombie:    '毒噛みで継続毒。不死の執念で自己回復。亡者の意地：場に出た時、自分の場のモンスターとデッキの合計が24枚より少ないほど強い（1枚足りないごとに攻撃・HP +10、上限なし）',
     sahagin:   '水槍攻撃＋ダイヤ獲得。氷魔法を反撃で跳ね返す',
     blackknight:'漆黒の断罪で全体・召喚獣・クリスタルへ同時斬撃。自傷あり',
     hydra:     '毒蓄積と再生噛み。毒の多頭撃で全体継続毒。城を焼く者：クリスタルへ1.25倍、ガードされても炎の3割が城に届く',
@@ -23429,6 +23429,33 @@ function playEndCurtain(win,msg){
   checkWin=function(){ try{ sweep(); }catch(e){} return cw.apply(this,arguments); };
 })();
 
+// ══════════════════════════════════════════════════════
+//   亡者の意地（2026-10-10 隆基・ゲイル「対抗モンスター」→ ゾンビ、1枚につき攻撃・HP +10、上限なし）
+//   場に出た時、自分の場のモンスター（自分を含む）とデッキの合計が 24枚より少ないほど強い。
+//   墓場の数ではなく手元の数で決まるので、セメタリーロンダリングで墓場を荒らされても弱らない
+// ══════════════════════════════════════════════════════
+const UNDEAD_RESOLVE_BASE=24, UNDEAD_RESOLVE_PER=10;
+(function installUndeadResolve(){
+  const he=handleMonsterEnter;
+  handleMonsterEnter=function(side,m){
+    try{
+      if(m&&m.id==='zombie'&&!m._resolveDone&&G){
+        m._resolveDone=true;
+        const pd=side==='p'?G.p:G.e;
+        const n=pd.deck.filter(c=>c&&c.type==='monster').length+pd.monsterField.filter(x=>x&&x.hp>0).length;
+        const lack=Math.max(0,UNDEAD_RESOLVE_BASE-n), up=lack*UNDEAD_RESOLVE_PER;
+        if(up>0){
+          m.def=Object.assign({},m.def,{atk:(m.def.atk||0)+up}); m.maxHp+=up; m.hp+=up;
+          const pre=side==='p'?'':'[敵] ';
+          log(pre+'【亡者の意地】仲間は残り'+n+'。死に損ないは倒れない——ゾンビ 攻撃 +'+up+'・HP +'+up,'gold');
+          try{ btPush(side,'亡者の意地——仲間は残り'+n+'、ゾンビが立ち上がる','gold'); }catch(e){}
+        }
+      }
+    }catch(e){}
+    return he.apply(this,arguments);
+  };
+})();
+
 </script>
 
 <style id="public-test-badge">
@@ -23436,10 +23463,10 @@ function playEndCurtain(win,msg){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.12</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.12%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.13</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.13%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.12";
+  var FORM="", PRE={}, V="0.1.13";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
