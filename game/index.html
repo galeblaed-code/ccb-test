@@ -1611,6 +1611,14 @@ body{
 #curtain-ov .cv-result{font-size:clamp(14px,1.8vw,18px);color:#b9b2a0;letter-spacing:.3em;opacity:0;transition:opacity .8s}
 #curtain-ov .show{opacity:1;transform:none}
 #curtain-ov.out{opacity:0;transition:opacity .6s}
+
+/* セメタリーロンダリングで奪ったモンスター：青く光る（2026-10-09） */
+@keyframes stolenGlow{0%,100%{box-shadow:0 0 8px 2px rgba(60,150,255,.75),0 0 18px rgba(40,120,255,.45)}50%{box-shadow:0 0 16px 5px rgba(90,180,255,1),0 0 34px rgba(40,140,255,.7)}}
+/* .m-card には box-shadow/outline を消す !important があるので、絵に光を付ける。脈打ちは ::after の青い縁で */
+.field-wrapper .m-card.stolen-card .m-card-img{filter:drop-shadow(0 0 5px rgba(90,175,255,1)) drop-shadow(0 0 12px rgba(40,130,255,.9)) brightness(1.05)!important}
+.field-wrapper .m-card.stolen-card{position:relative}
+.field-wrapper .m-card.stolen-card::after{content:'';position:absolute;inset:-3px;border:2px solid rgba(120,195,255,.95);border-radius:8px;box-shadow:0 0 12px rgba(60,160,255,.9),inset 0 0 10px rgba(60,160,255,.5);pointer-events:none;animation:stolenPulse 1.4s ease-in-out infinite;z-index:3}
+@keyframes stolenPulse{0%,100%{opacity:.55}50%{opacity:1}}
 @keyframes centerEffectFx{
   0%  {opacity:0;transform:translate(-50%,-50%) scale(.38);}
   20% {opacity:1;transform:translate(-50%,-50%) scale(1.14);}
@@ -12056,6 +12064,11 @@ function chainStep(side,roleId){
 //  方針（2026-09-29 隆基）：定番の役は効果を薄く、レアな役・連鎖は戦況を一気に書き換えるくらい
 // ══════════════════════════════════════════════════════
 const EXTRA_ROLES=[
+  // セメタリーロンダリング（2026-10-09 隆基とゲイルで確定）：相手の墓場から1体を奪ってデッキへ（シャッフル）。相手の墓場が空なら不成立
+  {id:'xCemeteryLaundering',name:'セメタリーロンダリング',reading:'セメタリーロンダリング',cards:[['moneychanger'],['graverobber']],once:{cemeteryLaunder:true},
+   onceReady:side=>{ const od=side==='p'?G.e:G.p; return od.graveyard.some(g=>g&&g.id&&g.def&&!(G._stolenUids&&G._stolenUids.has(g.uid))); },
+   meaning:'墓荒らしが掘り出し、両替商が帳簿を書き換える。昨日まで敵の兵だった者が、今日はこちらの名簿に載っている。洗われた死者は、二度目の死で、跡形もなく消える。',
+   desc:'両替商と墓荒らしが同時に場にいる。1ゲームに1度、相手の墓場からモンスター1体をランダムで奪い、自分のデッキに加えてシャッフルする（相手の墓場にモンスターがいなければ成立しない）。奪ったモンスターは場に出ると青く光り、倒されると墓場に入らず消える。',hint:'金の匂いと、墓の土の匂い'},
   // 叛逆の徒（2026-10-08 隆基「召喚獣攻撃特化の役かカード」）：神に挑む弱者と、神に呪われた者
   {id:'xHangyakuNoTo',name:'叛逆の徒',reading:'ハンギャクノト',cards:[['flowermantis'],['minotaur']],aura:{flowermantis:{atk:30},minotaur:{atk:30}},
    meaning:'一匹は、神に斧を振り上げた蟷螂。一頭は、神の呪いで生まれ、迷宮に閉じ込められた牛頭。笑われた者と、呪われた者。神に借りがあるのは、どちらも同じだ。',desc:'フラワーマンティスとミノタウロスが同時に場にいる。場にいる間、両者の攻撃 +30。2体とも、召喚獣への攻撃が外れても反動を受けない。',hint:'神に笑われた者と、神に呪われた者'},
@@ -23355,6 +23368,67 @@ function playEndCurtain(win,msg){
   hideMagicCastCard=function(){ const r=hd.apply(this,arguments); try{ const d=document.getElementById('magic-cast-desc'); if(d) d.textContent=''; }catch(e){} return r; };
 })();
 
+// ══════════════════════════════════════════════════════
+//   セメタリーロンダリング（2026-10-09 隆基・ゲイル確定）
+//   ・相手の墓場からモンスター1体をランダムで奪い、自分のデッキに加えて必ずシャッフル
+//   ・奪ったカードはデッキの中で目印（_stolenCards：カードそのものを覚える）。引かれて場に出たら青く光る
+//   ・奪ったモンスターが倒れたら墓場に入らず消滅（そのゲーム中は奪い返せない）
+// ══════════════════════════════════════════════════════
+(function installCemeteryLaundering(){
+  const ao=applyOnceEffects;
+  applyOnceEffects=function(side,o,label){
+    if(o&&o.cemeteryLaunder){
+      const pd=side==='p'?G.p:G.e, od=side==='p'?G.e:G.p, pre=side==='p'?'':'[敵] ';
+      G._stolenUids=G._stolenUids||new Set();
+      const cands=od.graveyard.map((g,i)=>({g,i})).filter(({g})=>g&&g.id&&g.def&&!G._stolenUids.has(g.uid));
+      if(!cands.length) return;
+      const pick=cands[Math.floor(Math.random()*cands.length)];
+      const taken=od.graveyard.splice(pick.i,1)[0];
+      const card={type:'monster',id:taken.id,stolen:true};
+      pd.deck.push(card); pd.deck=shuffle(pd.deck);
+      pd._stolenCards=pd._stolenCards||[]; pd._stolenCards.push(card);
+      log(pre+'【'+label+'】墓荒らしが相手の墓場から「'+taken.def.name+'」を掘り出し、両替商が名簿を書き換えた——自分のデッキへ（シャッフル）','gold');
+      try{ btPush(side,label+'——相手の墓場から「'+taken.def.name+'」を奪った','gold'); }catch(e){}
+      try{ showCenterNotice(label,taken.def.name+'を奪ってデッキへ',side,1500); }catch(e){}
+      try{ recEvent(side,'role','セメタリーロンダリング：相手の墓場から「'+taken.def.name+'」を奪った'); }catch(e){}
+      renderCounts&&renderCounts();
+      return;
+    }
+    return ao.apply(this,arguments);
+  };
+  // 奪ったカードが引かれて場に出たら、そのモンスターに目印（カードがデッキから消えたかで見分けるので、同じ種類の自分のカードと混ざらない）
+  const mk=makeMonsterInst;
+  makeMonsterInst=function(cardId,b,side){
+    const m=mk.apply(this,arguments);
+    try{
+      if(side&&G){ const pd=side==='p'?G.p:G.e, list=pd._stolenCards||[];
+        const k=list.findIndex(c=>c.id===cardId&&!pd.deck.includes(c));
+        if(k>=0){ list.splice(k,1); m.stolen=true; G._stolenUids=G._stolenUids||new Set(); G._stolenUids.add(m.uid);
+          log((side==='p'?'':'[敵] ')+'奪われた「'+m.def.name+'」が、こちらの兵として戦場に立った','gold'); } }
+    }catch(e){}
+    return m;
+  };
+  // 奪ったモンスターは墓場に入らない：墓場に来たら消す
+  function sweep(){
+    if(!G||!G._stolenUids||!G._stolenUids.size) return;
+    [['p',G.p],['e',G.e]].forEach(([s,pd])=>{
+      for(let i=pd.graveyard.length-1;i>=0;i--){ const g=pd.graveyard[i];
+        if(g&&G._stolenUids.has(g.uid)){ pd.graveyard.splice(i,1); G._stolenUids.delete(g.uid);
+          log((s==='p'?'':'[敵] ')+'奪われた「'+((g.def&&g.def.name)||g.id)+'」は、墓場に入らず消えた','');
+          try{ btPush(s,'奪った「'+((g.def&&g.def.name)||g.id)+'」は墓場に入らず消えた','loss'); }catch(e){} } }
+    });
+  }
+  const ra=renderAll;
+  renderAll=function(){
+    sweep();
+    const r=ra.apply(this,arguments);
+    try{ [['p',G.p],['e',G.e]].forEach(([s,pd])=>pd.monsterField.forEach((m,i)=>{ const el=document.getElementById(s+'-m-'+i); if(el) el.classList.toggle('stolen-card',!!(m&&m.stolen&&m.hp>0)); })); }catch(e){}
+    return r;
+  };
+  const cw=checkWin;
+  checkWin=function(){ try{ sweep(); }catch(e){} return cw.apply(this,arguments); };
+})();
+
 </script>
 
 <style id="public-test-badge">
@@ -23362,10 +23436,10 @@ function playEndCurtain(win,msg){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.11</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.11%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.12</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.12%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.11";
+  var FORM="", PRE={}, V="0.1.12";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
