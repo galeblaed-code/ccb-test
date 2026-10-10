@@ -12522,6 +12522,8 @@ const EXTRA_ROLES=[
    meaning:'焼きたてのパンと、獲れたての魚。港町の朝は、それだけで足りる。',desc:'パン職人と料理人が同時に場にいる。1ゲームに1度、味方全体 HP +120、召喚ダイヤ +1。',hint:'夜明けの港に、パンの匂いが流れる'},
   {id:'xArujiNakiYaiba',name:'主なき刃',reading:'アルジナキヤイバ',cards:[['ronin'],['samurai']],aura:{ronin:{atk:40},samurai:{atk:40}},
    meaning:'仕える刃と、仕えぬ刃。抜けば、同じ音がする。',desc:'浪人と侍が同時に場にいる。場にいる間、両者の攻撃 +40。',hint:'主を持つ者と、持たぬ者が並ぶ'},
+  {id:'xMeifuMadou',name:'冥府魔道',reading:'メイフマドウ',cards:[['ronin'],['yakuza'],['yojimbo']],once:{meifuMadou:true},
+   meaning:'帰る場所を捨てた者だけが、この道を歩ける。',desc:'浪人・渡世人・用心棒が同時に場にいる。1ゲームに1度、自分のデッキの上から3枚を墓場へ送り、場の3人の攻撃 +80・HP +100（最大HPも、ずっと）。',hint:'主なき刃、賽の目、用心棒。三人の流れ者が、同じ道に立つ'},
   {id:'xJingi',name:'仁義',reading:'ジンギ',cards:[['yakuza'],['yojimbo']],
    meaning:'賽の目は裏切っても、筋は裏切らない。',desc:'渡世人と用心棒が同時に場にいる。渡世人の丁半が外れ（半）でも、用心棒が筋を通して半分の攻撃が入る。',hint:'賭場の入口に、用心棒が立つ'},
   {id:'xMakanai',name:'まかない',reading:'マカナイ',cards:[['aquacat'],['cook']],once:{healAllies:60},
@@ -12965,6 +12967,16 @@ function applyOnceEffects(side,o,label){
   }
   if(o.cockatriceFry){ pd.monsterField.forEach(m=>{ if(m&&m.hp>0) m.hp=Math.min(m.maxHp,m.hp+60); }); parts.push('揚げたての唐揚げで味方全体 HP +60');
     if(Math.random()<1/6){ const c=pd.monsterField.find(x=>x&&x.hp>0&&x.id==='cook'); if(c){ const before=c.def.atk; c.def=Object.assign({},c.def,{atk:Math.max(0,before-30)}); parts.push('……料理人が、うっかり頭の目を見てしまった。右腕が石になった（料理人の攻撃 -30）'); } } }
+  // 冥府魔道（2026-10-11 隆基「浪人×渡世人×用心棒。自分のデッキから3枚墓場に送り、場にいる3体を大幅に能力アップ」）
+  if(o.meifuMadou){
+    const gone=[];
+    for(let k=0;k<3&&pd.deck.length;k++){ const c=pd.deck.shift(); const d=MD[c.id]; if(c.type==='monster'&&d) pd.graveyard.push({uid:'meifu-'+Date.now()+'-'+k+'-'+Math.random(),id:c.id,def:d,maxHp:d.hp}); gone.push(d?d.name:(c.name||c.id)); }
+    const three=pd.monsterField.filter(x=>x&&x.hp>0&&['ronin','yakuza','yojimbo'].includes(x.id));
+    three.forEach(m=>{ m.maxHp+=100; m.hp+=100; m._meifu=true; });   // 攻撃 +80 は加護として足す（下の extraRoleAura の包み）
+    parts.push((gone.length?gone.join('・')+' を冥府へ送り、':'')+'三人の流れ者が魔道に堕ちた（攻撃 +80・HP +100）');
+    try{ showCenterNotice(label,'デッキから'+gone.length+'枚を冥府へ——三人の攻撃 +80・HP +100',side,1600); }catch(e){}
+    try{ recEvent(side,'role','冥府魔道：'+(gone.join('・')||'何も')+' を冥府へ送り、浪人・渡世人・用心棒が魔道に堕ちた'); }catch(e){}
+  }
   if(o.whaleFeast){ const w=pd.monsterField.find(x=>x&&x.hp>0&&x.id==='demonwhale'); if(w){ w.hp=w.maxHp; parts.push('魔王鯨が烏賊の群れを呑み込んだ。HP全快'); } }
   // 冬の訪れ：どちらかの場のゴッドヘラクレスが凍りつく（次の番、動けない）
   if(o.freezeHercules){ const hs=[]; [G.p,G.e].forEach(q=>q.monsterField.forEach(x=>{ if(x&&x.hp>0&&x.id==='godhercules'){ x.frozen=true; hs.push(x); } })); parts.push(hs.length?'冷気が戦場を覆い、ゴッドヘラクレスが凍りついた（次の番、動けない）':'凍らせる虫はいなかった'); }
@@ -21336,6 +21348,7 @@ function onceEffectText(o){
   if(o.mdSecret) t.push('メタルドラゴンのHP全快、攻撃+60（ずっと）');
   if(o.cockatriceFry) t.push('味方全体 HP +60（6回に1回、料理人が頭の目を見て石化しかける）');
   if(o.whaleFeast) t.push('魔王鯨のHP全快');
+  if(o.meifuMadou) t.push('自分のデッキの上から3枚を墓場へ。浪人・渡世人・用心棒の攻撃+80・HP+100（ずっと）');
   if(o.freezeHercules) t.push('ゴッドヘラクレスが凍りつく（次の番、動けない）');
   if(o.kissHeal) t.push('ドラゴンソルジャーのHP全快、攻撃+40（ずっと）');
   if(o.graveSink) t.push('相手の墓場の亡骸'+o.graveSink+'体を海の底へ沈める（もう戻れない）');
@@ -23972,6 +23985,7 @@ function dqRun(){
   extraRoleAura=function(side,m){
     const out=ra.apply(this,arguments);
     try{ const pd=side==='p'?G.p:G.e; if(m&&m.id!=='bard'&&pd&&live(pd).some(x=>x.id==='bard')) out.atk+=15; }catch(e){}
+    if(m&&m._meifu) out.atk+=80;   // 冥府魔道に堕ちた流れ者
     return out;
   };
   // パン職人・酒場の歌い手：自分の番の始めに回復
@@ -24036,10 +24050,10 @@ function dqRun(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.29</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.29%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.30</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.30%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.29";
+  var FORM="", PRE={}, V="0.1.30";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
