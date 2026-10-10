@@ -1646,6 +1646,15 @@ body{
 #hand-ov .hd-card .hd-n{color:#ffd98a}
 #hand-ov .hd-close{margin-top:18px;background:#c99b3c;color:#1a1208;border:0;border-radius:6px;padding:8px 22px;font-weight:700;cursor:pointer}
 #hand-ov .hd-note{font-size:12px;color:#9d8f74;margin-top:4px}
+
+/* ドラクエ風のお知らせウインドウ（2026-10-10 隆基「誰が何をして何が起きたかをウインドに」）：画面下の中央。知らせが来た時だけ出る */
+#dq-win{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);width:min(760px,72vw);min-height:92px;z-index:65;background:rgba(0,0,0,.9);border:3px solid #f4f4f4;border-radius:9px;box-shadow:0 0 0 2px #000,0 8px 24px rgba(0,0,0,.6),inset 0 0 0 2px #000;padding:10px 18px;color:#fff;font:700 18px/1.65 'Hiragino Kaku Gothic ProN','Hiragino Sans',sans-serif;letter-spacing:.06em;opacity:0;transition:opacity .25s;pointer-events:none;cursor:pointer}
+#dq-win.show{opacity:1;pointer-events:auto}
+#dq-win .dq-line{white-space:pre-wrap;min-height:1.65em}
+#dq-win .dq-line.enemy{color:#ffd0c8}
+#dq-win .dq-line.role{color:#ffe08a}
+#dq-win .dq-next{position:absolute;right:12px;bottom:6px;font-size:13px;animation:dqBlink .8s steps(2) infinite}
+@keyframes dqBlink{50%{opacity:0}}
 @keyframes centerEffectFx{
   0%  {opacity:0;transform:translate(-50%,-50%) scale(.38);}
   20% {opacity:1;transform:translate(-50%,-50%) scale(1.14);}
@@ -23759,6 +23768,81 @@ function showHandReveal(){
   show(0);
 }
 
+// ══════════════════════════════════════════════════════
+//   ドラクエ風のお知らせウインドウ（2026-10-10 隆基）：バトルラインの知らせを、誰が何をして何が起きたかの文に言い換えて、
+//   画面下のウインドウに1文字ずつ出す。読める間をおいて自動で次へ（クリックで早送り）。最新の3行を表示。バトルラインもそのまま
+// ══════════════════════════════════════════════════════
+const DQ={q:[],lines:[],busy:false,el:null,skip:null,hideT:null};
+function dqEl(){
+  if(DQ.el&&document.body.contains(DQ.el)) return DQ.el;
+  const el=document.createElement('div'); el.id='dq-win'; el.innerHTML='<div class="dq-body"></div>';
+  el.addEventListener('click',()=>{ if(DQ.skip) DQ.skip(); });
+  document.body.appendChild(el); DQ.el=el; return el;
+}
+function dqWho(side){ return (G&&G.spectate)?announcementOwner(side):(side==='e'?'敵':'あなた'); }
+function dqOwn(side){ return (G&&G.spectate)?announcementOwner(side)+'の ':(side==='e'?'敵の ':''); }
+function dqRoleEffect(name){
+  try{ const d=ROLE_DEFS.find(r=>r.name===name)||(typeof EXTRA_ROLES!=='undefined'&&EXTRA_ROLES.find(r=>r.name===name)); if(!d||!d.desc) return '';
+    const ss=String(d.desc).split('。').map(x=>x.trim()).filter(Boolean);
+    const eff=ss.filter(x=>!(/同時に場に/.test(x)||/(場にいる|がそろう|が揃う|がそろっている|いない|ある時|いる時)$/.test(x)))[0]||ss[1]||'';
+    // 「メガロドン攻撃力 +40」→「メガロドンの 攻撃力 +40」（数字は 攻撃力 の直後に置く：画面の数字10倍の自動変換に任せるため）
+    return eff?eff.replace(/ATK/g,'攻撃力').replace(/([ァ-ヶー一-龥A-Za-z]+?)(?:の)?攻撃力? ?\+(\d+)/g,'$1の 攻撃力 +$2')+'。':''; }catch(e){ return ''; }
+}
+function dqLinesFor(side,text,cls,plate){
+  const t=String(text||'').trim();
+  let m;
+  if(!t&&!(plate&&plate.name)) return [];
+  if(plate&&plate.name){
+    const mem=(plate.members||[]).filter(Boolean);
+    const first=mem.length>=2?mem.slice(0,-1).join('と ')+'と '+mem[mem.length-1]+'が 出会い、「'+plate.name+'」が 生まれた。':mem.length===1?mem[0]+'たちが そろい、「'+plate.name+'」が 生まれた。':'「'+plate.name+'」が 成り立った。';
+    const eff=dqRoleEffect(plate.name);
+    return [[dqOwn(side)+first,'role'],...(eff?[[eff,'role']]:[])];
+  }
+  if((m=t.match(/^(.+) をドロー$/))) return [[dqOwn(side)+m[1]+'が あらわれた！']];
+  if((m=t.match(/^魔法「(.+)」を使用$/))) return [[dqWho(side)+'は 魔法「'+m[1]+'」を となえた！']];
+  if((m=t.match(/^召喚獣「(.+)」撃破$/))) return [['神の化身 '+m[1]+'が 討たれた！']];
+  if((m=t.match(/^召喚獣「(.+)」顕現$/))) return [[dqOwn(side)+'召喚獣 '+m[1]+'が 顕現した！','role']];
+  if((m=t.match(/^撃破で召喚石 \+(\d+)$/))) return [[dqWho(side)+'は 召喚ダイヤを '+m[1]+'つ 手に入れた。']];
+  if((m=t.match(/^クリスタル被弾で召喚石 \+(\d+)$/))) return [[dqWho(side)+'の クリスタルが 傷ついた。召喚ダイヤを '+m[1]+'つ 手に入れた。']];
+  if((m=t.match(/^(.+)の効果により【(.+)】発動$/))) return [[m[1]+'の 力で 【'+m[2]+'】が 起きた！']];
+  if((m=t.match(/^召喚石 -(\d+)$/))) return [[dqWho(side)+'は 召喚ダイヤを '+m[1]+'つ 使った。']];
+  if((m=t.match(/^(.+) 撃破$/))) return [[m[1]+'は たおれた。']];
+  if((m=t.match(/^(.+)の「(.+)」$/))) return [[dqOwn(side)+m[1]+'の 「'+m[2]+'」！']];
+  if(/^「/.test(t)) return [[t]];
+  return [[/[。！？」）]$/.test(t)?t:t+'。']];
+}
+function dqPush(side,text,cls,plate){
+  if(!G||G.phase==='gameover') return;
+  // バトルラインは同じ知らせを続けて出さない・溜めておいて後で出し直すので、2秒以内の同じ知らせは1回だけ
+  const key=side+'|'+text, now=Date.now(); DQ.seen=DQ.seen||{}; if(DQ.seen[key]&&now-DQ.seen[key]<2000) return; DQ.seen[key]=now;
+  dqLinesFor(side,text,cls,plate).forEach(([line,k])=>DQ.q.push({line,cls:k||(side==='e'&&!(G&&G.spectate)?'enemy':'')}));
+  // 溜まりすぎたら古い知らせから捨てて、今の盤面に追いつく（役の知らせは残す）
+  while(DQ.q.length>8){ const i=DQ.q.findIndex(x=>x.cls!=='role'); DQ.q.splice(i>=0?i:0,1); }
+  dqRun();
+}
+function dqRun(){
+  if(DQ.busy) return;
+  const el=dqEl(), body=el.querySelector('.dq-body');
+  const it=DQ.q.shift();
+  if(!it){ clearTimeout(DQ.hideT); DQ.hideT=setTimeout(()=>{ if(!DQ.busy&&!DQ.q.length){ el.classList.remove('show'); DQ.lines=[]; body.innerHTML=''; } },3500); return; }
+  DQ.busy=true; clearTimeout(DQ.hideT); el.classList.add('show');
+  DQ.lines.push(it); while(DQ.lines.length>3) DQ.lines.shift();
+  body.innerHTML=DQ.lines.map((l,i)=>'<div class="dq-line '+(l.cls||'')+'">'+(i<DQ.lines.length-1?escHtml(l.line):'')+'</div>').join('');
+  const cur=body.lastElementChild; let k=0, done=false;
+  const finishType=()=>{ if(done) return; done=true; clearInterval(tt); cur.textContent=it.line; hold(); };
+  const tt=setInterval(()=>{ k++; cur.textContent=it.line.slice(0,k); if(k>=it.line.length) finishType(); },26);
+  let ht=null;
+  const next=()=>{ clearTimeout(ht); DQ.skip=null; DQ.busy=false; dqRun(); };
+  function hold(){ DQ.skip=next; ht=setTimeout(next,Math.min(2200,650+it.line.length*28)); }
+  DQ.skip=finishType;
+}
+(function installDqWindow(){
+  const bp=btPush;
+  btPush=function(side,text,cls,plate){ const r=bp.apply(this,arguments); try{ dqPush(side,text,cls,plate); }catch(e){} return r; };
+  const go=gameOver;
+  gameOver=function(){ try{ DQ.q.length=0; const el=document.getElementById('dq-win'); if(el) el.classList.remove('show'); }catch(e){} return go.apply(this,arguments); };
+})();
+
 </script>
 
 <style id="public-test-badge">
@@ -23766,10 +23850,10 @@ function showHandReveal(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.24</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.24%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.25</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.25%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.24";
+  var FORM="", PRE={}, V="0.1.25";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
