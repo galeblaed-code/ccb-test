@@ -9992,6 +9992,22 @@ const AI_FACTIONS={
       {name:'剣の求道者',   fav:['swordsman','samurai','warrior'],   beast:'titan',     magic:['thunder']},
     ],
   },
+  transform:{
+    name:'変身愛好家', style:'transform',   // 2026-10-10 隆基「変身するカードを好む思考。勝率よりも変身がとにかく見たいから、そんなデッキばかり組む」
+    motto:'勝ち負け？ それより、あの瞬間を見たいんだ。',
+    // 変身の材料ばかりで組む。材料のモンスターは、相方が場にそろうまで攻撃に出さず大事にする
+    pool:['wolf','jack','knight','nightmare','succubus','oldman','relic','dragonbaby','fatetwins','frogprince','elf','king','demon','joker'],
+    beasts:['phoenix','alexander','siren','carbuncle','moogle','leviathan'],
+    magic:['cure','curaga','raise','arise','reraise','haste','poisona'],
+    members:[
+      {name:'月夜の見物人',         fav:['wolf','jack','nightmare'],              beast:'siren',     magic:['curaga']},
+      {name:'堕ちた騎士の追っかけ', fav:['knight','nightmare','succubus'],         beast:'phoenix',   magic:['raise']},
+      {name:'隠居剣士の弟子',       fav:['oldman','relic','knight'],               beast:'alexander', magic:['cure']},
+      {name:'竜の子守',             fav:['dragonbaby','fatetwins','elf'],          beast:'carbuncle', magic:['haste']},
+      {name:'おとぎ話の語り部',     fav:['frogprince','elf','wolf','jack'],        beast:'moogle',    magic:['reraise']},
+      {name:'仮面舞踏会の常連',     fav:['king','demon','joker'],                  beast:'leviathan', magic:['arise']},
+    ],
+  },
   pirate:{
     name:'荒波の海賊団', style:'pirate',   // 2026-10-10 隆基「荒くれ海の男の浪漫。汚染海洋生態系をメインに、とにかく豪快な海賊プレイが好きなAI」
     motto:'沈むなら派手に沈め。宝は、海の底にもある。',
@@ -23622,6 +23638,33 @@ const PIRATE_QUIPS=['「野郎ども、撃てぇ！」','「錨を上げろ！ �
   aiRiskWeight=function(){ return enemyAiStyle()==='pirate'?0.75:rw.apply(this,arguments); };
 })();
 
+// ══════════════════════════════════════════════════════
+//   変身愛好家の戦い方（style 'transform'、2026-10-10）：変身の材料（TRANSFORMS の a/b）は、相方が自分の場にいない間は
+//   攻撃役に選びにくくする（-60）。それ以外は堅実に。変身が起きたら、その陣営が大喜びする（バトルライン）
+// ══════════════════════════════════════════════════════
+const TF_FAN_QUIPS=['「来た来た来た！ これを見に来たんだ！」','「変わった……！ 今日はもう、勝ち負けはいい！」','「この瞬間のために、デッキを組んだんだ」','「見たか、今の！ 見たよな！？」','「ああ……生きててよかった」'];
+(function installTransformFan(){
+  function pieceWaiting(m){
+    const f=G.e.monsterField;
+    return TRANSFORMS.some(t=>{ if(m.id!==t.a&&m.id!==t.b) return false; const other=m.id===t.a?t.b:t.a; return !f.some(x=>x&&x!==m&&x.hp>0&&x.id===other); });
+  }
+  const ch=chooseAiCandidate;
+  chooseAiCandidate=function(candidates){
+    if(enemyAiStyle()!=='transform'||!candidates||!candidates.length) return ch.apply(this,arguments);
+    candidates.forEach(c=>{ const m=c.choice&&c.choice.m; if(m&&pieceWaiting(m)) c.score-=60; });
+    candidates.sort((a,b)=>b.score-a.score);
+    return candidates[0];
+  };
+  const ct=checkTransforms;
+  checkTransforms=function(side){
+    const n0=((G&&G.rec)||[]).filter(e=>e.kind==='transform').length;
+    const r=ct.apply(this,arguments);
+    try{ const pd=side==='p'?G.p:G.e, n1=((G&&G.rec)||[]).filter(e=>e.kind==='transform').length;
+      if(n1>n0&&pd&&pd.faction==='transform') btPush(side,TF_FAN_QUIPS[Math.floor(Math.random()*TF_FAN_QUIPS.length)]); }catch(e){}
+    return r;
+  };
+})();
+
 </script>
 
 <style id="public-test-badge">
@@ -23629,10 +23672,10 @@ const PIRATE_QUIPS=['「野郎ども、撃てぇ！」','「錨を上げろ！ �
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.21</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.21%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.22</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.22%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.21";
+  var FORM="", PRE={}, V="0.1.22";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
