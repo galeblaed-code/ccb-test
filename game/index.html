@@ -5931,6 +5931,21 @@ const MD = {
   redorca:{id:'redorca', name:'レッドオルカ', emoji:'🐋', hp:300, atk:170, dc:1, dt:3, pv:3, canAtkCrystal:true, canAtkBeast:true, fail:'selfCrystal30'},
   demonwhale:{id:'demonwhale', name:'魔王鯨', emoji:'🐳', hp:600, atk:150, dc:1, dt:3, pv:3, canAtkCrystal:true, canAtkBeast:true, fail:'enemyPt1', poisonResist:true},
   spearsquid:{id:'spearsquid', name:'槍烏賊', emoji:'🦑', hp:80, atk:75, dc:1, dt:2, pv:1, canAtkCrystal:true, canAtkBeast:false, fail:'none'},
+  // ── 2026-10-11 隆基：在野7枚・汚染海洋生態系7枚 ──
+  thief:{id:'thief', name:'シーフ', emoji:'🗡', hp:90, atk:55, dc:1, dt:2, pv:1, canAtkCrystal:true, canAtkBeast:false, fail:'none'},
+  baker:{id:'baker', name:'パン職人', emoji:'🥖', hp:160, atk:55, dc:1, dt:3, pv:2, canAtkCrystal:true, canAtkBeast:false, fail:'selfCrystal20'},
+  monk:{id:'monk', name:'モンク僧', emoji:'👊', hp:170, atk:100, dc:2, dt:7, pv:2, canAtkCrystal:true, canAtkBeast:true, fail:'selfCrystal20', poisonImmune:true},
+  bard:{id:'bard', name:'吟遊詩人', emoji:'🪕', hp:90, atk:30, dc:1, dt:2, pv:1, canAtkCrystal:true, canAtkBeast:false, fail:'none'},
+  ronin:{id:'ronin', name:'浪人', emoji:'⚔', hp:170, atk:95, dc:1, dt:3, pv:2, canAtkCrystal:true, canAtkBeast:true, fail:'selfCrystal20', counterOnSurvive:40},
+  yakuza:{id:'yakuza', name:'渡世人', emoji:'🎲', hp:150, atk:90, dc:1, dt:2, pv:2, canAtkCrystal:true, canAtkBeast:true, fail:'none'},
+  tavern:{id:'tavern', name:'酒場の女主人', emoji:'🍺', hp:120, atk:35, dc:1, dt:2, pv:1, canAtkCrystal:true, canAtkBeast:false, fail:'none'},
+  aquacat:{id:'aquacat', name:'アクアキャット', emoji:'🐱', hp:80, atk:50, dc:1, dt:2, pv:1, canAtkCrystal:true, canAtkBeast:false, fail:'none'},
+  shipworm:{id:'shipworm', name:'シップワーム', emoji:'🪱', hp:150, atk:85, dc:1, dt:3, pv:2, canAtkCrystal:true, canAtkBeast:false, fail:'selfCrystal20'},
+  bigtusk:{id:'bigtusk', name:'ビッグタスク', emoji:'🦭', hp:380, atk:130, dc:1, dt:3, pv:3, canAtkCrystal:true, canAtkBeast:true, fail:'selfCrystal30'},
+  porkfish:{id:'porkfish', name:'ポークフィッシュ', emoji:'🐟', hp:140, atk:60, dc:1, dt:2, pv:2, canAtkCrystal:true, canAtkBeast:false, fail:'none'},
+  fangedclam:{id:'fangedclam', name:'噛みつき貝', emoji:'🦪', hp:180, atk:70, dc:1, dt:2, pv:2, canAtkCrystal:false, canAtkBeast:false, fail:'none', counterOnSurvive:60},
+  kelpmimic:{id:'kelpmimic', name:'海藻魚', emoji:'🌿', hp:100, atk:70, dc:1, dt:2, pv:1, canAtkCrystal:true, canAtkBeast:false, fail:'none'},
+  armoredjelly:{id:'armoredjelly', name:'装甲海月', emoji:'🪼', hp:170, atk:70, dc:1, dt:3, pv:2, canAtkCrystal:true, canAtkBeast:false, fail:'selfCrystal20', poisonResist:true},
   paladin:   {id:'paladin',   name:'パラディン',    emoji:'🛡', hp:220, atk:75,  dc:1, dt:3,  pv:2, canAtkCrystal:true,  canAtkBeast:true,  fail:'selfCrystal30', poisonResist:true, magicGuard:0.8},
   icescorpion:{id:'icescorpion', name:'アイススコーピオン', emoji:'🦂', hp:110, atk:80, dc:1, dt:3, pv:1, canAtkCrystal:true, canAtkBeast:true, fail:'selfCrystal30', poisonResist:true},
   yeti:{id:'yeti', name:'イエティ', emoji:'🦍', hp:260, atk:110, dc:1, dt:3, pv:3, canAtkCrystal:true, canAtkBeast:true, fail:'selfCrystal40'},
@@ -5989,6 +6004,9 @@ MONSTER_SIZE_TIERS.mid.push('pope','templar','femmefatale','pirate');
 MONSTER_SIZE_TIERS.large.push('swordmaster');
 MONSTER_SIZE_TIERS.mid.push('frogprince','flowermantis','myconid','moneychanger','mercenary','cook');
 MONSTER_SIZE_TIERS.large.push('deathcrab','lightningbear');
+MONSTER_SIZE_TIERS.small.push('thief','bard','tavern','aquacat','kelpmimic');
+MONSTER_SIZE_TIERS.mid.push('baker','monk','ronin','yakuza','shipworm','porkfish','fangedclam','armoredjelly');
+MONSTER_SIZE_TIERS.large.push('bigtusk');
 Object.entries(MONSTER_SIZE_TIERS).forEach(([tier,ids])=>{
   ids.forEach(id=>{ if(MD[id]) MD[id].sizeTier=tier; });
 });
@@ -6044,6 +6062,20 @@ if(MONSTER_ATTACK_STYLE['irongiant'])MONSTER_ATTACK_STYLE['goliath']=MONSTER_ATT
 if(MONSTER_ATTACK_STYLE['megalodon'])MONSTER_ATTACK_STYLE['redorca']=MONSTER_ATTACK_STYLE['megalodon'];if(MONSTER_EFFECT_IMG['megalodon'])MONSTER_EFFECT_IMG['redorca']=MONSTER_EFFECT_IMG['megalodon'];if(MONSTER_SE['megalodon'])MONSTER_SE['redorca']=MONSTER_SE['megalodon'];
 if(MONSTER_ATTACK_STYLE['mosasaurus'])MONSTER_ATTACK_STYLE['demonwhale']=MONSTER_ATTACK_STYLE['mosasaurus'];if(MONSTER_EFFECT_IMG['mosasaurus'])MONSTER_EFFECT_IMG['demonwhale']=MONSTER_EFFECT_IMG['mosasaurus'];if(MONSTER_SE['mosasaurus'])MONSTER_SE['demonwhale']=MONSTER_SE['mosasaurus'];
 if(MONSTER_ATTACK_STYLE['swordfish'])MONSTER_ATTACK_STYLE['spearsquid']=MONSTER_ATTACK_STYLE['swordfish'];if(MONSTER_EFFECT_IMG['swordfish'])MONSTER_EFFECT_IMG['spearsquid']=MONSTER_EFFECT_IMG['swordfish'];if(MONSTER_SE['swordfish'])MONSTER_SE['spearsquid']=MONSTER_SE['swordfish'];
+if(MONSTER_ATTACK_STYLE['ninja'])MONSTER_ATTACK_STYLE['thief']=MONSTER_ATTACK_STYLE['ninja'];if(MONSTER_EFFECT_IMG['ninja'])MONSTER_EFFECT_IMG['thief']=MONSTER_EFFECT_IMG['ninja'];if(MONSTER_SE['ninja'])MONSTER_SE['thief']=MONSTER_SE['ninja'];
+if(MONSTER_ATTACK_STYLE['cook'])MONSTER_ATTACK_STYLE['baker']=MONSTER_ATTACK_STYLE['cook'];if(MONSTER_EFFECT_IMG['cook'])MONSTER_EFFECT_IMG['baker']=MONSTER_EFFECT_IMG['cook'];if(MONSTER_SE['cook'])MONSTER_SE['baker']=MONSTER_SE['cook'];
+if(MONSTER_ATTACK_STYLE['warrior'])MONSTER_ATTACK_STYLE['monk']=MONSTER_ATTACK_STYLE['warrior'];if(MONSTER_EFFECT_IMG['warrior'])MONSTER_EFFECT_IMG['monk']=MONSTER_EFFECT_IMG['warrior'];if(MONSTER_SE['warrior'])MONSTER_SE['monk']=MONSTER_SE['warrior'];
+if(MONSTER_ATTACK_STYLE['mermaid'])MONSTER_ATTACK_STYLE['bard']=MONSTER_ATTACK_STYLE['mermaid'];if(MONSTER_EFFECT_IMG['mermaid'])MONSTER_EFFECT_IMG['bard']=MONSTER_EFFECT_IMG['mermaid'];if(MONSTER_SE['mermaid'])MONSTER_SE['bard']=MONSTER_SE['mermaid'];
+if(MONSTER_ATTACK_STYLE['samurai'])MONSTER_ATTACK_STYLE['ronin']=MONSTER_ATTACK_STYLE['samurai'];if(MONSTER_EFFECT_IMG['samurai'])MONSTER_EFFECT_IMG['ronin']=MONSTER_EFFECT_IMG['samurai'];if(MONSTER_SE['samurai'])MONSTER_SE['ronin']=MONSTER_SE['samurai'];
+if(MONSTER_ATTACK_STYLE['yojimbo'])MONSTER_ATTACK_STYLE['yakuza']=MONSTER_ATTACK_STYLE['yojimbo'];if(MONSTER_EFFECT_IMG['yojimbo'])MONSTER_EFFECT_IMG['yakuza']=MONSTER_EFFECT_IMG['yojimbo'];if(MONSTER_SE['yojimbo'])MONSTER_SE['yakuza']=MONSTER_SE['yojimbo'];
+if(MONSTER_ATTACK_STYLE['cook'])MONSTER_ATTACK_STYLE['tavern']=MONSTER_ATTACK_STYLE['cook'];if(MONSTER_EFFECT_IMG['cook'])MONSTER_EFFECT_IMG['tavern']=MONSTER_EFFECT_IMG['cook'];if(MONSTER_SE['cook'])MONSTER_SE['tavern']=MONSTER_SE['cook'];
+if(MONSTER_ATTACK_STYLE['coeurl'])MONSTER_ATTACK_STYLE['aquacat']=MONSTER_ATTACK_STYLE['coeurl'];if(MONSTER_EFFECT_IMG['coeurl'])MONSTER_EFFECT_IMG['aquacat']=MONSTER_EFFECT_IMG['coeurl'];if(MONSTER_SE['coeurl'])MONSTER_SE['aquacat']=MONSTER_SE['coeurl'];
+if(MONSTER_ATTACK_STYLE['kraken'])MONSTER_ATTACK_STYLE['shipworm']=MONSTER_ATTACK_STYLE['kraken'];if(MONSTER_EFFECT_IMG['kraken'])MONSTER_EFFECT_IMG['shipworm']=MONSTER_EFFECT_IMG['kraken'];if(MONSTER_SE['kraken'])MONSTER_SE['shipworm']=MONSTER_SE['kraken'];
+if(MONSTER_ATTACK_STYLE['mosasaurus'])MONSTER_ATTACK_STYLE['bigtusk']=MONSTER_ATTACK_STYLE['mosasaurus'];if(MONSTER_EFFECT_IMG['mosasaurus'])MONSTER_EFFECT_IMG['bigtusk']=MONSTER_EFFECT_IMG['mosasaurus'];if(MONSTER_SE['mosasaurus'])MONSTER_SE['bigtusk']=MONSTER_SE['mosasaurus'];
+if(MONSTER_ATTACK_STYLE['lardfish'])MONSTER_ATTACK_STYLE['porkfish']=MONSTER_ATTACK_STYLE['lardfish'];if(MONSTER_EFFECT_IMG['lardfish'])MONSTER_EFFECT_IMG['porkfish']=MONSTER_EFFECT_IMG['lardfish'];if(MONSTER_SE['lardfish'])MONSTER_SE['porkfish']=MONSTER_SE['lardfish'];
+if(MONSTER_ATTACK_STYLE['deathcrab'])MONSTER_ATTACK_STYLE['fangedclam']=MONSTER_ATTACK_STYLE['deathcrab'];if(MONSTER_EFFECT_IMG['deathcrab'])MONSTER_EFFECT_IMG['fangedclam']=MONSTER_EFFECT_IMG['deathcrab'];if(MONSTER_SE['deathcrab'])MONSTER_SE['fangedclam']=MONSTER_SE['deathcrab'];
+if(MONSTER_ATTACK_STYLE['jewelfish'])MONSTER_ATTACK_STYLE['kelpmimic']=MONSTER_ATTACK_STYLE['jewelfish'];if(MONSTER_EFFECT_IMG['jewelfish'])MONSTER_EFFECT_IMG['kelpmimic']=MONSTER_EFFECT_IMG['jewelfish'];if(MONSTER_SE['jewelfish'])MONSTER_SE['kelpmimic']=MONSTER_SE['jewelfish'];
+if(MONSTER_ATTACK_STYLE['flan'])MONSTER_ATTACK_STYLE['armoredjelly']=MONSTER_ATTACK_STYLE['flan'];if(MONSTER_EFFECT_IMG['flan'])MONSTER_EFFECT_IMG['armoredjelly']=MONSTER_EFFECT_IMG['flan'];if(MONSTER_SE['flan'])MONSTER_SE['armoredjelly']=MONSTER_SE['flan'];
 if(MONSTER_ATTACK_STYLE['paladin'])MONSTER_ATTACK_STYLE['aegis']=MONSTER_ATTACK_STYLE['paladin'];if(MONSTER_EFFECT_IMG['paladin'])MONSTER_EFFECT_IMG['aegis']=MONSTER_EFFECT_IMG['paladin'];if(MONSTER_SE['paladin'])MONSTER_SE['aegis']=MONSTER_SE['paladin'];
 if(MONSTER_ATTACK_STYLE['swordsman'])MONSTER_ATTACK_STYLE['dragonslave']=MONSTER_ATTACK_STYLE['swordsman'];if(MONSTER_EFFECT_IMG['swordsman'])MONSTER_EFFECT_IMG['dragonslave']=MONSTER_EFFECT_IMG['swordsman'];if(MONSTER_SE['swordsman'])MONSTER_SE['dragonslave']=MONSTER_SE['swordsman'];
 if(MONSTER_ATTACK_STYLE['sage'])MONSTER_ATTACK_STYLE['arbiter']=MONSTER_ATTACK_STYLE['sage'];if(MONSTER_EFFECT_IMG['sage'])MONSTER_EFFECT_IMG['arbiter']=MONSTER_EFFECT_IMG['sage'];if(MONSTER_SE['sage'])MONSTER_SE['arbiter']=MONSTER_SE['sage'];
@@ -6222,6 +6254,20 @@ const CARD_ASSETS = {
   redorca:{en:'RED ORCA', img:'カード絵_表示用/モンスター/レッドオルカ.webp'},
   demonwhale:{en:'DEMON WHALE', img:'カード絵_表示用/モンスター/魔王鯨.webp'},
   spearsquid:{en:'SPEAR SQUID', img:'カード絵_表示用/モンスター/槍烏賊.webp'},
+  thief:{en:'THIEF', img:'カード絵_表示用/モンスター/シーフ.webp'},
+  baker:{en:'BAKER', img:'カード絵_表示用/モンスター/パン職人.webp'},
+  monk:{en:'MONK', img:'カード絵_表示用/モンスター/モンク僧.webp'},
+  bard:{en:'BARD', img:'カード絵_表示用/モンスター/吟遊詩人.webp'},
+  ronin:{en:'RONIN', img:'カード絵_表示用/モンスター/浪人.webp'},
+  yakuza:{en:'YAKUZA', img:'カード絵_表示用/モンスター/渡世人.webp'},
+  tavern:{en:'TAVERN KEEPER', img:'カード絵_表示用/モンスター/酒場.webp'},
+  aquacat:{en:'AQUA CAT', img:'カード絵_表示用/モンスター/アクアキャット.webp'},
+  shipworm:{en:'SHIPWORM', img:'カード絵_表示用/モンスター/シップワーム.webp'},
+  bigtusk:{en:'BIG TUSK', img:'カード絵_表示用/モンスター/ビッグタスク.webp'},
+  porkfish:{en:'PORKFISH', img:'カード絵_表示用/モンスター/ポークフィッシュ.webp'},
+  fangedclam:{en:'FANGED CLAM', img:'カード絵_表示用/モンスター/噛みつき貝.webp'},
+  kelpmimic:{en:'KELP MIMIC', img:'カード絵_表示用/モンスター/海藻魚.webp'},
+  armoredjelly:{en:'ARMORED JELLYFISH', img:'カード絵_表示用/モンスター/装甲海月.webp'},
   grimbulsti:{en:'GRIMBULSTI', img:'カード絵_表示用/召喚獣/グリンブルスティ.webp'},
   fenrir:{en:'FENRIR', img:'カード絵_表示用/召喚獣/フェンリル.webp'},
   swordfish:{en:'SWORDFISH', img:'カード絵_表示用/モンスター/ソードフィッシュ.webp'},
@@ -6351,7 +6397,8 @@ const MONSTER_POOL = [
   'assassin','frogprince','deathcrab','flowermantis','myconid','moneychanger','mercenary','cook','lightningbear','oldman','demon',
   'pope','templar','acolyte','femmefatale','pirate',
   'poseidon','oceanknight','mosasaurus','jewelfish','lardfish','swordfish','wyvernknight','aegis','dragonslave','arbiter','muramasa',
-  'dragonbaby','metaldragon','cyclops','succubus','roc','mermaid','senate','devilknight','bat','cultist','blacksmith','blacklobster','chancellor','whitestingray','dragonsoldier','godhercules','goliath','redorca','demonwhale','spearsquid'
+  'dragonbaby','metaldragon','cyclops','succubus','roc','mermaid','senate','devilknight','bat','cultist','blacksmith','blacklobster','chancellor','whitestingray','dragonsoldier','godhercules','goliath','redorca','demonwhale','spearsquid',
+  'thief','baker','monk','bard','ronin','yakuza','tavern','aquacat','shipworm','bigtusk','porkfish','fangedclam','kelpmimic','armoredjelly'
 ];
 // 変身（トランスフォーム）でしか出会えないカード。デッキ編成・AIの山札には入らない（2026-10-01 隆基×ゲイル）
 const TRANSFORM_ONLY=['werewolf','dullahan','swordmaster','devillord','madking','prince','crystaldragon'];
@@ -6523,7 +6570,7 @@ function setBuilderMonsterFilter(f){
   renderBuilderList();
 }
 
-const BUILDER_MONSTER_GROUPS=[{name:'ハイランド王国',ids:['pope','king','chancellor','senate','joker','queen','prince','sage','paladin','dragoon','poseidon','redmage','whitewitch','acolyte','blackmage','knight','oceanknight','wyvernknight','templar','spade','heart','club','diamond','platoon','archer','irongiant','metaldragon','assassin','chocobo']},{name:'在野',ids:['fatetwins','blackknight','sworddancer','mercenary','gladiator','pirate','swordsman','warrior','yojimbo','frogprince','femmefatale','samurai','elf','cook','ninja','oldman','moneychanger','armsdealer','blacksmith','jack','graverobber']},{name:'竜',ids:['chaosdragon','hydra','crystaldragon','doublehead','dragon','dragonsoldier','wyvern','dragonbaby']},{name:'魔族',ids:['dullahan','devilknight','madking','werewolf','gigas','minotaur','cyclops','demon','nightmare','tonberry','orc','vampire','succubus','shrub','goliath','blackgob','sahagin','lamia','cultist','harpy','bat','skeleton','zombie','lizardman','ahriman','mimic','ghost','grudge','frog','kobold','goblin']},{name:'聖遺物',ids:['relic','aegis','dragonslave','muramasa','arbiter','mindflayer','golem']},{name:'暗黒生態系',ids:['behemoth','godhercules','lightningbear','cerberus','adamantoise','yeti','chimera2','griffin','roc','manticore','sabertiger','icicletooth','flowermantis','icescorpion','ochu','aspis','morbol','coeurl','myconid','flamefly','basilisk','flan','cockatrice','leafraven','wolf','cactuar','mandra','spider']},{name:'汚染海洋生態系',ids:['demonwhale','redorca','mosasaurus','megalodon','kraken','whitestingray','deathcrab','blacklobster','swordfish','spearsquid','lardfish','bomb','jewelfish','mermaid']}];
+const BUILDER_MONSTER_GROUPS=[{name:'ハイランド王国',ids:['pope','king','chancellor','senate','joker','queen','prince','sage','paladin','dragoon','poseidon','redmage','whitewitch','acolyte','blackmage','knight','oceanknight','wyvernknight','templar','spade','heart','club','diamond','platoon','archer','irongiant','metaldragon','assassin','chocobo']},{name:'在野',ids:['fatetwins','blackknight','sworddancer','mercenary','gladiator','pirate','swordsman','warrior','yojimbo','frogprince','femmefatale','samurai','elf','cook','ninja','oldman','moneychanger','armsdealer','blacksmith','jack','graverobber','ronin','monk','yakuza','baker','tavern','bard','thief']},{name:'竜',ids:['chaosdragon','hydra','crystaldragon','doublehead','dragon','dragonsoldier','wyvern','dragonbaby']},{name:'魔族',ids:['dullahan','devilknight','madking','werewolf','gigas','minotaur','cyclops','demon','nightmare','tonberry','orc','vampire','succubus','shrub','goliath','blackgob','sahagin','lamia','cultist','harpy','bat','skeleton','zombie','lizardman','ahriman','mimic','ghost','grudge','frog','kobold','goblin']},{name:'聖遺物',ids:['relic','aegis','dragonslave','muramasa','arbiter','mindflayer','golem']},{name:'暗黒生態系',ids:['behemoth','godhercules','lightningbear','cerberus','adamantoise','yeti','chimera2','griffin','roc','manticore','sabertiger','icicletooth','flowermantis','icescorpion','ochu','aspis','morbol','coeurl','myconid','flamefly','basilisk','flan','cockatrice','leafraven','wolf','cactuar','mandra','spider']},{name:'汚染海洋生態系',ids:['demonwhale','redorca','mosasaurus','megalodon','kraken','whitestingray','deathcrab','blacklobster','swordfish','spearsquid','lardfish','bomb','jewelfish','mermaid','bigtusk','armoredjelly','fangedclam','shipworm','porkfish','kelpmimic','aquacat']}];
 function builderMonsterOrder(){ const seen=new Set(); const out=[]; BUILDER_MONSTER_GROUPS.forEach(g=>g.ids.forEach(id=>{ if(MONSTER_POOL.includes(id)&&!seen.has(id)){ seen.add(id); out.push(id); } })); MONSTER_POOL.forEach(id=>{ if(!seen.has(id)) out.push(id); }); return out; }
 const BUILDER_MAGIC_GROUPS=[{name:'炎',ids:['fire','firaga']},{name:'氷',ids:['blizzard','blizzaga']},{name:'雷',ids:['thunder','thundaga']},{name:'回復',ids:['cure','curaga','poisona']},{name:'復活',ids:['raise','arise','reraise']},{name:'毒',ids:['poison','bio']},{name:'闇',ids:['drain','death','gravide']},{name:'天変',ids:['meteor','ultima']},{name:'時',ids:['haste']}];
 function builderMagicOrder(){ const seen=new Set(); const out=[]; BUILDER_MAGIC_GROUPS.forEach(g=>g.ids.forEach(id=>{ if(MAGIC_POOL.includes(id)&&!seen.has(id)){ seen.add(id); out.push(id); } })); MAGIC_POOL.forEach(id=>{ if(!seen.has(id)) out.push(id); }); return out; }
@@ -6828,6 +6875,20 @@ function monsterRoleText(id){
     goliath:'ゴブリンたちがDIYで作った、木製の三階建て攻城戦車。てっぺんに巨大な大砲。動力は人力（中でゴブリンが漕いでいる）。クリスタルへの攻撃1.5倍。味方の小鬼（ゴブリン・ブラックゴブリン・コボルド）1体につき攻撃+30、一人もいないと攻撃-60。壊されると漕ぎ手が逃げ出す（デッキのゴブリンを1体場に出す）。ただし工学がない：大砲を撃つと反動で傷つき（出目5で40、6で70）、自分の番の始めに6回に1回は勝手に崩れかける（120）。賢者がいれば起きない。乗組員いわく「なんで動力が人力なんだよ。転職したい」',
     redorca:'血に染まった赤いシャチ。海の頂点の狩人。海の者を攻撃する時ダメージ1.5倍、メガロドンには2倍（サメ狩り）',
     demonwhale:'深海の巨鯨。汚染海洋生態系で一番大きい。出目6で相手の小型・中型を丸呑みにし、相手のデッキへ吐き戻す（倒した扱いではない）。倒されると亡骸が深海を養う：味方の海の者全員HP+100、召喚ダイヤ+2（鯨落ち）',
+    thief:'屋根から屋根へ渡る盗賊。小さく素早い。出目6で相手の財布をすり取る（相手の召喚ダイヤを1つ奪う）',
+    baker:'夜明け前から窯に火を入れる職人。自分の番の始めに、焼きたてのパンで一番弱った味方のHP +20',
+    monk:'素手で岩を割る修行僧。ダイス2個の連打。修行の体は毒を受け付けない',
+    bard:'酒場で歌う流れの詩人。自分は弱いが、場にいる間、味方全員の攻撃 +15（士気の歌）',
+    ronin:'主を失った剣士。殴られて生き残ると斬り返す（カウンター40）',
+    yakuza:'丁半博打で生きる流れ者。偶数（丁）なら倍付けの一撃、奇数（半）なら空振り',
+    tavern:'在野の者が集まる酒場の女主人。場に出た時、ツケの取り立てで召喚ダイヤ+1（その一体につき1回）',
+    aquacat:'海に棲む猫。手土産：場に出た時、召喚ダイヤ+1（その一体につき1回）。魚が大好物で、魚への攻撃は2倍',
+    shipworm:'船底を食い破る巨大な蛆。木の船や兵器が大好物：海賊・海洋騎士・ポセイドン・ゴリアテへの攻撃は2倍',
+    bigtusk:'巨大な牙のセイウチ。分厚い脂肪で、単体攻撃で受けるダメージを3割減らす。出目6で大波を起こす（敵全体へ）',
+    porkfish:'豚の顔をした魚。脂が乗っていて旨い。倒されると、その身が味方全体のHPを30回復する（ご馳走）',
+    fangedclam:'牙の生えた大貝。動かないので攻撃はモンスターにしか届かない。殴られて生き残ると噛み返す（カウンター60）',
+    kelpmimic:'海藻に化けた魚。最初に受ける単体攻撃を、1回だけ海藻に紛れてかわす',
+    armoredjelly:'甲殻をまとった海月。出目4以上で毒の触手。触れた者も毒になる（単体攻撃してきたモンスターを毒にする）',
     spearsquid:'腕の先が槍になった赤い烏賊。群れで狩る。よく当たり、出目5で墨を吐いて相手の攻撃を下げる。槍持ちの仲間',
     aegis:'聖なる大盾。攻撃する力はない。場にいる間、敵モンスターの単体攻撃をHPが尽きるまで一身に受け続ける（全体攻撃と空からの急襲は防げない）',
     dragonslave:'竜を屠るための剣。場に出た時、相手の場に竜がいれば、その竜をデッキに帰還させ、別のモンスターと入れ替えさせる',
@@ -7147,7 +7208,7 @@ function builderRemoveFx(tab,id){ builderRemove(tab,id); builderSe('remove',0.45
 function builderRemoveAtFx(tab,idx){ builderRemoveAt(tab,idx); builderSe('remove',0.45); }
 let _builderZoomTimer=null;
 // カードの弾（2026-10-04 隆基の見立て）：絵の世代で分ける。1＝初期の弾（古びた色）、2＝第2弾、3＝最新の弾（発色が鮮やかで今風）
-const CARD_SERIES={"goblin": 1, "kobold": 1, "lizardman": 1, "ochu": 1, "tonberry": 1, "dragon": 1, "mimic": 1, "flan": 1, "ahriman": 1, "wyvern": 1, "adamantoise": 1, "behemoth": 1, "cactuar": 1, "coeurl": 1, "morbol": 1, "bomb": 1, "irongiant": 1, "spade": 1, "heart": 1, "diamond": 1, "club": 1, "jack": 1, "queen": 1, "king": 1, "joker": 1, "ninja": 1, "yojimbo": 1, "zombie": 1, "frog": 1, "wolf": 1, "spider": 1, "skeleton": 1, "ghost": 1, "vampire": 1, "werewolf": 1, "orc": 1, "minotaur": 1, "harpy": 1, "griffin": 1, "golem": 1, "chimera2": 1, "cockatrice": 1, "sahagin": 1, "kraken": 1, "basilisk": 1, "manticore": 1, "dullahan": 1, "mindflayer": 1, "lamia": 1, "hydra": 1, "blackknight": 1, "sabertiger": 1, "whitewitch": 1, "chocobo": 1, "mandra": 1, "flamefly": 1, "blackgob": 3, "nightmare": 3, "gigas": 3, "devillord": 3, "cerberus": 3, "grudge": 1, "samurai": 1, "warrior": 1, "dragoon": 1, "redmage": 1, "blackmage": 1, "icicletooth": 1, "sage": 1, "fatetwins": 1, "paladin": 1, "elf": 2, "oldman": 2, "demon": 2, "aegis": 3, "dragonslave": 3, "arbiter": 3, "muramasa": 3, "wyvernknight": 1, "dragonbaby": 3, "crystaldragon": 3, "metaldragon": 3, "cyclops": 2, "succubus": 3, "roc": 3, "mermaid": 3, "senate": 3, "devilknight": 3, "bat": 3, "cultist": 3, "blacksmith": 3, "blacklobster": 3, "chancellor": 3, "whitestingray": 1, "dragonsoldier": 3, "godhercules": 3, "goliath": 3, "redorca": 3, "demonwhale": 3, "spearsquid": 3, "grimbulsti": 3, "fenrir": 3, "swordfish": 3, "poseidon": 3, "oceanknight": 3, "mosasaurus": 3, "jewelfish": 3, "lardfish": 3, "pope": 2, "templar": 2, "acolyte": 2, "femmefatale": 2, "pirate": 2, "swordmaster": 2, "assassin": 2, "frogprince": 2, "deathcrab": 2, "flowermantis": 2, "myconid": 2, "moneychanger": 2, "mercenary": 2, "cook": 2, "lightningbear": 2, "icescorpion": 2, "yeti": 2, "shrub": 2, "doublehead": 2, "megalodon": 2, "swordsman": 2, "gladiator": 2, "graverobber": 2, "platoon": 2, "archer": 2, "leafraven": 2, "armsdealer": 2, "madking": 2, "prince": 2, "relic": 2, "knight": 2, "chaosdragon": 1, "sworddancer": 3, "aspis": 1, "moogle": 1, "ifrit": 1, "siren": 1, "carbuncle": 1, "shiva": 1, "ramuh": 1, "titan": 1, "garuda": 1, "phoenix": 1, "leviathan": 1, "alexander": 1, "odin": 1, "bahamut": 1};
+const CARD_SERIES={"goblin": 1, "kobold": 1, "lizardman": 1, "ochu": 1, "tonberry": 1, "dragon": 1, "mimic": 1, "flan": 1, "ahriman": 1, "wyvern": 1, "adamantoise": 1, "behemoth": 1, "cactuar": 1, "coeurl": 1, "morbol": 1, "bomb": 1, "irongiant": 1, "spade": 1, "heart": 1, "diamond": 1, "club": 1, "jack": 1, "queen": 1, "king": 1, "joker": 1, "ninja": 1, "yojimbo": 1, "zombie": 1, "frog": 1, "wolf": 1, "spider": 1, "skeleton": 1, "ghost": 1, "vampire": 1, "werewolf": 1, "orc": 1, "minotaur": 1, "harpy": 1, "griffin": 1, "golem": 1, "chimera2": 1, "cockatrice": 1, "sahagin": 1, "kraken": 1, "basilisk": 1, "manticore": 1, "dullahan": 1, "mindflayer": 1, "lamia": 1, "hydra": 1, "blackknight": 1, "sabertiger": 1, "whitewitch": 1, "chocobo": 1, "mandra": 1, "flamefly": 1, "blackgob": 3, "nightmare": 3, "gigas": 3, "devillord": 3, "cerberus": 3, "grudge": 1, "samurai": 1, "warrior": 1, "dragoon": 1, "redmage": 1, "blackmage": 1, "icicletooth": 1, "sage": 1, "fatetwins": 1, "paladin": 1, "elf": 2, "oldman": 2, "demon": 2, "aegis": 3, "dragonslave": 3, "arbiter": 3, "muramasa": 3, "wyvernknight": 1, "dragonbaby": 3, "crystaldragon": 3, "metaldragon": 3, "cyclops": 2, "succubus": 3, "roc": 3, "mermaid": 3, "senate": 3, "devilknight": 3, "bat": 3, "cultist": 3, "blacksmith": 3, "blacklobster": 3, "chancellor": 3, "whitestingray": 1, "dragonsoldier": 3, "godhercules": 3, "goliath": 3, "redorca": 3, "demonwhale": 3, "spearsquid": 3, "thief": 2, "baker": 2, "monk": 2, "bard": 2, "ronin": 2, "yakuza": 2, "tavern": 2, "aquacat": 3, "shipworm": 3, "bigtusk": 3, "porkfish": 3, "fangedclam": 3, "kelpmimic": 3, "armoredjelly": 3, "grimbulsti": 3, "fenrir": 3, "swordfish": 3, "poseidon": 3, "oceanknight": 3, "mosasaurus": 3, "jewelfish": 3, "lardfish": 3, "pope": 2, "templar": 2, "acolyte": 2, "femmefatale": 2, "pirate": 2, "swordmaster": 2, "assassin": 2, "frogprince": 2, "deathcrab": 2, "flowermantis": 2, "myconid": 2, "moneychanger": 2, "mercenary": 2, "cook": 2, "lightningbear": 2, "icescorpion": 2, "yeti": 2, "shrub": 2, "doublehead": 2, "megalodon": 2, "swordsman": 2, "gladiator": 2, "graverobber": 2, "platoon": 2, "archer": 2, "leafraven": 2, "armsdealer": 2, "madking": 2, "prince": 2, "relic": 2, "knight": 2, "chaosdragon": 1, "sworddancer": 3, "aspis": 1, "moogle": 1, "ifrit": 1, "siren": 1, "carbuncle": 1, "shiva": 1, "ramuh": 1, "titan": 1, "garuda": 1, "phoenix": 1, "leviathan": 1, "alexander": 1, "odin": 1, "bahamut": 1};
 const SERIES_NAME={1:'初期の弾',2:'第2弾',3:'最新の弾'};
 const SERIES_LINES={
   1:['これは初期のシリーズのカードです。長く使われてきた札ですね。','初期の弾のカードですね。この色の褪せ方は、何度も卓を回ってきた証です。','古参の札です。最初の頃から、ずっと戦ってきたカードですね。'],
@@ -8338,6 +8399,20 @@ const RESOLVE_TABLES = {
   myconid:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'miss',label:'胞子が湿気る',atk:0};if(s<=3)return{type:'normal',label:'胞子',atk:50,poisonTurns:1};if(s<=5)return{type:'strong',label:'菌糸の絡みつき',atk:60,selfHeal:30};return{type:'special',label:'胞子の嵐 敵全体を蝕む',atk:0,aoeEnemy:true,aoeDmg:45,poisonTurns:1};}},
   moneychanger:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'両替の失敗',atk:0,selfDmg:20};if(s<=3)return{type:'normal',label:'金袋で殴る',atk:30,selfPt:1};if(s<=5)return{type:'strong',label:'手数料',atk:30,stealPt:1};return{type:'special',label:'大口の両替 召喚ダイヤ +2',atk:40,selfPt:2};}},
   mercenary:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'契約違反',atk:0,selfDmg:30};if(s<=3)return{type:'normal',label:'傭兵の剣',atk:95};if(s<=5)return{type:'strong',label:'盾ごと叩き斬る',atk:125};return{type:'special',label:'戦場の狼 召喚獣にも斬り込む',atk:120,beastSplash:50};}},
+  thief:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'miss',label:'足を滑らせる',atk:0};if(s<=4)return{type:'normal',label:'短剣',atk:55};if(s===5)return{type:'strong',label:'背後から刺す',atk:70};return{type:'special',label:'財布をすり取る！',atk:45,stealPt:1};}},
+  baker:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'窯で火傷',atk:0,selfDmg:20};if(s<=3)return{type:'normal',label:'麺棒',atk:55};if(s<=5)return{type:'strong',label:'焼きたてを頬張る',atk:60,selfHeal:40};return{type:'special',label:'大きなパンを焼き上げる',atk:50,selfHeal:80};}},
+  monk:{dice:2,resolve(d){const s=diceSum(d);if(s<=3)return{type:'fail',label:'修行不足',atk:0,selfDmg:30};if(s<=6)return{type:'normal',label:'正拳',atk:100};if(s<=10)return{type:'strong',label:'百裂拳',atk:140};return{type:'special',label:'無念無想の一撃',atk:180};}},
+  bard:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'miss',label:'弦が切れる',atk:0};if(s<=4)return{type:'normal',label:'竪琴で殴る',atk:30};if(s===5)return{type:'strong',label:'鼓舞の歌',atk:20,selfHeal:30};return{type:'special',label:'おひねり 召喚ダイヤ+1',atk:25,selfPt:1};}},
+  ronin:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'酒が抜けていない',atk:0,selfDmg:30};if(s<=3)return{type:'normal',label:'刀',atk:95};if(s<=5)return{type:'strong',label:'居合',atk:125};return{type:'special',label:'主なき刃',atk:155};}},
+  yakuza:{dice:1,resolve(d){const s=diceSum(d);if(s%2===1)return{type:'miss',label:'半！ 外れ',atk:0,chouhanMiss:true};if(s===6)return{type:'special',label:'丁！ 大勝ち',atk:200};return{type:'strong',label:'丁！ 倍付け',atk:180};}},
+  tavern:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'miss',label:'酔っ払いに絡まれる',atk:0};if(s<=4)return{type:'normal',label:'ジョッキで殴る',atk:35};if(s===5)return{type:'strong',label:'一杯おごる',atk:30,selfHeal:50};return{type:'special',label:'ツケを取り立てる 召喚ダイヤ+1',atk:40,selfPt:1};}},
+  aquacat:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'miss',label:'毛づくろい',atk:0};if(s<=4)return{type:'normal',label:'猫パンチ',atk:50};if(s===5)return{type:'strong',label:'ひっかき',atk:65};return{type:'special',label:'魚をくわえて逃げる',atk:75};}},
+  shipworm:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'木屑が詰まる',atk:0,selfDmg:20};if(s<=3)return{type:'normal',label:'食い破る',atk:85};if(s<=5)return{type:'strong',label:'船底を穿つ',atk:105};return{type:'special',label:'穴だらけにする',atk:125,targetAtkDown:20};}},
+  bigtusk:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'氷の上で滑る',atk:0,selfDmg:40};if(s<=3)return{type:'normal',label:'牙突き',atk:130};if(s<=5)return{type:'strong',label:'のしかかり',atk:160};return{type:'special',label:'大波を起こす 敵全体へ',atk:0,aoeEnemy:true,aoeDmg:80};}},
+  porkfish:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'miss',label:'網に引っかかる',atk:0};if(s<=4)return{type:'normal',label:'体当たり',atk:60};if(s===5)return{type:'strong',label:'鼻で突き上げる',atk:75};return{type:'special',label:'脂の乗った一撃',atk:70,selfHeal:40};}},
+  fangedclam:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'miss',label:'殻を閉じたまま',atk:0};if(s<=4)return{type:'normal',label:'噛みつく',atk:70};if(s===5)return{type:'strong',label:'噛み砕く',atk:95};return{type:'special',label:'離さない',atk:80,targetAtkDown:25};}},
+  kelpmimic:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'miss',label:'海藻に絡まる',atk:0};if(s<=4)return{type:'normal',label:'不意打ち',atk:70};if(s===5)return{type:'strong',label:'藻陰から噛む',atk:85};return{type:'special',label:'森ごと襲う',atk:100};}},
+  armoredjelly:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'甲殻が重い',atk:0,selfDmg:20};if(s<=3)return{type:'normal',label:'甲殻の体当たり',atk:70};if(s<=5)return{type:'strong',label:'毒の触手',atk:75,poisonTurns:1};return{type:'special',label:'千本の触手',atk:90,poisonTurns:1,targetAtkDown:20};}},
   cook:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'鍋をひっくり返す',atk:0,selfDmg:20};if(s<=3)return{type:'normal',label:'フライパン',atk:60};if(s<=5)return{type:'strong',label:'熱々の油',atk:80};return{type:'special',label:'大盤振る舞い 自己回復',atk:70,selfHeal:60};}},
   lightningbear:{dice:2,resolve(d){const s=diceSum(d);if(s<=3)return{type:'fail',label:'雷が自分に落ちる',atk:0,selfDmg:60};if(s<=6)return{type:'normal',label:'雷爪',atk:150};if(s<=10)return{type:'strong',label:'帯電の一撃',atk:190};return{type:'special',label:'落雷の咆哮 敵全体へ',atk:0,aoeEnemy:true,aoeDmg:110,beastSplash:60};}},
   chaosdragon:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'strong',label:'混沌の暴走！ 敵味方すべてを呑む（自身も傷つく）',atk:0,aoeEnemy:true,aoeDmg:120,crystalSplash:60,chaosAlly:120,chaosSelfHit:80,chaosOwnCrystal:60};if(s<=3)return{type:'normal',label:'カオスブレス 敵味方全体へ',atk:0,aoeEnemy:true,aoeDmg:160,chaosAlly:70};if(s<=5)return{type:'strong',label:'混沌の咆哮 召喚獣まで届く',atk:0,aoeEnemy:true,aoeDmg:200,beastSplash:100,chaosAlly:90,chaosOwnCrystal:30};return{type:'special',label:'終焉の混沌！ 敵味方すべてに着弾',atk:0,aoeEnemy:true,aoeDmg:260,beastSplash:150,crystalSplash:120,chaosAlly:110,chaosOwnBeast:80,chaosOwnCrystal:50};}},
@@ -10044,7 +10119,7 @@ const AI_FACTIONS={
     name:'荒波の海賊団', style:'pirate',   // 2026-10-10 隆基「荒くれ海の男の浪漫。汚染海洋生態系をメインに、とにかく豪快な海賊プレイが好きなAI」
     motto:'沈むなら派手に沈め。宝は、海の底にもある。',
     // 汚染海洋生態系と港町の者で組む。クリスタルが殴れるなら殴る。損しか見込めなくても降りない
-    pool:['pirate','mermaid','cook','sahagin','kraken','megalodon','demonwhale','redorca','mosasaurus','whitestingray','deathcrab','blacklobster','swordfish','spearsquid','lardfish','bomb','jewelfish','oceanknight','poseidon','moneychanger'],
+    pool:['pirate','mermaid','cook','bigtusk','armoredjelly','fangedclam','shipworm','porkfish','kelpmimic','aquacat','sahagin','kraken','megalodon','demonwhale','redorca','mosasaurus','whitestingray','deathcrab','blacklobster','swordfish','spearsquid','lardfish','bomb','jewelfish','oceanknight','poseidon','moneychanger'],
     beasts:['leviathan','siren','ifrit','ramuh','garuda','bahamut'],
     magic:['thundaga','thunder','firaga','fire','drain','haste','meteor'],
     members:[
@@ -11534,7 +11609,7 @@ function applyElementalMonsterDamage(ownerSide,slot,attr,dmg,attackerSide){
 
 const DRAGON_KIND_MONSTERS=new Set(['dragon','wyvern','hydra','basilisk','lizardman','chaosdragon','doublehead','dragonbaby','crystaldragon','dragonsoldier']);
 const REPTILE_KIND_MONSTERS=new Set(['lizardman','basilisk','lamia','chimera2','cockatrice','hydra','aspis','mosasaurus']);
-const HUMAN_KIND_MONSTERS=new Set(['ninja','yojimbo','samurai','warrior','dragoon','redmage','blackmage','spade','heart','diamond','club','jack','queen','king','sage','paladin','swordsman','gladiator','graverobber','platoon','archer','armsdealer','madking','prince','knight','assassin','moneychanger','oldman','swordmaster','pope','templar','acolyte','femmefatale','pirate','poseidon','oceanknight','senate','cultist','blacksmith','chancellor','dragonsoldier']);
+const HUMAN_KIND_MONSTERS=new Set(['thief','baker','monk','bard','ronin','yakuza','tavern','ninja','yojimbo','samurai','warrior','dragoon','redmage','blackmage','spade','heart','diamond','club','jack','queen','king','sage','paladin','swordsman','gladiator','graverobber','platoon','archer','armsdealer','madking','prince','knight','assassin','moneychanger','oldman','swordmaster','pope','templar','acolyte','femmefatale','pirate','poseidon','oceanknight','senate','cultist','blacksmith','chancellor','dragonsoldier']);
 // 人間は、モンスターから見たらみんな小型（2026-10-03 隆基）
 HUMAN_KIND_MONSTERS.forEach(id=>{ if(MD[id]) MD[id].sizeTier='small'; });
 // ── カーバンクルの赤績光（2026-09-28 隆基案）：場にいる間、自分の魔法を増幅し、失敗の反動を相手へ返す ──
@@ -11583,12 +11658,12 @@ const LIGHT_WARRIOR_MONSTERS=new Set(['dragoon','redmage','warrior','blackmage',
 const BEAST_KIND_MONSTERS=new Set(['wolf','coeurl','sabertiger','behemoth','griffin','cerberus','manticore','chocobo','kobold','werewolf','icicletooth','yeti','lightningbear','mercenary','bat']);
 const PLANT_KIND_MONSTERS=new Set(['ochu','mandra','morbol','shrub','flowermantis','myconid']);
 const INSECT_KIND_MONSTERS=new Set(['spider','flamefly','zombie','aspis','cactuar','icescorpion','flowermantis','godhercules']);
-const POISON_KIND_MONSTERS=new Set(['morbol','hydra','zombie','spider','basilisk','manticore','chimera2','blackmage','aspis','icescorpion','deathcrab','myconid']);
+const POISON_KIND_MONSTERS=new Set(['armoredjelly','morbol','hydra','zombie','spider','basilisk','manticore','chimera2','blackmage','aspis','icescorpion','deathcrab','myconid']);
 const SPEAR_KIND_MONSTERS=new Set(['lizardman','dragoon','spade','jack','sahagin','platoon','spearsquid']);
 const DARK_KIND_MONSTERS=new Set(['skeleton','zombie','ghost','vampire','dullahan','nightmare','devillord','blackknight','grudge','ahriman','mindflayer','sworddancer','tonberry','madking','graverobber','assassin','demon','succubus','devilknight','bat','cultist']);
 const FLYING_KIND_MONSTERS=new Set(['cactuar','harpy','griffin','cockatrice','wyvern','ahriman','flamefly','leafraven','wyvernknight','dragonbaby','crystaldragon','metaldragon','succubus','roc','bat']);
 const ARMORED_KIND_MONSTERS=new Set(['irongiant','golem','adamantoise','warrior','blackknight','club','king','platoon','knight','gladiator','deathcrab','mercenary','templar','crystaldragon','metaldragon','devilknight','blacklobster','dragonsoldier','godhercules']);
-const WATER_KIND_MONSTERS=new Set(['sahagin','kraken','flan','ochu','megalodon','deathcrab','frogprince','cook','poseidon','oceanknight','mosasaurus','jewelfish','lardfish','swordfish','mermaid','blacklobster','whitestingray','redorca','demonwhale','spearsquid']);
+const WATER_KIND_MONSTERS=new Set(['aquacat','shipworm','bigtusk','porkfish','fangedclam','kelpmimic','armoredjelly','sahagin','kraken','flan','ochu','megalodon','deathcrab','frogprince','cook','poseidon','oceanknight','mosasaurus','jewelfish','lardfish','swordfish','mermaid','blacklobster','whitestingray','redorca','demonwhale','spearsquid']);
 const ROLE_DEFS=[
   {id:'dragonKingdom',name:'ドラゴンキングダム',hidden:'???',reading:'ドラゴンキングダム',meaning:'竜が支配する王国。強大な竜たちが集まった戦場。',desc:'味方の場に竜系モンスター2体以上。2体で竜系の攻撃 +12、3体で +30。'},
   {id:'beastLand',name:'ビーストランド',hidden:'???',reading:'ビーストランド',meaning:'獣たちが走り回る土地。群れの力で粘り強く戦う。',desc:'味方の場に獣系モンスター2体以上。2体でターン開始時に獣系HP +5、3体で +12。'},
@@ -12440,6 +12515,19 @@ const EXTRA_ROLES=[
    meaning:'深海で、鯨と大烏賊が、千年喧嘩している。',desc:'魔王鯨とクラーケンが、敵味方どちらの場でも同時にいる。場にいる間、両者の攻撃 +80。',hint:'深海の巨鯨と大烏賊が、向かい合う'},
   {id:'xUmiNoOujaKoutai',name:'海の王者交代',reading:'ウミノオウジャコウタイ',cards:[['redorca'],['megalodon']],bothSides:true,aura:{redorca:{atk:60}},
    meaning:'シャチは、サメの肝だけを喰う。',desc:'レッドオルカとメガロドンが、敵味方どちらの場でも同時にいる。場にいる間、レッドオルカの攻撃 +60。',hint:'赤いシャチが、巨大なサメの影を追う'},
+  // ── 在野・汚染海洋生態系の新顔の役（2026-10-11 隆基） ──
+  {id:'xSakabaNoUtaite',name:'酒場の歌い手',reading:'サカバノウタイテ',cards:[['tavern'],['bard']],
+   meaning:'酒場の灯りが消えない夜は、誰かが歌っている。',desc:'酒場の女主人と吟遊詩人が同時に場にいる。自分の番の始めに、味方全体 HP +15。',hint:'酒場の片隅で、竪琴が鳴る'},
+  {id:'xMinatomachiNoChoushoku',name:'港町の朝食',reading:'ミナトマチノチョウショク',cards:[['baker'],['cook']],once:{healAllies:120,pts:1},
+   meaning:'焼きたてのパンと、獲れたての魚。港町の朝は、それだけで足りる。',desc:'パン職人と料理人が同時に場にいる。1ゲームに1度、味方全体 HP +120、召喚ダイヤ +1。',hint:'夜明けの港に、パンの匂いが流れる'},
+  {id:'xArujiNakiYaiba',name:'主なき刃',reading:'アルジナキヤイバ',cards:[['ronin'],['samurai']],aura:{ronin:{atk:40},samurai:{atk:40}},
+   meaning:'仕える刃と、仕えぬ刃。抜けば、同じ音がする。',desc:'浪人と侍が同時に場にいる。場にいる間、両者の攻撃 +40。',hint:'主を持つ者と、持たぬ者が並ぶ'},
+  {id:'xJingi',name:'仁義',reading:'ジンギ',cards:[['yakuza'],['yojimbo']],
+   meaning:'賽の目は裏切っても、筋は裏切らない。',desc:'渡世人と用心棒が同時に場にいる。渡世人の丁半が外れ（半）でも、用心棒が筋を通して半分の攻撃が入る。',hint:'賭場の入口に、用心棒が立つ'},
+  {id:'xMakanai',name:'まかない',reading:'マカナイ',cards:[['aquacat'],['cook']],once:{healAllies:60},
+   meaning:'厨房の裏口には、いつも猫がいる。',desc:'アクアキャットと料理人が同時に場にいる。1ゲームに1度、味方全体 HP +60。',hint:'厨房の裏口で、猫が魚を待っている'},
+  {id:'xButauoNoKakuni',name:'豚魚の角煮',reading:'ブタウオノカクニ',cards:[['porkfish'],['cook']],once:{healAllies:100,pts:1},
+   meaning:'豚か魚か、料理人も知らない。ただ、旨い。',desc:'ポークフィッシュと料理人が同時に場にいる。1ゲームに1度、味方全体 HP +100、召喚ダイヤ +1。',hint:'鍋の中で、豚の顔をした魚が煮える'},
   {id:'xYariikaNoMure',name:'槍烏賊の群れ',reading:'ヤリイカノムレ',cards:[['spearsquid'],['spearsquid']],pairFollow:true,
    meaning:'一匹を見たら、海の中には千匹いる。',desc:'槍烏賊が2体、同時に場にいる。片方が攻撃に成功すると、もう一体が続けて突く（1ターンに1回）。',hint:'赤い槍が、二本並ぶ'},
   {id:'xCockatriceNoKaraage',name:'コカトリスの唐揚げ',reading:'コカトリスノカラアゲ',cards:[['cook'],['cockatrice']],once:{cockatriceFry:true,pts:1},
@@ -13842,7 +13930,7 @@ function hasBunbuRyodo(side){
   return magicUsers.some(a=>warriors.some(b=>b.uid!==a.uid));
 }
 const DRAGON_SERVANT_PREY=new Set(['goblin','frog','flan','aspis','lizardman']);
-const FEMALE_KIND_MONSTERS=new Set(['whitewitch','queen','sworddancer','heart','fatetwins','femmefatale','succubus','mermaid']);
+const FEMALE_KIND_MONSTERS=new Set(['bard','tavern','whitewitch','queen','sworddancer','heart','fatetwins','femmefatale','succubus','mermaid']);
 const KNIGHT_KIND_MONSTERS=new Set(['warrior','dragoon','blackknight','yojimbo','redmage','paladin','knight','prince','templar','oceanknight','wyvernknight','devilknight','dragonsoldier']);
 const DEFENSE_KIND_MONSTERS=new Set(['adamantoise','golem','blackknight','kraken','dullahan','irongiant']);
 function hasDragonServant(side){
@@ -22778,6 +22866,8 @@ const ENTRY_GIFTS={
   oldman:    {tag:'昔の蓄え',     line:'老人が懐から、古い宝石を一つ取り出した。「若い頃の、な」'},
   bat:       {tag:'洞窟の光り物', line:'蝙蝠が、洞窟の奥で見つけた光り物を落としていった。'},
   dragonbaby:{tag:'宝の山のかけら',line:'竜の子が、親の宝の山からくすねてきた宝石を自慢げに見せた。'},
+  tavern:    {tag:'ツケの取り立て', line:'酒場の女主人が、帳場の引き出しから宝石を出した。「溜まってたツケさ」'},
+  aquacat:   {tag:'猫の手土産',   line:'アクアキャットが、海の底で拾った宝石を足元に置いた。'},
   spider:    {tag:'巣の落とし物', line:'スパイダーの巣に、誰かの宝石が引っかかっていた。'},
 };
 (function installEntryGifts(){
@@ -23872,6 +23962,73 @@ function dqRun(){
   gameOver=function(){ try{ DQ.q.length=0; const el=document.getElementById('dq-win'); if(el) el.classList.remove('show'); }catch(e){} return go.apply(this,arguments); };
 })();
 
+// ===== 在野・汚染海洋生態系の新顔14枚の能力（2026-10-11 隆基「在野と海洋汚染生態系に7枚ずつ」） =====
+(function installNewcomers20261011(){
+  const FISH=new Set(['megalodon','swordfish','lardfish','jewelfish','porkfish','kelpmimic','whitestingray','spearsquid']);
+  const WOOD=new Set(['pirate','oceanknight','poseidon','goliath']);
+  const live=pd=>pd.monsterField.filter(m=>m&&m.hp>0);
+  // 吟遊詩人：士気の歌（自分以外の味方の攻撃 +15、何人いても一度だけ）
+  const ra=extraRoleAura;
+  extraRoleAura=function(side,m){
+    const out=ra.apply(this,arguments);
+    try{ const pd=side==='p'?G.p:G.e; if(m&&m.id!=='bard'&&pd&&live(pd).some(x=>x.id==='bard')) out.atk+=15; }catch(e){}
+    return out;
+  };
+  // パン職人・酒場の歌い手：自分の番の始めに回復
+  const kr=applyKindRoleRegen;
+  applyKindRoleRegen=function(side){
+    const r=kr.apply(this,arguments);
+    try{
+      if(G&&G.phase==='battle'&&!isPreparationRound()){
+        const pd=side==='p'?G.p:G.e, pre=side==='p'?'':'[敵] ';
+        live(pd).filter(m=>m.id==='baker').forEach(()=>{
+          const hurt=live(pd).filter(x=>x.hp<x.maxHp).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
+          if(hurt){ hurt.hp=Math.min(hurt.maxHp,hurt.hp+20); log(pre+'【焼きたて】パン職人が'+hurt.def.name+'にパンを渡した（HP +20）','gold'); }
+        });
+        const rr=EXTRA_ROLES.find(x=>x.id==='xSakabaNoUtaite');
+        if(rr&&extraRoleHolds(side,rr)){ live(pd).forEach(x=>{ x.hp=Math.min(x.maxHp,x.hp+15); }); log(pre+'【酒場の歌い手】酒場に歌が流れる（味方全体 HP +15）','gold'); }
+      }
+    }catch(e){}
+    return r;
+  };
+  // 攻撃が当たる前：好物・脂肪・擬態・毒の甲殻・仁義
+  const core=applyAttackResolveCore;
+  applyAttackResolveCore=async function(side,attacker,result,targetType,targetSlot){
+    try{
+      const pre=side==='p'?'':'[敵] ', os=side==='p'?'e':'p', od=side==='p'?G.e:G.p;
+      if(attacker&&attacker.id==='yakuza'&&result&&result.chouhanMiss){
+        const rr=EXTRA_ROLES.find(x=>x.id==='xJingi');
+        if(rr&&extraRoleHolds(side,rr)){ result.type='normal'; result.atk=90; result.label='半… 用心棒が筋を通す'; log(pre+'【仁義】半の目。それでも用心棒が筋を通した（攻撃 90）','gold'); }
+      }
+      if(targetType==='monster'&&result&&result.atk>0){
+        const tg=od.monsterField[targetSlot];
+        if(tg&&tg.hp>0){
+          if(attacker.id==='aquacat'&&FISH.has(tg.id)){ result.atk*=2; log(pre+'【大好物】アクアキャットが'+tg.def.name+'に飛びかかった（ダメージ2倍）','gold'); }
+          if(attacker.id==='shipworm'&&WOOD.has(tg.id)){ result.atk*=2; log(pre+'【船食い】シップワームが'+tg.def.name+'を食い破る（ダメージ2倍）','gold'); }
+          if(tg.id==='bigtusk'){ result.atk=Math.round(result.atk*0.7); log('【分厚い脂肪】ビッグタスクの脂肪が攻撃を受け止めた（ダメージ3割減）','bad'); }
+          if(tg.id==='kelpmimic'&&!tg._kelpDodged){ tg._kelpDodged=true; result.atk=0; result.label=(result.label||'')+'（海藻に紛れてかわされた）'; log('【擬態】海藻魚が海藻に紛れ、攻撃をかわした','bad'); }
+          if(tg.id==='armoredjelly'&&!attacker.poison){ const pd=side==='p'?G.p:G.e, i=pd.monsterField.indexOf(attacker); if(i>=0){ poisonMonster(side,i,1,true); log(pre+attacker.def.name+'は装甲海月の触手に触れた——毒','bad'); } }
+        }
+      }
+    }catch(e){}
+    return core.apply(this,arguments);
+  };
+  // ポークフィッシュ：倒されると、その身が味方全体を回復（ご馳走）
+  const cd=checkDeathDraws;
+  checkDeathDraws=function(side){
+    try{
+      const pd=side==='p'?G.p:G.e;
+      if(!pd._ddBusy){
+        const cur=new Set(pd.monsterField.filter(Boolean).map(m=>m.uid)), prev=pd._fieldUids||cur;
+        prev.forEach(uid=>{ if(cur.has(uid)) return; const g=pd.graveyard.find(x=>x&&x.uid===uid);
+          if(g&&!g.noKill&&g.id==='porkfish'){ const pre=side==='p'?'':'[敵] '; live(pd).forEach(x=>{ x.hp=Math.min(x.maxHp,x.hp+30); }); log(pre+'【ご馳走】ポークフィッシュの身が、味方の腹を満たした（味方全体 HP +30）','gold'); }
+        });
+      }
+    }catch(e){}
+    return cd.apply(this,arguments);
+  };
+})();
+
 </script>
 
 <style id="public-test-badge">
@@ -23879,10 +24036,10 @@ function dqRun(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.27</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.27%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.28</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.28%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.27";
+  var FORM="", PRE={}, V="0.1.28";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
