@@ -1626,6 +1626,26 @@ body{
 .field-wrapper .m-card.drop-over{position:relative}
 .field-wrapper .m-card.drop-over::before{content:'';position:absolute;inset:-5px;border:3px solid #ff4a4a;border-radius:9px;box-shadow:0 0 18px rgba(255,60,60,.95),inset 0 0 12px rgba(255,60,60,.5);pointer-events:none;z-index:5}
 .p-field-row .m-card{touch-action:none}
+
+/* 相手の手の内（2026-10-10） */
+#hand-ov{position:fixed;inset:0;z-index:2147480500;background:rgba(4,3,8,.86);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 16px}
+#hand-ov .hd-panel{width:min(820px,100%);background:linear-gradient(180deg,#1d1610,#120d09);border:1px solid #8a6a32;border-radius:10px;padding:18px 20px 22px;color:#efe3c6;font-family:'Hiragino Mincho ProN','Yu Mincho',serif;box-shadow:0 10px 40px rgba(0,0,0,.7)}
+#hand-ov .hd-tabs{display:flex;gap:8px;margin-bottom:10px}
+#hand-ov .hd-tabs button{background:#2a2015;color:#e8d6a8;border:1px solid #7a5d2c;border-radius:6px;padding:5px 12px;cursor:pointer;font:inherit;font-size:13px}
+#hand-ov .hd-tabs button.on{background:#c99b3c;color:#1a1208}
+#hand-ov h2{margin:0;font-size:22px;letter-spacing:.12em;color:#ffd98a}
+#hand-ov .hd-who{font-size:15px;margin-top:4px;color:#e8d6a8}
+#hand-ov .hd-motto{font-size:14px;color:#b9a67e;margin:6px 0 10px}
+#hand-ov h3{font-size:15px;color:#ffd98a;margin:16px 0 6px;letter-spacing:.08em;border-bottom:1px solid rgba(201,155,60,.35);padding-bottom:3px}
+#hand-ov .hd-aims{margin:0;padding-left:1.2em;font-size:14px;line-height:1.7}
+#hand-ov .hd-grid{display:flex;flex-wrap:wrap;gap:8px}
+#hand-ov .hd-card{width:84px;text-align:center;font-size:12.5px;line-height:1.3;color:#e8d6a8;font-family:'Hiragino Sans',sans-serif}
+#hand-ov .hd-card img{width:84px;border-radius:5px;display:block;box-shadow:0 2px 6px rgba(0,0,0,.6)}
+#hand-ov .hd-card.unused img{filter:grayscale(.85) brightness(.55)}
+#hand-ov .hd-card.unused{color:#8f8470}
+#hand-ov .hd-card .hd-n{color:#ffd98a}
+#hand-ov .hd-close{margin-top:18px;background:#c99b3c;color:#1a1208;border:0;border-radius:6px;padding:8px 22px;font-weight:700;cursor:pointer}
+#hand-ov .hd-note{font-size:12px;color:#9d8f74;margin-top:4px}
 @keyframes centerEffectFx{
   0%  {opacity:0;transform:translate(-50%,-50%) scale(.38);}
   20% {opacity:1;transform:translate(-50%,-50%) scale(1.14);}
@@ -4702,6 +4722,7 @@ img[src*="ゼネラルデビル"]{object-fit:fill!important;}
     <button class="btn" type="button" onclick="showEventRecord()">出来事の記録を見る</button>
     <button class="btn" type="button" onclick="copyGoStory()">この問いを写す</button>
     <button class="btn" type="button" onclick="showStoryOre()">物語の原石を見る</button>
+    <button class="btn" type="button" onclick="showHandReveal()">相手の手の内を見る</button>
     <button class="btn" onclick="location.reload()">もう一度</button>
   </div>
 </div>
@@ -23606,6 +23627,7 @@ function checkDeadLedger(side){
       pd.deck.splice(i,1,{type:'monster',id:target}); have++;
     }
     pd.deck=shuffle(pd.deck); pd._ledgerTarget=target;
+    try{ if(pd._orig) pd._orig.monsters=pd.deck.filter(c=>c&&c.type==='monster').map(c=>c.id); }catch(e){}
     const nm=MD[target].name;
     log('['+factionMemberName(side)+'] 相手の名簿を読んだ——狙いは「'+nm+'」','gold');
     try{ btPush(side,'帳簿狂い「狙いは'+nm+'。四人目まで、帳簿に書き込む」'); }catch(e){}
@@ -23667,6 +23689,76 @@ const TF_FAN_QUIPS=['「来た来た来た！ これを見に来たんだ！」'
   };
 })();
 
+// ══════════════════════════════════════════════════════
+//   相手の手の内（2026-10-10 隆基「試合後に相手のデッキ公開」）：結果の画面のボタンから開く。
+//   誰だったか（派閥・メンバー・口ぐせ）／狙っていたこと／召喚獣・魔法・モンスター（出番があったか）／出番のなかった者たち。
+//   観戦では両方の陣営を切り替えて見られる。デッキは試合の始めに覚えておく（帳簿狂いの並べ替えの後の中身）
+// ══════════════════════════════════════════════════════
+(function installHandReveal(){
+  const ig=initGame;
+  initGame=function(){
+    const r=ig.apply(this,arguments);
+    try{ [G.p,G.e].forEach(pd=>{ pd._orig={monsters:pd.deck.filter(c=>c&&c.type==='monster').map(c=>c.id),magic:(pd.magicHand||[]).map(c=>c.id||c),beasts:[pd.beasts.activeId,...(pd.beasts.reserve||[])].filter(Boolean)}; pd._appeared={}; pd._magicUsed={}; pd._beastShown={}; }); }catch(e){}
+    return r;
+  };
+  const he=handleMonsterEnter;
+  handleMonsterEnter=function(side,m){ try{ const pd=side==='p'?G.p:G.e; if(pd&&m){ pd._appeared=pd._appeared||{}; pd._appeared[m.id]=(pd._appeared[m.id]||0)+1; } }catch(e){} return he.apply(this,arguments); };
+  const sm=showMagicCastCard;
+  showMagicCastCard=function(def,side){ try{ const pd=side==='e'?G.e:G.p; if(pd&&def){ pd._magicUsed=pd._magicUsed||{}; pd._magicUsed[def.id]=(pd._magicUsed[def.id]||0)+1; } }catch(e){} return sm.apply(this,arguments); };
+  const bs=playBeastSummonSequence;
+  playBeastSummonSequence=function(side,bDef){ try{ const pd=side==='p'?G.p:G.e; if(pd&&bDef){ pd._beastShown=pd._beastShown||{}; pd._beastShown[bDef.id]=true; } }catch(e){} return bs.apply(this,arguments); };
+})();
+function handWho(pd,isMe){
+  const f=AI_FACTIONS[pd&&pd.faction], m=f&&f.members[pd.factionMember];
+  if(f) return {name:f.name+(m?'の'+m.name:''),motto:f.motto||''};
+  return {name:isMe?'あなた':'対戦相手',motto:''};
+}
+function handAims(pd){
+  const out=[], ids=new Set((pd._orig&&pd._orig.monsters)||[]), ap=pd._appeared||{};
+  if(pd._ledgerTarget) out.push('珍事【死者の帳簿】：「'+MD[pd._ledgerTarget].name+'」を4枚そろえる（自分の2枚＋相手の墓場から奪う2枚）');
+  TRANSFORMS.forEach(t=>{ if(ids.has(t.a)&&ids.has(t.b)) out.push('変身：'+MD[t.a].name+' ＋ '+MD[t.b].name+' → '+MD[t.to].name+(ap[t.to]?'（起きた）':'（起きなかった）')); });
+  if(ids.has('moneychanger')&&ids.has('graverobber')) out.push('役【セメタリーロンダリング】：両替商と墓荒らしをそろえて、相手の墓場から奪う');
+  if(ids.has('flowermantis')&&ids.has('minotaur')) out.push('役【叛逆の徒】：神に挑む蟷螂と牛頭');
+  if(ids.has('blackknight')&&ids.has('king')) out.push('役【愛の為に】：黒騎士が王を討つ');
+  return out;
+}
+function handCardHtml(id,used,label){
+  const a=CARD_ASSETS[id]||{}, nm=(MD[id]&&MD[id].name)||(BD[id]&&BD[id].name)||(MG[id]&&MG[id].name)||id;
+  return '<div class="hd-card'+(used?'':' unused')+'">'+(a.img?'<img src="'+a.img+'" alt="">':'')+'<div>'+escHtml(nm)+'</div><div class="hd-n">'+escHtml(label)+'</div></div>';
+}
+function handSectionHtml(pd,isMe){
+  const who=handWho(pd,isMe), o=pd._orig||{monsters:[],magic:[],beasts:[]}, ap=pd._appeared||{}, mu=pd._magicUsed||{}, bsn=pd._beastShown||{};
+  let h='<h2>'+(isMe?'あなたの手の内':'相手の手の内')+'</h2><div class="hd-who">'+escHtml(who.name)+'</div>'+(who.motto?'<div class="hd-motto">「'+escHtml(who.motto)+'」</div>':'');
+  const aims=handAims(pd);
+  h+='<h3>狙っていたこと</h3>'+(aims.length?'<ul class="hd-aims">'+aims.map(x=>'<li>'+escHtml(x)+'</li>').join('')+'</ul>':'<div class="hd-note">はっきりした狙いは見当たらない。ただ、戦い抜くために組んだデッキだ。</div>');
+  const beastNow=id=>bsn[id]||(pd.beasts&&pd.beasts.activeId===id&&pd.beasts.summoned)||((pd.beasts&&pd.beasts.defeated)||[]).includes(id);
+  h+='<h3>召喚獣</h3><div class="hd-grid">'+o.beasts.map(id=>handCardHtml(id,beastNow(id),beastNow(id)?'顕現した':'眠ったまま')).join('')+'</div>';
+  const mg={}; o.magic.forEach(id=>mg[id]=(mg[id]||0)+1);
+  h+='<h3>魔法</h3><div class="hd-grid">'+Object.keys(mg).map(id=>handCardHtml(id,!!mu[id],(mg[id]>1?'×'+mg[id]+' ':'')+(mu[id]?'使った':'使わず'))).join('')+'</div>';
+  const cnt={}; o.monsters.forEach(id=>cnt[id]=(cnt[id]||0)+1);
+  const ids=Object.keys(cnt).sort((a,b)=>(ap[b]?1:0)-(ap[a]?1:0));
+  h+='<h3>モンスター（'+o.monsters.length+'枚）</h3><div class="hd-grid">'+ids.map(id=>{ const n=cnt[id], k=Math.min(n,ap[id]||0); return handCardHtml(id,k>0,(n>1?'×'+n+' ':'')+(k?'出た'+(n>1?k:''):'出番なし')); }).join('')+'</div>';
+  const sleep=ids.filter(id=>(ap[id]||0)<cnt[id]).map(id=>MD[id].name+(cnt[id]-(ap[id]||0)>1?'×'+(cnt[id]-(ap[id]||0)):''));
+  h+='<h3>出番のなかった者たち</h3><div class="hd-note" style="font-size:14px;color:#d8c9a6">'+(sleep.length?escHtml(sleep.join('、'))+'。デッキの底で、出番を待ったまま戦いは終わった。':'全員が戦場に立った。')+'</div>';
+  const extra=Object.keys(ap).filter(id=>!cnt[id]&&MD[id]);
+  if(extra.length) h+='<div class="hd-note">デッキの外から現れた者：'+escHtml(extra.map(id=>MD[id].name).join('、'))+'（変身や、奪ったカード）</div>';
+  return h;
+}
+function showHandReveal(){
+  if(!G||!G.p||!G.e) return;
+  const old=document.getElementById('hand-ov'); if(old) old.remove();
+  const ov=document.createElement('div'); ov.id='hand-ov';
+  const spect=!!G.spectate;
+  const views=spect?[[G.p,false,handWho(G.p,false).name],[G.e,false,handWho(G.e,false).name]]:[[G.e,false,'相手'],[G.p,true,'自分']];
+  ov.innerHTML='<div class="hd-panel"><div class="hd-tabs">'+views.map((v,i)=>'<button data-i="'+i+'"'+(i===0?' class="on"':'')+'>'+escHtml(v[2])+'</button>').join('')+'</div><div class="hd-body"></div><button class="hd-close">閉じる</button></div>';
+  document.body.appendChild(ov);
+  const body=ov.querySelector('.hd-body'), show=i=>{ body.innerHTML=handSectionHtml(views[i][0],views[i][1]); ov.querySelectorAll('.hd-tabs button').forEach(b=>b.classList.toggle('on',+b.dataset.i===i)); };
+  ov.querySelectorAll('.hd-tabs button').forEach(b=>b.addEventListener('click',()=>show(+b.dataset.i)));
+  ov.querySelector('.hd-close').addEventListener('click',()=>ov.remove());
+  ov.addEventListener('click',e=>{ if(e.target===ov) ov.remove(); });
+  show(0);
+}
+
 </script>
 
 <style id="public-test-badge">
@@ -23674,10 +23766,10 @@ const TF_FAN_QUIPS=['「来た来た来た！ これを見に来たんだ！」'
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.23</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.23%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.24</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.24%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.23";
+  var FORM="", PRE={}, V="0.1.24";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
