@@ -9992,6 +9992,21 @@ const AI_FACTIONS={
       {name:'剣の求道者',   fav:['swordsman','samurai','warrior'],   beast:'titan',     magic:['thunder']},
     ],
   },
+  pirate:{
+    name:'荒波の海賊団', style:'pirate',   // 2026-10-10 隆基「荒くれ海の男の浪漫。汚染海洋生態系をメインに、とにかく豪快な海賊プレイが好きなAI」
+    motto:'沈むなら派手に沈め。宝は、海の底にもある。',
+    // 汚染海洋生態系と港町の者で組む。クリスタルが殴れるなら殴る。損しか見込めなくても降りない
+    pool:['pirate','mermaid','cook','sahagin','kraken','megalodon','demonwhale','redorca','mosasaurus','whitestingray','deathcrab','blacklobster','swordfish','spearsquid','lardfish','bomb','jewelfish','oceanknight','poseidon','moneychanger'],
+    beasts:['leviathan','siren','ifrit','ramuh','garuda','bahamut'],
+    magic:['thundaga','thunder','firaga','fire','drain','haste','meteor'],
+    members:[
+      {name:'髑髏旗の船長',   fav:['pirate','megalodon','kraken','bomb'],           beast:'leviathan', magic:['thundaga']},
+      {name:'樽爆弾の砲手',   fav:['bomb','swordfish','spearsquid','deathcrab'],    beast:'ifrit',     magic:['firaga']},
+      {name:'深海の宝探し',   fav:['jewelfish','blacklobster','demonwhale','mermaid'], beast:'siren',   magic:['drain']},
+      {name:'鯨狩りの銛打ち', fav:['redorca','mosasaurus','demonwhale','whitestingray'], beast:'leviathan', magic:['thunder']},
+      {name:'港の酒場の料理番', fav:['cook','lardfish','blacklobster','spearsquid'],  beast:'garuda',   magic:['haste']},
+    ],
+  },
   hunter:{
     name:'厄災狩り', style:'hunter', strictPool:true,   // 2026-10-03 隆基案：召喚獣狙いの短期決戦
     motto:'城は後でいい。先に厄災の首を落とせ。',
@@ -19567,7 +19582,7 @@ function enemyChooseAttacker(){
   if(lethalBeast) return lethalBeast;
   const candidates=active.map(x=>({choice:x,score:aiBestAttackScore(x.m),drama:aiActionDramaScore(x.m,'monster')}));
   // 降りる：どのカードで殴っても損しか見込めない時は、攻撃しない（博打・浪漫・適当な人は降りない）
-  if(!['gamble','romance','random','aragami'].includes(enemyAiStyle())&&candidates.length&&Math.max(...candidates.map(c=>c.score))<0) return null;
+  if(!['gamble','romance','random','aragami','pirate'].includes(enemyAiStyle())&&candidates.length&&Math.max(...candidates.map(c=>c.score))<0) return null;
   const picked=chooseAiCandidate(candidates);
   return picked?picked.choice:active[0];
 }
@@ -23584,6 +23599,29 @@ function checkDeadLedger(side){
   };
 })();
 
+// ══════════════════════════════════════════════════════
+//   海賊の戦い方（style 'pirate'、2026-10-10）：豪快。クリスタルを殴れるなら、少し損でも殴る。降りない。危ない賭けも押す。
+//   クリスタルへ斬り込む時、ときどき掛け声（バトルライン）
+// ══════════════════════════════════════════════════════
+const PIRATE_QUIPS=['「野郎ども、撃てぇ！」','「錨を上げろ！ 獲物は目の前だ！」','「宝はあの城の中だ！」','「沈むなら派手に沈め！」','「帆を張れ、風はこっちに吹いてる！」','「酒は勝ってから飲め！」'];
+(function installPirateStyle(){
+  const ch=chooseAiCandidate;
+  chooseAiCandidate=function(candidates){
+    if(enemyAiStyle()!=='pirate'||!candidates||!candidates.length) return ch.apply(this,arguments);
+    candidates.sort((a,b)=>b.score-a.score);
+    const best=candidates[0].score;
+    const isCry=c=>c&&c.target&&c.target.type==='crystal';
+    const cry=candidates.find(c=>isCry(c)&&c.score>=best-70);
+    let pick;
+    if(cry&&Math.random()<0.75) pick=cry;
+    else { const pool=candidates.filter(c=>c.score>=best-50).slice(0,4); pool.sort((a,b)=>(b.drama||0)-(a.drama||0)||b.score-a.score); pick=Math.random()<0.5?pool[0]:candidates[0]; }
+    try{ if(isCry(pick)&&Math.random()<0.35) btPush('e',PIRATE_QUIPS[Math.floor(Math.random()*PIRATE_QUIPS.length)]); }catch(e){}
+    return pick;
+  };
+  const rw=aiRiskWeight;
+  aiRiskWeight=function(){ return enemyAiStyle()==='pirate'?0.75:rw.apply(this,arguments); };
+})();
+
 </script>
 
 <style id="public-test-badge">
@@ -23591,10 +23629,10 @@ function checkDeadLedger(side){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.20</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.20%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.21</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.21%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.20";
+  var FORM="", PRE={}, V="0.1.21";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
