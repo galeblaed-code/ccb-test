@@ -1648,8 +1648,10 @@ body{
 #hand-ov .hd-note{font-size:12px;color:#9d8f74;margin-top:4px}
 
 /* ドラクエ風のお知らせウインドウ（2026-10-10 隆基「誰が何をして何が起きたかをウインドに」）：画面下の中央。知らせが来た時だけ出る */
-#dq-win{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);width:min(760px,72vw);min-height:92px;z-index:65;background:rgba(0,0,0,.9);border:3px solid #f4f4f4;border-radius:9px;box-shadow:0 0 0 2px #000,0 8px 24px rgba(0,0,0,.6),inset 0 0 0 2px #000;padding:10px 18px;color:#fff;font:700 18px/1.65 'Hiragino Kaku Gothic ProN','Hiragino Sans',sans-serif;letter-spacing:.06em;opacity:0;transition:opacity .25s;pointer-events:none;cursor:pointer}
+#dq-win{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(760px,72vw);min-height:92px;z-index:65;background:rgba(0,0,0,.9);border:3px solid #f4f4f4;border-radius:9px;box-shadow:0 0 0 2px #000,0 8px 24px rgba(0,0,0,.6),inset 0 0 0 2px #000;padding:10px 18px;color:#fff;font:700 18px/1.65 'Hiragino Kaku Gothic ProN','Hiragino Sans',sans-serif;letter-spacing:.06em;opacity:0;transition:opacity .25s;pointer-events:none;cursor:pointer}
 #dq-win.show{opacity:1;pointer-events:auto}
+#dq-win.below{transform:translate(-50%,0)}
+body:has(#role-plate.show) #dq-win{opacity:0!important;pointer-events:none!important}
 #dq-win .dq-line{white-space:pre-wrap;min-height:1.65em}
 #dq-win .dq-line.enemy{color:#ffd0c8}
 #dq-win .dq-line.role{color:#ffe08a}
@@ -10226,9 +10228,9 @@ function initGame(playerConfig, enemyConfig){
 	  log('あなた: '+beastNames(playerBeasts),'sys');
 	  log('敵: 召喚獣3体セット（正体不明）','sys');
 	  log('敵AI思考: '+aiStyleName(G.e.aiStyle),'sys');
-	  if(G.e.faction&&AI_FACTIONS[G.e.faction]) log('敵は【'+factionMemberName('e')+'】——'+AI_FACTIONS[G.e.faction].name+'「'+AI_FACTIONS[G.e.faction].motto+'」','sys');
+	  if(G.spectate&&G.e.faction&&AI_FACTIONS[G.e.faction]) log('敵は【'+factionMemberName('e')+'】——'+AI_FACTIONS[G.e.faction].name+'「'+AI_FACTIONS[G.e.faction].motto+'」','sys');
 	  // ゴブリン軍師団などの「作戦理論」は、開幕のバトルラインで披露する
-	  try{ G._theoryAnnounce=[]; ['p','e'].forEach(sd=>{ const pd=sd==='p'?G.p:G.e, f=pd.faction&&AI_FACTIONS[pd.faction], fm=f&&f.members[pd.factionMember]; if(fm&&fm.theory){ log('【作戦】'+fm.name+'「'+fm.theory+'」','sys'); G._theoryAnnounce.push({side:sd,text:'作戦「'+fm.theory+'」'}); } }); }catch(e){}
+	  try{ G._theoryAnnounce=[]; ['p','e'].forEach(sd=>{ const pd=sd==='p'?G.p:G.e, f=pd.faction&&AI_FACTIONS[pd.faction], fm=f&&f.members[pd.factionMember]; if(fm&&fm.theory&&G.spectate){ log('【作戦】'+fm.name+'「'+fm.theory+'」','sys'); G._theoryAnnounce.push({side:sd,text:'作戦「'+fm.theory+'」'}); } }); }catch(e){}
   log('サイコロを1個振り、奇数ならあなた、偶数なら敵が先攻。','sys');
   renderAll();
   runOpeningPhase();
@@ -22901,7 +22903,7 @@ function blogText(){
   resetBattleAnnouncements=function(){
     const r=reset.apply(this,arguments);
     BLOG.rows=[]; BLOG.pPd=G&&G.p; const el=blogEl(); el.querySelector('.bl-list').replaceChildren();
-    try{ blogAdd('turn',null,'対戦開始：'+announcementOwner('p')+' × '+announcementOwner('e')+(G.e&&G.e.faction&&AI_FACTIONS[G.e.faction]&&!G.spectate?'（'+factionMemberName('e')+'）':'')); }catch(e){}
+    try{ blogAdd('turn',null,'対戦開始：'+announcementOwner('p')+' × '+announcementOwner('e')+''); }catch(e){}
     return r;
   };
   // バトルラインに流れた知らせを、そのまま残す（溜まりすぎて飛ばされた分も残る）
@@ -23643,8 +23645,9 @@ function checkDeadLedger(side){
     pd.deck=shuffle(pd.deck); pd._ledgerTarget=target;
     try{ if(pd._orig) pd._orig.monsters=pd.deck.filter(c=>c&&c.type==='monster').map(c=>c.id); }catch(e){}
     const nm=MD[target].name;
-    log('['+factionMemberName(side)+'] 相手の名簿を読んだ——狙いは「'+nm+'」','gold');
-    try{ btPush(side,'帳簿狂い「狙いは'+nm+'。四人目まで、帳簿に書き込む」'); }catch(e){}
+    // 狙いを明かすのは観戦の時だけ（AI戦では、相手の動きから読み取ってもらう）
+    if(G.spectate){ log('['+factionMemberName(side)+'] 相手の名簿を読んだ——狙いは「'+nm+'」','gold');
+      try{ btPush(side,'帳簿狂い「狙いは'+nm+'。四人目まで、帳簿に書き込む」'); }catch(e){} }
   }
   const oc=openingCallFor;
   openingCallFor=async function(side){
@@ -23829,9 +23832,20 @@ function dqPush(side,text,cls,plate){
   while(DQ.q.length>8){ const i=DQ.q.findIndex(x=>x.cls!=='role'); DQ.q.splice(i>=0?i:0,1); }
   dqRun();
 }
+// 2026-10-11 隆基「メッセージの場所はバトルラインの上」：バトルラインの真上に重ねる。攻撃・サイコロの窓が開いている間はその下
+function dqPlace(el){
+  const line=document.querySelector('.battle-line'), r=line&&line.getBoundingClientRect();
+  const win=document.querySelector('#dice-ov.show .dice-window'), w=win&&win.getBoundingClientRect();
+  if(w&&w.height){ el.style.top=(w.bottom+8)+'px'; el.classList.add('below'); el.style.zIndex='75'; }
+  else{ el.classList.remove('below'); el.style.top=(r&&r.height?(r.top+r.height/2):window.innerHeight/2)+'px'; el.style.zIndex='66'; }
+  if(r&&r.width) el.style.left=(r.left+r.width/2)+'px';
+}
 function dqRun(){
   if(DQ.busy) return;
   const el=dqEl(), body=el.querySelector('.dq-body');
+  // 役の掲示板が出ている間は待つ（掲示板が消えてから続き）
+  if(document.querySelector('#role-plate.show')&&DQ.q.length){ DQ.busy=true; setTimeout(()=>{ DQ.busy=false; dqRun(); },150); return; }
+  dqPlace(el);
   const it=DQ.q.shift();
   if(!it){ clearTimeout(DQ.hideT); DQ.hideT=setTimeout(()=>{ if(!DQ.busy&&!DQ.q.length){ el.classList.remove('show'); DQ.lines=[]; body.innerHTML=''; } },3500); return; }
   DQ.busy=true; clearTimeout(DQ.hideT); el.classList.add('show');
@@ -23847,6 +23861,11 @@ function dqRun(){
   DQ.skip=finishType;
 }
 (function installDqWindow(){
+  // 2026-10-11 隆基「対戦相手の思考名は出さずに、ただ対戦相手が現れたでいい。デッキや立ち回りで戦術を予測して攻略したい」
+  // 文を出している途中でサイコロの窓が開いても追いかける
+  setInterval(()=>{ try{ const el=DQ.el; if(el&&el.classList.contains('show')) dqPlace(el); }catch(e){} },150);
+  const ig=initGame;
+  initGame=function(){ const r=ig.apply(this,arguments); try{ DQ.q.length=0; DQ.lines=[]; DQ.seen={}; setTimeout(()=>{ if(!G||G.phase==='gameover') return; DQ.q.push({line:G.spectate?(announcementOwner('p')+'と '+announcementOwner('e')+'の 戦いが 始まった！'):'対戦相手が あらわれた！',cls:''}); dqRun(); },600); }catch(e){} return r; };
   const bp=btPush;
   btPush=function(side,text,cls,plate){ const r=bp.apply(this,arguments); try{ dqPush(side,text,cls,plate); }catch(e){} return r; };
   const go=gameOver;
@@ -23860,10 +23879,10 @@ function dqRun(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.26</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.26%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.27</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.27%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.26";
+  var FORM="", PRE={}, V="0.1.27";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
