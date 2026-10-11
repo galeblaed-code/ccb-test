@@ -12588,6 +12588,8 @@ const EXTRA_ROLES=[
   // 2026-10-11 隆基の創作短編「血風の邂逅――浪人とダークエルフ」から
   {id:'xKeppuuNoKaikou',name:'血風の邂逅',reading:'ケップウノカイコウ',cards:[['ronin'],['tonberry']],bothSides:true,opposite:true,aura:{ronin:{atk:60},tonberry:{atk:60}},
    meaning:'捨てた者と、堕ちた者。答えは、刃の中にしかない。',desc:'浪人とダークエルフが、敵と味方に分かれて場にいる（同じ側では成立しない）。両者の攻撃 +60。おたがいを攻撃する時は、さらに1.5倍。',hint:'紅葉の散る古い神殿で、二つの孤高が向かい合う'},
+  {id:'xRoujinToUmi',name:'老人と海',reading:'ロウジントウミ',cards:[['demonwhale'],['oldman']],bothSides:true,
+   meaning:'人は打ち負かされることはあっても、海に屈することはない。老人は、それを知っていた。',desc:'魔王鯨と老人がそろう（魔王鯨は敵の場にいてもよい。老人は自分の場に）。場にいる間、相手の場の汚染海洋生態系のモンスターの攻撃 -40。',hint:'小舟の老人が、巨鯨の影を見つめている'},
   {id:'xJingi',name:'仁義',reading:'ジンギ',cards:[['yakuza'],['yojimbo']],
    meaning:'賽の目は裏切っても、筋は裏切らない。',desc:'渡世人と用心棒が同時に場にいる。渡世人の丁半が外れ（半）でも、用心棒が筋を通して半分の攻撃が入る。',hint:'賭場の入口に、用心棒が立つ'},
   {id:'xMakanai',name:'まかない',reading:'マカナイ',cards:[['aquacat'],['cook']],once:{healAllies:60},
@@ -24258,6 +24260,22 @@ function kataribeMult(){
   };
 })();
 
+// ===== 老人と海（2026-10-12 隆基「魔王鯨×老人＝老人と海。相手の盤面に海洋汚染生態系がいた場合、弱体化できる」）=====
+// 老人が自分の場にいて成立していれば、相手の場の汚染海洋生態系の攻撃 -40（敵の魔王鯨も含む）
+(function installRoujinToUmi(){
+  const ra=extraRoleAura;
+  extraRoleAura=function(side,m){
+    const out=ra.apply(this,arguments);
+    try{
+      if(m&&SEA_FAMILY_MONSTERS.has(m.id)){
+        const os=side==='p'?'e':'p', op=os==='p'?G.p:G.e, r=EXTRA_ROLES.find(x=>x.id==='xRoujinToUmi');
+        if(r&&op.monsterField.some(x=>x&&x.hp>0&&x.id==='oldman')&&extraRoleHolds(os,r)) out.atk-=40;
+      }
+    }catch(e){}
+    return out;
+  };
+})();
+
 </script>
 
 <style id="public-test-badge">
@@ -24265,10 +24283,10 @@ function kataribeMult(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.40</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.40%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.41</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.41%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.40";
+  var FORM="", PRE={}, V="0.1.41";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
