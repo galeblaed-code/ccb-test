@@ -6402,7 +6402,7 @@ const MONSTER_POOL = [
   'pope','templar','acolyte','femmefatale','pirate',
   'poseidon','oceanknight','mosasaurus','jewelfish','lardfish','swordfish','wyvernknight','aegis','dragonslave','arbiter','muramasa',
   'dragonbaby','metaldragon','cyclops','succubus','roc','mermaid','senate','devilknight','bat','cultist','blacksmith','blacklobster','chancellor','whitestingray','dragonsoldier','godhercules','goliath','redorca','demonwhale','spearsquid',
-  'thief','baker','monk','bard','ronin','yakuza','tavern','aquacat','shipworm','bigtusk','porkfish','fangedclam','kelpmimic','armoredjelly','kunoichi'
+  'thief','baker','monk','bard','ronin','yakuza','tavern','aquacat','shipworm','bigtusk','porkfish','fangedclam','kelpmimic','armoredjelly'
 ];
 // 変身（トランスフォーム）でしか出会えないカード。デッキ編成・AIの山札には入らない（2026-10-01 隆基×ゲイル）
 const TRANSFORM_ONLY=['kunoichi','werewolf','dullahan','swordmaster','devillord','madking','prince','crystaldragon'];
@@ -10117,7 +10117,7 @@ const AI_FACTIONS={
     name:'変身愛好家', style:'transform',   // 2026-10-10 隆基「変身するカードを好む思考。勝率よりも変身がとにかく見たいから、そんなデッキばかり組む」
     motto:'勝ち負け？ それより、あの瞬間を見たいんだ。',
     // 変身の材料ばかりで組む。材料のモンスターは、相方が場にそろうまで攻撃に出さず大事にする
-    pool:['wolf','jack','knight','nightmare','succubus','oldman','relic','dragonbaby','fatetwins','frogprince','elf','king','demon','joker'],
+    pool:['wolf','jack','knight','nightmare','succubus','oldman','relic','dragonbaby','fatetwins','frogprince','elf','king','demon','joker','thief','ninja'],
     beasts:['phoenix','alexander','siren','carbuncle','moogle','leviathan'],
     magic:['cure','curaga','raise','arise','reraise','haste','poisona'],
     members:[
@@ -10127,6 +10127,7 @@ const AI_FACTIONS={
       {name:'竜の子守',             fav:['dragonbaby','fatetwins','elf'],          beast:'carbuncle', magic:['haste']},
       {name:'おとぎ話の語り部',     fav:['frogprince','elf','wolf','jack'],        beast:'moogle',    magic:['reraise']},
       {name:'仮面舞踏会の常連',     fav:['king','demon','joker'],                  beast:'leviathan', magic:['arise']},
+      {name:'忍びの里の見物人',     fav:['thief','ninja','elf'],                   beast:'siren',     magic:['haste']},   // 2026-10-11 隆基：クノイチのクラスチェンジを見に来る
     ],
   },
   pirate:{
@@ -24188,10 +24189,10 @@ function kataribeMult(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.35</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.35%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.36</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.36%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.35";
+  var FORM="", PRE={}, V="0.1.36";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
