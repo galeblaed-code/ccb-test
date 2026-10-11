@@ -6438,6 +6438,13 @@ const BUILDER_PRESETS=[
     beast:['odin','bahamut','phoenix'],
     magic:['death','ultima','meteor','arise','thunder','drain'],
     monster:['tonberry','dragon','joker','behemoth','cerberus','devillord','nightmare','gigas','bomb','blackknight','dullahan','mimic','king','wyvern']
+  },
+  // 2026-10-11 隆基「怪魚好きなプレイヤー向けのデッキも作れるだろ？こんだけあれば」
+  {
+    name:'怪魚型',
+    beast:['leviathan','siren','garuda'],
+    magic:['cure','cure','poisona','raise','blizzard','thunder'],
+    monster:['demonwhale','redorca','megalodon','kraken','bigtusk','mosasaurus','armoredjelly','kelpmimic','fangedclam','porkfish','spearsquid','swordfish','deathcrab','aquacat']
   }
 ];
 
@@ -9378,6 +9385,7 @@ function monsterCounterIfSurvived(defenderSide,defender,attackerSide,attacker){
   const fortressCounter=FORTRESS_KIND_MONSTERS.has(defender.id)&&hasNankofuraku(defenderSide);
   if(!defender.def.counterOnSurvive&&!fortressCounter) return;
   let dmg=defender.def.counterOnSurvive||0;
+  try{ if(defender.id==='fangedclam'){ const _r=EXTRA_ROLES.find(x=>x.id==='xKaiteiNoWana'); if(_r&&extraRoleHolds(defenderSide,_r)){ dmg*=2; const _ap=attackerSide==='p'?G.p:G.e, _ai=_ap.monsterField.indexOf(attacker); if(_ai>=0&&!attacker.poison) poisonMonster(attackerSide,_ai,1,true); log('【海底の罠】噛みつき貝が深く噛み、海月の毒が回る（カウンター2倍・毒）','gold'); } } }catch(e){}
   if(hasHankiJin(defenderSide)&&isCounterMonster(defender)){
     dmg+=35;
     log('反撃陣！ '+defender.def.name+' のカウンター +35','gold');
@@ -10124,6 +10132,7 @@ const AI_FACTIONS={
     magic:['thundaga','thunder','firaga','fire','drain','haste','meteor'],
     members:[
       {name:'髑髏旗の船長',   fav:['pirate','megalodon','kraken','bomb'],           beast:'leviathan', magic:['thundaga']},
+      {name:'怪魚狂い',       fav:['demonwhale','bigtusk','armoredjelly','kelpmimic'], beast:'leviathan', magic:['blizzard']},
       {name:'樽爆弾の砲手',   fav:['bomb','swordfish','spearsquid','deathcrab'],    beast:'ifrit',     magic:['firaga']},
       {name:'深海の宝探し',   fav:['jewelfish','blacklobster','demonwhale','mermaid'], beast:'siren',   magic:['drain']},
       {name:'鯨狩りの銛打ち', fav:['redorca','mosasaurus','demonwhale','whitestingray'], beast:'leviathan', magic:['thunder']},
@@ -12342,8 +12351,8 @@ const EXTRA_ROLES=[
    meaning:'口づけで解けるはずの呪いが、まだ解けない。解けないのは、呪いのせいなのか。',desc:'カエル王子と、クイーン・王子・僧侶のいずれかが同時に場にいる。場にいる間、カエル王子の攻撃 +60・最大HP +60。',hint:'蛙の王子の前に、呪いを解けそうな者が立つ'},
   {id:'xKaeruNoKishidan',name:'蛙の騎士団',reading:'カエルノキシダン',cards:[['frogprince'],['frog'],['cook']],aura:{frogprince:{atk:50,hp:50},frog:{atk:50,hp:50},cook:{atk:50,hp:50}},
    meaning:'王と、兵と、料理番。全員が蛙だった。沼の国の騎士団は、今日も堂々と進軍する。',desc:'カエル王子・フロッグ・料理人が同時に場にいる。場にいる間、3体の攻撃 +50・最大HP +50。',hint:'沼の国の三人が、隊列を組む'},
-  {id:'xShinkaiNoHasami',name:'深海の鋏',reading:'シンカイノハサミ',cards:[['deathcrab'],['kraken','megalodon','sahagin']],aura:{deathcrab:{atk:50,hp:80}},
-   meaning:'深い海の底では、鋏を持つ者が一番長く生き残る。',desc:'デスクラブと、クラーケン・メガロドン・トライデントソルジャーのいずれかが同時に場にいる。場にいる間、デスクラブの攻撃 +50・最大HP +80。',hint:'深い海の者たちが、浅瀬に集まる'},
+  {id:'xShinkaiNoHasami',name:'深海の鋏',reading:'シンカイノハサミ',cards:[['deathcrab'],['kraken','megalodon','sahagin']],aura:{deathcrab:{atk:80,hp:100}},
+   meaning:'深い海の底では、鋏を持つ者が一番長く生き残る。',desc:'デスクラブと、クラーケン・メガロドン・トライデントソルジャーのいずれかが同時に場にいる。場にいる間、デスクラブの攻撃 +80・最大HP +100。',hint:'深い海の者たちが、浅瀬に集まる'},
   {id:'xHanaNoWana',name:'花の罠',reading:'ハナノワナ',cards:[['flowermantis'],['shrub','mandra','ochu','myconid']],once:{enemyAllDmg:60},
    meaning:'花畑に、花ではないものが一輪まじっていた。気づいた時には、鎌が振り下ろされていた。',desc:'フラワーマンティスと、スラブ・マンドラゴラ・マンイーター・マイコニドのいずれかが同時に場にいる。1ゲームに1度、敵モンスター全体に60ダメージ。',hint:'花の群れの中に、動く花がいる'},
   {id:'xKinshiNoMori',name:'菌糸の森',reading:'キンシノモリ',cards:[['myconid'],['shrub','mandra','morbol','ochu']],aura:{'@plant':{hp:40}},
@@ -12412,8 +12421,8 @@ const EXTRA_ROLES=[
    meaning:'料理人は包丁を研ぎ、大鍋に火を入れた。脂の乗った大魚が、炎の上で黄金色に焼けていく。今夜は宴だ。人も、獣も、腹いっぱい食えばまた戦える。',desc:'料理人とラードフィッシュが同時に場にいる。1ゲームに1度、自クリスタル +50、負傷した自分の召喚獣 +50。',hint:'料理人の前に、脂の乗った大魚が跳ねる'},
   {id:'xRankaku',name:'乱獲',reading:'ランカク',cards:[['pirate'],['jewelfish']],once:{pts:2,enemyPts:1},
    meaning:'宝石の鱗は高く売れる。海賊たちは網を広げた。海から何が減っていくのか、誰も気にしなかった。',desc:'海賊とジュエルフィッシュが同時に場にいる。1ゲームに1度、召喚ダイヤ +2、相手にも召喚ダイヤ +1。',hint:'海賊の網に、きらめく群れがかかる'},
-  {id:'xUmiNoSoukihei',name:'海の槍騎兵',reading:'ウミノソウキヘイ',cards:[['swordfish'],['oceanknight']],aura:{swordfish:{atk:50},oceanknight:{atk:50}},
-   meaning:'海洋騎士が槍を構えて波を駆けると、その横を一本の剣が並んで泳いだ。どちらが先に獲物を貫くか、競っているようだった。',desc:'ソードフィッシュと海洋騎士が同時に場にいる。場にいる間、両者の攻撃 +50。',hint:'波を駆ける騎兵の横を、剣の魚が並んで泳ぐ'},
+  {id:'xUmiNoSoukihei',name:'海の槍騎兵',reading:'ウミノソウキヘイ',cards:[['swordfish'],['oceanknight']],aura:{swordfish:{atk:70},oceanknight:{atk:70}},
+   meaning:'海洋騎士が槍を構えて波を駆けると、その横を一本の剣が並んで泳いだ。どちらが先に獲物を貫くか、競っているようだった。',desc:'ソードフィッシュと海洋騎士が同時に場にいる。場にいる間、両者の攻撃 +70。',hint:'波を駆ける騎兵の横を、剣の魚が並んで泳ぐ'},
   {id:'xKajikiNoShioyaki',name:'カジキの塩焼き',reading:'カジキノシオヤキ',cards:[['cook'],['swordfish']],once:{healAllies:60},
    meaning:'晩餐というほどではない。塩をふって焼いただけだ。それでも、戦の合間の一口はうまい。',desc:'料理人とソードフィッシュが同時に場にいる。1ゲームに1度、味方全体 HP +60。',hint:'料理人が、剣のような魚に塩をふる'},
   {id:'xHiryuuKiheidan',name:'飛龍騎兵団',reading:'ヒリュウキヘイダン',cards:[['dragoon'],['wyvernknight']],aura:{dragoon:{atk:40},wyvernknight:{atk:40,hp:40}},
@@ -12434,8 +12443,8 @@ const EXTRA_ROLES=[
    meaning:'裁定者の杖が、天秤を傾けた。天の賽は投げられた。この戦場に、聖なる光が降る。',desc:'賢者・教皇・僧騎士・侍祭・黒魔道士のいずれかと、裁定者の杖が同時に場にいる。1ゲームに1度、アレア・ヤクタが発動する。',hint:'祈る者か学ぶ者が、裁定者の杖を手にする'},
   {id:'xRyoudanIssenZetsuichimon',name:'両断一閃絶一門',reading:'リョウダンイッセンゼツイチモン',cards:[['samurai','ninja','yojimbo'],['muramasa']],once:{beastHalve:true},
    meaning:'妖刀が鞘から抜かれた一瞬、厄災の気配が真っ二つに裂けた。斬ったのは、まだ目覚めてもいない獣だった。',desc:'侍・忍者・用心棒のいずれかと村正が同時に場にいる。1ゲームに1度、相手の召喚獣（待機中でも）のHPを残りの半分にする。',hint:'刀を振るう者が、妖刀を手にする'},
-  {id:'xOogurai',name:'大喰らい',reading:'オオグライ',cards:[['kraken'],['mosasaurus'],['megalodon']],once:{millRand:3},
-   meaning:'汚れた海の三つの影が、同じ方向を向いた。沖を渡っていた補給船は、一隻も港に着かなかった。',desc:'クラーケン・モササウルス・メガロドンが同時に場にいる。1ゲームに1度、相手のデッキからランダムにモンスター3体を墓場へ送る。',hint:'汚れた海の三つの主が、同じ海に集まる'},
+  {id:'xOogurai',name:'大喰らい',reading:'オオグライ',cards:[['kraken'],['mosasaurus'],['megalodon']],once:{millRand:5},
+   meaning:'汚れた海の三つの影が、同じ方向を向いた。沖を渡っていた補給船は、一隻も港に着かなかった。',desc:'クラーケン・モササウルス・メガロドンが同時に場にいる。1ゲームに1度、相手のデッキからランダムにモンスター5体を墓場へ送る。',hint:'汚れた海の三つの主が、同じ海に集まる'},
   // ── 2026-10-03 召喚獣を削る役 ──
   {id:'xKeishou',name:'継承',reading:'ケイショウ',cards:[['swordmaster'],['fatetwins']],once:{beastDmg:300},
    meaning:'剣聖は二本の剣を、兄と妹に一本ずつ渡した。一人では持てなかった光と闇を、二人なら持てる。最初に斬ったのは、目覚めかけた厄災だった。',desc:'剣聖と運命の双子が同時に場にいる。1ゲームに1度、相手の召喚獣（待機中でも）に300ダメージ。',hint:'老いた剣士が、二人の子に剣を託す'},
@@ -12524,6 +12533,23 @@ const EXTRA_ROLES=[
    meaning:'仕える刃と、仕えぬ刃。抜けば、同じ音がする。',desc:'浪人と侍が同時に場にいる。場にいる間、両者の攻撃 +40。',hint:'主を持つ者と、持たぬ者が並ぶ'},
   {id:'xMeifuMadou',name:'冥府魔道',reading:'メイフマドウ',cards:[['ronin'],['yakuza'],['yojimbo']],once:{meifuMadou:true},
    meaning:'帰る場所を捨てた者だけが、この道を歩ける。',desc:'浪人・渡世人・用心棒が同時に場にいる。1ゲームに1度、自分のデッキの上から3枚を墓場へ送り、場の3人の攻撃 +80・HP +100（最大HPも、ずっと）。',hint:'主なき刃、賽の目、用心棒。三人の流れ者が、同じ道に立つ'},
+  // ── 汚染海洋生態系を主軸にする役（2026-10-11 隆基「海洋汚染主軸の役も強化したい」「全部実装」） ──
+  {id:'xKegaretaUshio',name:'汚れた潮',reading:'ケガレタウシオ',cards:[['@sea'],['@sea'],['@sea']],aura:{'@sea':{atk:30,hp:50}},
+   meaning:'汚れた海で生き残ったものだけが、ここにいる。',desc:'汚染海洋生態系のモンスターが3体、同時に場にいる。場にいる間、汚染海洋生態系のモンスターの攻撃 +30・最大HP +50。',hint:'濁った潮に、三つの影'},
+  {id:'xAkashio',name:'赤潮',reading:'アカシオ',cards:[['@sea'],['@sea'],['armoredjelly','kelpmimic']],
+   meaning:'海が赤く染まる日、陸の者は魚を食べない。',desc:'汚染海洋生態系のモンスター3体（うち1体は装甲海月か海藻魚）が同時に場にいる。自分の番の始めに、敵モンスター全体を毒にする。',hint:'海月と藻が、潮を赤く染める'},
+  {id:'xShinkaiNoOukoku',name:'深海の王国',reading:'シンカイノオウコク',cards:[['@bigsea'],['@bigsea']],once:{enemyAllDmg:100},
+   meaning:'光の届かない場所にも、王はいる。',desc:'汚染海洋生態系の大型（魔王鯨・レッドオルカ・モササウルス・メガロドン・クラーケン・ホワイトスティングレイ・ビッグタスク）が2体、同時に場にいる。1ゲームに1度、敵モンスター全体に100ダメージ。',hint:'深海の巨影が、二つ並ぶ'},
+  {id:'xKaiteiNoWana',name:'海底の罠',reading:'カイテイノワナ',cards:[['fangedclam'],['armoredjelly']],
+   meaning:'海の底で、口を開けて待つものがいる。',desc:'噛みつき貝と装甲海月が同時に場にいる。噛みつき貝のカウンターが2倍になり、噛まれた相手は毒になる。',hint:'貝の口のそばで、海月が揺れる'},
+  {id:'xMoNoMori',name:'藻の森',reading:'モノモリ',cards:[['kelpmimic'],['aquacat']],
+   meaning:'藻の森では、猫にしか魚が見つけられない。',desc:'海藻魚とアクアキャットが同時に場にいる。自分の番の始めに、海藻魚の「かわす」が戻る（毎ターン1回かわせる）。',hint:'藻の森で、猫が魚の影を追う'},
+  {id:'xSenteiNoAna',name:'船底の穴',reading:'センテイノアナ',cards:[['shipworm'],['pirate','oceanknight']],bothSides:true,once:{shipHole:true},
+   meaning:'どんな船も、内側から沈む。',desc:'シップワームと、海賊か海洋騎士が、敵味方どちらの場でも同時にいる。1ゲームに1度、その船乗りの最大HPを半分にする（相手の船乗りを先に狙う。いなければ味方の船が沈む）。',hint:'船底から、木を齧る音がする'},
+  {id:'xKaijuuNoTenteki',name:'海獣の天敵',reading:'カイジュウノテンテキ',cards:[['bigtusk'],['redorca']],bothSides:true,aura:{redorca:{atk:60}},
+   meaning:'牙の獣は、黒い背びれの影を見ると、氷の上に逃げる。',desc:'ビッグタスクとレッドオルカが、敵味方どちらの場でも同時にいる。ビッグタスクは身を固め、脂肪で受けるダメージが5割減になる。ただしレッドオルカの攻撃だけは脂肪を貫く。レッドオルカの攻撃 +60。',hint:'氷の縁で、牙の獣が黒い影を見ている'},
+  {id:'xButauoNoMure',name:'豚魚の群れ',reading:'ブタウオノムレ',cards:[['porkfish'],['porkfish']],
+   meaning:'一匹が網にかかれば、群れごと宴になる。',desc:'ポークフィッシュが2体、同時に場にいる。ポークフィッシュが倒された時、もう1体が場に残っていれば、ご馳走が2倍（味方全体 HP +60）。',hint:'豚の顔をした魚が、群れで泳ぐ'},
   {id:'xJingi',name:'仁義',reading:'ジンギ',cards:[['yakuza'],['yojimbo']],
    meaning:'賽の目は裏切っても、筋は裏切らない。',desc:'渡世人と用心棒が同時に場にいる。渡世人の丁半が外れ（半）でも、用心棒が筋を通して半分の攻撃が入る。',hint:'賭場の入口に、用心棒が立つ'},
   {id:'xMakanai',name:'まかない',reading:'マカナイ',cards:[['aquacat'],['cook']],once:{healAllies:60},
@@ -12562,8 +12588,8 @@ const EXTRA_ROLES=[
   {id:'xOtomeNoKuchizuke',name:'乙女の口づけ',reading:'オトメノクチヅケ',cards:[['dragonsoldier'],['elf']],once:{kissHeal:true},
    meaning:'呪いは、口づけでは解けなかった。それでも彼は、少しだけ人間に戻った気がした。',desc:'ドラゴンソルジャーとエルフが同時に場にいる。1ゲームに1度、ドラゴンソルジャーのHP全快、攻撃 +40（ずっと）。',hint:'森の乙女が、竜の顔の戦士に近づく'},
   // ── ホワイトスティングレイ（白い魔女）の役（2026-10-04 隆基の絵） ──
-  {id:'xAwaNoYukue',name:'泡の行方',reading:'アワノユクエ',cards:[['whitestingray'],['mermaid']],aura:{whitestingray:{atk:30,hp:60},mermaid:{atk:30,hp:60}},
-   meaning:'泡になって消えた人魚は、白い魔女になったという。',desc:'ホワイトスティングレイと人魚が同時に場にいる。場にいる間、両者の攻撃 +30・最大HP +60。',hint:'白い魔女と人魚が、同じ海を泳ぐ'},
+  {id:'xAwaNoYukue',name:'泡の行方',reading:'アワノユクエ',cards:[['whitestingray'],['mermaid']],aura:{whitestingray:{atk:60,hp:80},mermaid:{atk:60,hp:80}},
+   meaning:'泡になって消えた人魚は、白い魔女になったという。',desc:'ホワイトスティングレイと人魚が同時に場にいる。場にいる間、両者の攻撃 +60・最大HP +80。',hint:'白い魔女と人魚が、同じ海を泳ぐ'},
   {id:'xFunanoriNoAkumu',name:'船乗りの悪夢',reading:'フナノリノアクム',cards:[['whitestingray'],['pirate','oceanknight','poseidon']],bothSides:true,once:{enemyPtsLoss:1},
    meaning:'帆柱の上で見張りが叫んだ。「白い魔女だ」。それきり、誰も舵を取らなかった。',desc:'ホワイトスティングレイと、海賊・海洋騎士・ポセイドンのいずれかが、敵味方どちらの場でも同時にいる。1ゲームに1度、相手の召喚ダイヤを1つ消す。',hint:'白い魔女が、船乗りの前に浮かび上がる'},
   {id:'xShiroiMajoToKuroiEbi',name:'白い魔女と黒い海老',reading:'シロイマジョトクロイエビ',cards:[['whitestingray'],['blacklobster']],once:{graveSink:2},
@@ -12730,12 +12756,15 @@ function fieldAcronym(f){ const live=f.filter(m=>m&&m.hp>0); if(live.length!==3)
   });
 })();
 // 条件の書き方：'dragon'＝そのモンスター／'@dragon'＝ドラゴン系など種族／'#small' '#mid' '#large'＝大きさ／'#fire'＝火の属性
+// 汚染海洋生態系（デッキ編成の見出しと同じ顔ぶれ）とその大型（2026-10-11 隆基「海洋汚染主軸の役も強化したい」）
+const SEA_FAMILY_MONSTERS=new Set(['demonwhale','redorca','mosasaurus','megalodon','kraken','whitestingray','deathcrab','blacklobster','swordfish','spearsquid','lardfish','bomb','jewelfish','mermaid','bigtusk','armoredjelly','fangedclam','shipworm','porkfish','kelpmimic','aquacat']);
+const BIG_SEA_MONSTERS=new Set(['demonwhale','redorca','mosasaurus','megalodon','kraken','whitestingray','bigtusk']);
 function xKindSet(name){
   return ({'@dragon':DRAGON_KIND_MONSTERS,'@reptile':REPTILE_KIND_MONSTERS,'@human':HUMAN_KIND_MONSTERS,'@trump':TRUMP_KIND_MONSTERS,
     '@beast':BEAST_KIND_MONSTERS,'@plant':PLANT_KIND_MONSTERS,'@insect':INSECT_KIND_MONSTERS,'@poison':POISON_KIND_MONSTERS,
     '@spear':SPEAR_KIND_MONSTERS,'@dark':DARK_KIND_MONSTERS,'@flying':FLYING_KIND_MONSTERS,'@armored':ARMORED_KIND_MONSTERS,
     '@water':WATER_KIND_MONSTERS,'@female':FEMALE_KIND_MONSTERS,'@knight':KNIGHT_KIND_MONSTERS,'@undead':UNDEAD_KIND_MONSTERS,
-    '@mage':CARBUNCLE_MAGES})[name]||null;
+    '@mage':CARBUNCLE_MAGES,'@sea':SEA_FAMILY_MONSTERS,'@bigsea':BIG_SEA_MONSTERS})[name]||null;
 }
 function xMatch(m,item){
   if(item[0]==='@'){ const k=xKindSet(item); return !!(k&&k.has(m.id)); }
@@ -12968,6 +12997,12 @@ function applyOnceEffects(side,o,label){
   if(o.cockatriceFry){ pd.monsterField.forEach(m=>{ if(m&&m.hp>0) m.hp=Math.min(m.maxHp,m.hp+60); }); parts.push('揚げたての唐揚げで味方全体 HP +60');
     if(Math.random()<1/6){ const c=pd.monsterField.find(x=>x&&x.hp>0&&x.id==='cook'); if(c){ const before=c.def.atk; c.def=Object.assign({},c.def,{atk:Math.max(0,before-30)}); parts.push('……料理人が、うっかり頭の目を見てしまった。右腕が石になった（料理人の攻撃 -30）'); } } }
   // 冥府魔道（2026-10-11 隆基「浪人×渡世人×用心棒。自分のデッキから3枚墓場に送り、場にいる3体を大幅に能力アップ」）
+  // 船底の穴：相手の船乗りを先に狙う。いなければ味方の船が沈む
+  if(o.shipHole){
+    const pick=(sd)=>{ const q=sd==='p'?G.p:G.e; return q.monsterField.find(x=>x&&x.hp>0&&(x.id==='pirate'||x.id==='oceanknight')); };
+    let tsd=os, t=pick(os); if(!t){ tsd=side; t=pick(side); }
+    if(t){ t.maxHp=Math.max(1,Math.ceil(t.maxHp/2)); t.hp=Math.min(t.hp,t.maxHp); parts.push((tsd===side?'味方の':'相手の')+t.def.name+'の船底に穴が開いた（最大HP 半分）'); try{ recEvent(side,'role','船底の穴：'+(tsd===side?'味方の':'相手の')+t.def.name+'の船が、内側から沈み始めた'); }catch(e){} }
+  }
   if(o.meifuMadou){
     const gone=[];
     for(let k=0;k<3&&pd.deck.length;k++){ const c=pd.deck.shift(); const d=MD[c.id]; if(c.type==='monster'&&d) pd.graveyard.push({uid:'meifu-'+Date.now()+'-'+k+'-'+Math.random(),id:c.id,def:d,maxHp:d.hp}); gone.push(d?d.name:(c.name||c.id)); }
@@ -21348,6 +21383,7 @@ function onceEffectText(o){
   if(o.mdSecret) t.push('メタルドラゴンのHP全快、攻撃+60（ずっと）');
   if(o.cockatriceFry) t.push('味方全体 HP +60（6回に1回、料理人が頭の目を見て石化しかける）');
   if(o.whaleFeast) t.push('魔王鯨のHP全快');
+  if(o.shipHole) t.push('船乗り（海賊か海洋騎士）の最大HPを半分に');
   if(o.meifuMadou) t.push('自分のデッキの上から3枚を墓場へ。浪人・渡世人・用心棒の攻撃+80・HP+100（ずっと）');
   if(o.freezeHercules) t.push('ゴッドヘラクレスが凍りつく（次の番、動けない）');
   if(o.kissHeal) t.push('ドラゴンソルジャーのHP全快、攻撃+40（ずっと）');
@@ -23999,6 +24035,10 @@ function dqRun(){
           const hurt=live(pd).filter(x=>x.hp<x.maxHp).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
           if(hurt){ hurt.hp=Math.min(hurt.maxHp,hurt.hp+20); log(pre+'【焼きたて】パン職人が'+hurt.def.name+'にパンを渡した（HP +20）','gold'); }
         });
+        const ak=EXTRA_ROLES.find(x=>x.id==='xAkashio');
+        if(ak&&extraRoleHolds(side,ak)){ const os=side==='p'?'e':'p', od=os==='p'?G.p:G.e; let n=0; od.monsterField.forEach((x,i)=>{ if(x&&x.hp>0&&!x.poison){ poisonMonster(os,i,1,true); n++; } }); if(n) log(pre+'【赤潮】海が赤く染まった——敵モンスター'+n+'体が毒','gold'); }
+        const mo=EXTRA_ROLES.find(x=>x.id==='xMoNoMori');
+        if(mo&&extraRoleHolds(side,mo)) live(pd).forEach(x=>{ if(x.id==='kelpmimic'&&x._kelpDodged){ x._kelpDodged=false; log(pre+'【藻の森】海藻魚が、また藻の陰に隠れた','gold'); } });
         const rr=EXTRA_ROLES.find(x=>x.id==='xSakabaNoUtaite');
         if(rr&&extraRoleHolds(side,rr)){ live(pd).forEach(x=>{ x.hp=Math.min(x.maxHp,x.hp+15); }); log(pre+'【酒場の歌い手】酒場に歌が流れる（味方全体 HP +15）','gold'); }
       }
@@ -24019,7 +24059,10 @@ function dqRun(){
         if(tg&&tg.hp>0){
           if(attacker.id==='aquacat'&&FISH.has(tg.id)){ result.atk*=2; log(pre+'【大好物】アクアキャットが'+tg.def.name+'に飛びかかった（ダメージ2倍）','gold'); }
           if(attacker.id==='shipworm'&&WOOD.has(tg.id)){ result.atk*=2; log(pre+'【船食い】シップワームが'+tg.def.name+'を食い破る（ダメージ2倍）','gold'); }
-          if(tg.id==='bigtusk'){ result.atk=Math.round(result.atk*0.7); log('【分厚い脂肪】ビッグタスクの脂肪が攻撃を受け止めた（ダメージ3割減）','bad'); }
+          if(tg.id==='bigtusk'){ const kt=EXTRA_ROLES.find(x=>x.id==='xKaijuuNoTenteki'), on=kt&&extraRoleHolds(side,kt);
+            if(on&&attacker.id==='redorca') log(pre+'【海獣の天敵】レッドオルカの牙が、ビッグタスクの脂肪を貫いた','gold');
+            else if(on){ result.atk=Math.round(result.atk*0.5); log('【海獣の天敵】天敵の影に、ビッグタスクが身を固めた（ダメージ5割減）','bad'); }
+            else { result.atk=Math.round(result.atk*0.7); log('【分厚い脂肪】ビッグタスクの脂肪が攻撃を受け止めた（ダメージ3割減）','bad'); } }
           if(tg.id==='kelpmimic'&&!tg._kelpDodged){ tg._kelpDodged=true; result.atk=0; result.label=(result.label||'')+'（海藻に紛れてかわされた）'; log('【擬態】海藻魚が海藻に紛れ、攻撃をかわした','bad'); }
           if(tg.id==='armoredjelly'&&!attacker.poison){ const pd=side==='p'?G.p:G.e, i=pd.monsterField.indexOf(attacker); if(i>=0){ poisonMonster(side,i,1,true); log(pre+attacker.def.name+'は装甲海月の触手に触れた——毒','bad'); } }
         }
@@ -24035,7 +24078,7 @@ function dqRun(){
       if(!pd._ddBusy){
         const cur=new Set(pd.monsterField.filter(Boolean).map(m=>m.uid)), prev=pd._fieldUids||cur;
         prev.forEach(uid=>{ if(cur.has(uid)) return; const g=pd.graveyard.find(x=>x&&x.uid===uid);
-          if(g&&!g.noKill&&g.id==='porkfish'){ const pre=side==='p'?'':'[敵] '; live(pd).forEach(x=>{ x.hp=Math.min(x.maxHp,x.hp+30); }); log(pre+'【ご馳走】ポークフィッシュの身が、味方の腹を満たした（味方全体 HP +30）','gold'); }
+          if(g&&!g.noKill&&g.id==='porkfish'){ const pre=side==='p'?'':'[敵] ', herd=live(pd).some(x=>x.id==='porkfish'), h=herd?60:30; live(pd).forEach(x=>{ x.hp=Math.min(x.maxHp,x.hp+h); }); log(pre+(herd?'【豚魚の群れ】群れごと宴になった——':'【ご馳走】')+'ポークフィッシュの身が、味方の腹を満たした（味方全体 HP +'+h+'）','gold'); }
         });
       }
     }catch(e){}
@@ -24050,10 +24093,10 @@ function dqRun(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.30</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.30%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.31</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.31%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.30";
+  var FORM="", PRE={}, V="0.1.31";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
