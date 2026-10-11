@@ -12567,6 +12567,9 @@ const EXTRA_ROLES=[
    meaning:'どんな荒くれも、酒場の灯りを見れば帰ってくる。',desc:'海賊か海洋騎士と、酒場の女主人が同時に場にいる。自分の番の始めに、海の男のHP +20。',hint:'港の酒場に、灯りがともる'},
   {id:'xKataribe',name:'語り部',reading:'カタリベ',cards:[['tavern'],['bard']],
    meaning:'物語が終わりに近づくほど、神々の話は大きくなる。',desc:'酒場の女主人と吟遊詩人が同時に場にいる。自分と相手のデッキの残りの合計が少ないほど、おたがいの召喚獣の攻撃が上がる（合計48枚で±0、0枚で2倍）。',hint:'酒場の片隅で、詩人が神々の戦いを語り始める'},
+  // 2026-10-11 隆基の創作短編「血風の邂逅――浪人とダークエルフ」から
+  {id:'xKeppuuNoKaikou',name:'血風の邂逅',reading:'ケップウノカイコウ',cards:[['ronin'],['tonberry']],bothSides:true,opposite:true,aura:{ronin:{atk:60},tonberry:{atk:60}},
+   meaning:'捨てた者と、堕ちた者。答えは、刃の中にしかない。',desc:'浪人とダークエルフが、敵と味方に分かれて場にいる（同じ側では成立しない）。両者の攻撃 +60。おたがいを攻撃する時は、さらに1.5倍。',hint:'紅葉の散る古い神殿で、二つの孤高が向かい合う'},
   {id:'xJingi',name:'仁義',reading:'ジンギ',cards:[['yakuza'],['yojimbo']],
    meaning:'賽の目は裏切っても、筋は裏切らない。',desc:'渡世人と用心棒が同時に場にいる。渡世人の丁半が外れ（半）でも、用心棒が筋を通して半分の攻撃が入る。',hint:'賭場の入口に、用心棒が立つ'},
   {id:'xMakanai',name:'まかない',reading:'マカナイ',cards:[['aquacat'],['cook']],once:{healAllies:60},
@@ -24088,6 +24091,7 @@ function dqRun(){
         const kh=EXTRA_ROLES.find(x=>x.id==='xKaiheitai'); if(kh&&extraRoleHolds(side,kh)){ result.atk=Math.round(result.atk*1.5); log(pre+'【海兵隊】海・空・陸の連携で、召喚獣を攻める（1.5倍）','gold'); } }
       if(targetType==='monster'&&result&&result.atk>0){
         const tg=od.monsterField[targetSlot];
+        if(tg&&tg.hp>0&&((attacker.id==='ronin'&&tg.id==='tonberry')||(attacker.id==='tonberry'&&tg.id==='ronin'))){ result.atk=Math.round(result.atk*1.5); log(pre+'【血風の邂逅】'+attacker.def.name+'の刃が、もう一つの孤高とぶつかる（1.5倍）','gold'); }
         if(tg&&tg.hp>0&&((attacker.id==='pirate'&&tg.id==='oceanknight')||(attacker.id==='oceanknight'&&tg.id==='pirate'))){ result.atk=Math.round(result.atk*1.5); log(pre+'【宿敵】'+attacker.def.name+'が宿敵に斬りかかる（1.5倍）','gold'); }
         if(tg&&tg.hp>0){
           if(attacker.id==='aquacat'&&FISH.has(tg.id)){ result.atk*=2; log(pre+'【大好物】アクアキャットが'+tg.def.name+'に飛びかかった（ダメージ2倍）','gold'); }
@@ -24154,10 +24158,10 @@ function kataribeMult(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.33</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.33%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.34</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.34%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.33";
+  var FORM="", PRE={}, V="0.1.34";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
