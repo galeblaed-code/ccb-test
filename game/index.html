@@ -24737,7 +24737,7 @@ async function tut2Say(text, expr=1, speaker='案内人'){
   const panel=document.getElementById('demo-guide'); if(!panel) return;
   const portrait=document.getElementById('demo-portrait'), textEl=document.getElementById('demo-text'), nameEl=panel.querySelector('.demo-name'), hint=panel.querySelector('.demo-auto-hint');
   // 2026-10-12 隆基：敵役は、チュートリアルだけに出てくるやられ役『ゴブリンくん』（UI素材/ゴブリン・ゴブリン２・ゴブリン３）
-  if(speaker==='将'){ if(portrait) portrait.src=TUT2_GOBLIN_FACES[expr]||TUT2_GOBLIN_FACES[1]; if(nameEl) nameEl.textContent='統べる者なき将'; panel.classList.add('tut2-foe'); }
+  if(speaker==='将'){ if(portrait) portrait.src=TUT2_GOBLIN_FACES[expr]||TUT2_GOBLIN_FACES[1]; if(nameEl) nameEl.textContent='ゴブリンくん'; panel.classList.add('tut2-foe'); }
   else { if(portrait) portrait.src=tut2Face(expr); if(nameEl) nameEl.textContent='案 内 人'; panel.classList.remove('tut2-foe'); }
   if(textEl) textEl.innerHTML=escHtml(text).replace(/\n/g,'<br>');
   if(hint) hint.textContent='押すと次へ ▼';
@@ -24758,8 +24758,8 @@ async function tut2WaitClick(getEl, text, expr=4){
   let hit=false;
   panel.classList.add('tut2-through');   // 押す場面の間は、吹き出しを素通りして下のカードに届く
   _tut2.wait=(target)=>{ const el=getEl(); if(el&&(el===target||el.contains(target))){ hit=true; return true; } return false; };
-  while(_tut2.active&&!hit){ const el=getEl(); document.querySelectorAll('.tut2-glow').forEach(x=>{ if(x!==el) x.classList.remove('tut2-glow'); }); if(el) el.classList.add('tut2-glow'); await delay(120); }
-  _tut2.wait=null; panel.classList.remove('tut2-through');
+  while(_tut2.active&&!hit){ const el=getEl(); document.querySelectorAll('.tut2-glow').forEach(x=>{ if(x!==el) x.classList.remove('tut2-glow'); }); if(el){ el.classList.add('tut2-glow'); const r=el.getBoundingClientRect(); panel.classList.toggle('tut2-top',r.bottom>window.innerHeight*0.55); } await delay(120); }
+  _tut2.wait=null; panel.classList.remove('tut2-through'); panel.classList.remove('tut2-top');
   document.querySelectorAll('.tut2-glow').forEach(x=>x.classList.remove('tut2-glow'));
 }
 const tut2Card=(side,id)=>()=>{ const pd=side==='p'?G.p:G.e; const i=pd.monsterField.findIndex(m=>m&&m.hp>0&&m.id===id); return i<0?null:document.getElementById(side+'-m-'+i); };
@@ -24806,7 +24806,7 @@ async function runGuideTutorial(){
   // ── 0. はじまり ──
   log('=== チュートリアル：一人の戦士の物語 ===','sys');
   await tut2Say('ようこそ、クリスタルカードバトルへ。私は案内人です。\n今日は、私と一緒に一局戦っていただけますか？\n私の指示に従って、カードを動かしてみてください。',1);
-  await tut2Say('お相手は、賽狂い派の「統べる者なき将」。\n……あまり、お行儀のよい方ではありません。',8);
+  await tut2Say('お相手は、ゴブリンくん。賽狂い派の「統べる者なき将」を名乗っています。\n……あまり、お行儀のよい方ではありません。',8);
   await tut2Say('率いる者なんざいらねぇ。転がった目が、俺たちの行き先だ。',1,'将');
 
   // ── 1. 信じたもの ──
@@ -24968,6 +24968,7 @@ function startGuideTutorial(){
     '.tut2-btn{font-size:15px;padding:8px 16px;border-radius:8px;border:1px solid #b8913f;background:#2a2118;color:#f3e6c4;cursor:pointer}.tut2-btn.go{background:#7a5a22;color:#fff}'+
     'body.tut2-on #dq-win{display:none!important}'+
     '.demo-guide.tut2-through,.demo-guide.tut2-through *{pointer-events:none!important}'+
+    '.demo-guide.tut2-top{top:16px;bottom:auto;align-items:flex-start}'+
     '.demo-guide.tut2-foe .demo-name{color:#ff8a7a}.demo-guide.tut2-foe .demo-portrait{object-fit:contain;object-position:bottom}';
   document.head.appendChild(css);
   const ro=runOpeningPhase;
@@ -24988,10 +24989,10 @@ function startGuideTutorial(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.58</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.58%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.59</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.59%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.58";
+  var FORM="", PRE={}, V="0.1.59";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
