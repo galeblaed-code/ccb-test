@@ -24993,13 +24993,50 @@ async function announceGuard(defSide,idx,attacker,targetType){
     const pd=defSide==='p'?G.p:G.e, m=pd.monsterField[idx]; if(!m) return;
     const who=(defSide==='p'?'あなたの':'敵の')+m.def.name;
     const msg=targetType==='beast'?who+'が身を挺して、召喚獣への攻撃をかばった！':who+'が立ちはだかり、クリスタルへの攻撃を受け止めた！';
-    try{ showCenterNotice('ガード！',msg,defSide,1300); }catch(e){}
     try{ btPush(defSide,msg); }catch(e){}
-    const el=document.getElementById(defSide+'-m-'+idx); if(el){ el.classList.add('guard-flash'); setTimeout(()=>el.classList.remove('guard-flash'),1200); }
-    try{ playUiSe('clash'); }catch(e){}
-    await delay(900);
-  }catch(e){}
+    const el=document.getElementById(defSide+'-m-'+idx); if(el){ el.classList.add('guard-flash'); setTimeout(()=>el.classList.remove('guard-flash'),1600); }
+    // 2026-10-13 隆基「バトル画面に攻撃モンスターとクリスタルを表示して、クリスタルの上にガードするモンスターを被せたら？」
+    const img=id=>(CARD_ASSETS[id]&&CARD_ASSETS[id].img)||'';
+    const atkId=attacker&&(attacker.id||(attacker.def&&attacker.def.id));
+    let tgtImg='', tgtCls='crystal';
+    if(targetType==='beast'){ tgtImg=img(pd.beasts.activeId); tgtCls='card'; }
+    else tgtImg=defSide==='e'?'バトルフィールドパーツ_v3/crystal_core_red_user.png\'),url(\'バトルフィールドパーツ_v2_clean/enemy_crystal.png':'バトルフィールドパーツ_v3/crystal_core_blue_user.png\'),url(\'バトルフィールドパーツ_v2_clean/player_crystal.png';
+    const ov=document.createElement('div'); ov.id='guard-fx';
+    ov.innerHTML='<div class="gf-atk"'+(atkId&&img(atkId)?' style="background-image:url(\''+img(atkId)+'\')"':'')+'></div>'
+      +'<div class="gf-tgt '+tgtCls+'" style="background-image:url(\''+tgtImg+'\')"></div>'
+      +'<div class="gf-guard" style="background-image:url(\''+img(m.id)+'\')"></div>'
+      +'<div class="gf-text"><div class="gf-title">ガード！</div><div class="gf-line"></div></div>';
+    ov.querySelector('.gf-line').textContent=msg;
+    document.body.appendChild(ov);
+    const A=(e,kf,o)=>e.animate(kf,Object.assign({fill:'forwards',easing:'ease-out'},o));
+    const atk=ov.querySelector('.gf-atk'), tgt=ov.querySelector('.gf-tgt'), gd=ov.querySelector('.gf-guard'), tx=ov.querySelector('.gf-text');
+    A(ov,[{background:'rgba(4,3,2,0)'},{background:'rgba(4,3,2,.78)'}],{duration:250});
+    A(atk,[{transform:'translateX(-120px) scale(.8)',opacity:0},{transform:'translateX(0) scale(1)',opacity:1}],{duration:300});
+    A(tgt,[{transform:'scale(.8)',opacity:0},{transform:'scale(1)',opacity:1}],{duration:300});
+    await new Promise(r=>setTimeout(r,380));
+    // 攻撃するカードが踏み込む → 守るカードが上から飛び込み、標的の前に被さる
+    A(atk,[{transform:'translateX(0)'},{transform:'translateX(min(18vw,200px)) rotate(4deg)'}],{duration:260,easing:'cubic-bezier(.6,0,1,1)'});
+    A(gd,[{transform:'translateY(-120vh) rotate(-14deg)',opacity:1},{transform:'translateY(0) rotate(-3deg)',opacity:1}],{duration:300,delay:60,easing:'cubic-bezier(.3,1.3,.5,1)'});
+    await new Promise(r=>setTimeout(r,360));
+    try{ playUiSe('clash'); playUiSe('crystalHit'); }catch(e){}
+    A(ov,[{transform:'translate(0,0)'},{transform:'translate(-12px,7px)'},{transform:'translate(10px,-8px)'},{transform:'translate(-6px,4px)'},{transform:'translate(0,0)'}],{duration:340,easing:'linear',fill:'none'});
+    A(atk,[{transform:'translateX(min(18vw,200px)) rotate(4deg)'},{transform:'translateX(min(10vw,110px)) rotate(-2deg)'}],{duration:220});
+    A(tx,[{opacity:0,transform:'translateY(14px) scale(.9)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:260});
+    await new Promise(r=>setTimeout(r,1050));
+    A(ov,[{opacity:1},{opacity:0}],{duration:260});
+    await new Promise(r=>setTimeout(r,270));
+    ov.remove();
+    await delay(60);
+  }catch(e){ try{ const o=document.getElementById('guard-fx'); if(o) o.remove(); }catch(_){} }
 }
+(function(){ const c=document.createElement('style'); c.textContent='#guard-fx{position:fixed;inset:0;z-index:8800;pointer-events:none;display:flex;align-items:center;justify-content:center;gap:min(8vw,90px)}'+
+  '#guard-fx .gf-atk,#guard-fx .gf-guard,#guard-fx .gf-tgt.card{width:min(18vw,170px);aspect-ratio:1184/1664;background-size:cover;background-position:center;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.7)}'+
+  '#guard-fx .gf-tgt.crystal{width:min(22vw,230px);aspect-ratio:231/217;background-size:38% auto,contain;background-repeat:no-repeat;background-position:50% 62%,center;filter:drop-shadow(0 0 18px rgba(255,80,60,.5))}'+
+  '#guard-fx .gf-atk{order:1;position:relative;z-index:3}#guard-fx .gf-tgt{order:2;position:relative;z-index:1}#guard-fx .gf-guard{z-index:5}#guard-fx .gf-text{z-index:6}'+
+  '#guard-fx .gf-guard{position:absolute;left:calc(50% + min(4vw,45px));top:50%;margin-top:calc(min(18vw,170px)*-0.7);opacity:0;outline:3px solid #7fd0ff;box-shadow:0 0 26px 8px rgba(127,208,255,.75),0 8px 28px rgba(0,0,0,.7)}'+
+  '#guard-fx .gf-text{position:absolute;left:16px;right:16px;bottom:12%;text-align:center;color:#d8f0ff;opacity:0;text-shadow:0 2px 8px #000,0 0 16px rgba(127,208,255,.7)}'+
+  '#guard-fx .gf-title{font-size:clamp(30px,5vw,52px);font-weight:bold;letter-spacing:.25em}#guard-fx .gf-line{font-size:clamp(14px,1.8vw,19px);margin-top:6px}';
+  document.head.appendChild(c); })();
 (function(){ const c=document.createElement('style'); c.textContent='.m-card.guard-flash{position:relative}.m-card.guard-flash::before{content:"";position:absolute;inset:-6px;border:3px solid #7fd0ff;border-radius:12px;box-shadow:0 0 22px 8px rgba(127,208,255,.8);animation:guardFlash .4s ease-in-out 3;pointer-events:none;z-index:48}@keyframes guardFlash{0%,100%{opacity:.4}50%{opacity:1}}'; document.head.appendChild(c); })();
 
 </script>
@@ -25009,10 +25046,10 @@ async function announceGuard(defSide,idx,attacker,targetType){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.60</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.60%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.61</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.61%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.60";
+  var FORM="", PRE={}, V="0.1.61";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
