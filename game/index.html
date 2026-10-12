@@ -10071,7 +10071,7 @@ const AI_FACTIONS={
   ruin:{
     name:'賽狂い派', style:'gamble',
     motto:'勝ち負けなんざ後でいい。賽が転がる音だけが本物だ。',
-    pool:['joker','cerberus','demon','sworddancer','bomb','tonberry','chaosdragon','blackknight','gigas','werewolf','mimic','nightmare'],
+    pool:['joker','cerberus','demon','sworddancer','bomb','tonberry','chaosdragon','blackknight','gigas','werewolf','mimic','nightmare','goblin','zombie','skeleton'],
     beasts:['odin','bahamut','phoenix','moogle','leviathan','ifrit','fenrir'],
     magic:['death','ultima','meteor','firaga','thundaga','blizzaga','gravide','haste','drain','arise'],
     members:[
@@ -10080,6 +10080,7 @@ const AI_FACTIONS={
       {name:'断頭台の常連', fav:['cerberus','demon','tonberry'], beast:'odin',    magic:['death','death']},
       {name:'爆ぜ屋',       fav:['bomb','flamefly','cactuar'],       beast:'ifrit',   magic:['firaga','thundaga']},
       {name:'散り刃',       fav:['sworddancer','werewolf','aspis','relic'],  beast:'phoenix', magic:['haste']},
+      {name:'統べる者なき将', fav:['goblin','zombie','skeleton'],          beast:'odin',    magic:['ultima'], armyFan:true},   // 2026-10-12 隆基：魔の軍勢を狙う破滅主義
     ],
   },
   steady:{
@@ -24610,6 +24611,26 @@ const ARMY_RIOT_DMG=120;   // 自陣へなだれ込んだ時の、自分のク�
   };
 })();
 
+// ===== 統べる者なき将（2026-10-12 隆基）：賽狂い派の6人目。魔の軍勢を最優先で狙い、軍勢が起きると喜び、自陣が燃えるほど笑う =====
+const ARMY_FAN_QUIPS=['「率いる者なんざいらねぇ。転がった目が、俺たちの行き先だ」','「来たぞ、軍勢だ！ どっちへ走るかは、賽に聞け！」','「味方の城が燃えてる？ いい音だ、もっと鳴らせ！」','「勝ち負けは後でいい。この地鳴りを聞け」'];
+(function installArmyFan(){
+  const isFan=side=>{ try{ const pd=side==='p'?G.p:G.e, f=AI_FACTIONS[pd.faction], m=f&&f.members[pd.factionMember]; return !!(m&&m.armyFan); }catch(e){ return false; } };
+  const ct=checkTransforms;
+  checkTransforms=function(side){
+    const pd=side==='p'?G.p:G.e, n0=pd?pd.monsterField.filter(m=>m&&m.id==='monsterarmy').length:0;
+    const r=ct.apply(this,arguments);
+    try{ const n1=pd.monsterField.filter(m=>m&&m.id==='monsterarmy').length; if(n1>n0&&isFan(side)) btPush(side,ARMY_FAN_QUIPS[1]); }catch(e){}
+    return r;
+  };
+  const core=applyAttackResolveCore;
+  applyAttackResolveCore=async function(side,attacker,result,targetType,targetSlot){
+    const ret=await core.apply(this,arguments);
+    try{ if(attacker&&attacker.id==='monsterarmy'&&result&&result.armyRiot&&isFan(side)&&Math.random()<0.5) btPush(side,ARMY_FAN_QUIPS[2]); }catch(e){}
+    return ret;
+  };
+})();
+
+
 </script>
 
 <style id="public-test-badge">
@@ -24617,10 +24638,10 @@ const ARMY_RIOT_DMG=120;   // 自陣へなだれ込んだ時の、自分のク�
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.51</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.51%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.52</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.52%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.51";
+  var FORM="", PRE={}, V="0.1.52";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
