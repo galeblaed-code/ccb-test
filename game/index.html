@@ -24751,9 +24751,10 @@ async function tut2WaitClick(getEl, text, expr=4){
   if(hint) hint.textContent='光っているところを押してください';
   panel.classList.remove('hide');
   let hit=false;
+  panel.classList.add('tut2-through');   // 押す場面の間は、吹き出しを素通りして下のカードに届く
   _tut2.wait=(target)=>{ const el=getEl(); if(el&&(el===target||el.contains(target))){ hit=true; return true; } return false; };
   while(_tut2.active&&!hit){ const el=getEl(); document.querySelectorAll('.tut2-glow').forEach(x=>{ if(x!==el) x.classList.remove('tut2-glow'); }); if(el) el.classList.add('tut2-glow'); await delay(120); }
-  _tut2.wait=null;
+  _tut2.wait=null; panel.classList.remove('tut2-through');
   document.querySelectorAll('.tut2-glow').forEach(x=>x.classList.remove('tut2-glow'));
 }
 const tut2Card=(side,id)=>()=>{ const pd=side==='p'?G.p:G.e; const i=pd.monsterField.findIndex(m=>m&&m.hp>0&&m.id===id); return i<0?null:document.getElementById(side+'-m-'+i); };
@@ -24780,14 +24781,17 @@ async function runGuideTutorial(){
   try{ document.getElementById('turn-num').textContent=''; }catch(e){}
   renderAll(); await delay(300);
   // 画面の押し方：案内人の吹き出しを読む時は、どこを押しても次へ。光っている所を待つ時は、そこだけ
+  // 2026-10-12 修正：『クリック』だと、引っ張って攻撃する仕組み（指やマウスを押し下げた瞬間に動く）に飲み込まれて止まることがあった。
+  // → 押し下げた瞬間（pointerdown）で判断し、チュートリアル中はゲーム側の押す・引っ張る処理に何も届かないようにする
   _tut2.handler=(e)=>{
     if(!_tut2.active) return;
     if(e.target.closest('#grave-pick,#tut2-btns,#demo-skip,.role-discover-popup')) return;
-    e.stopPropagation(); e.preventDefault();
+    e.stopPropagation(); if(e.type!=='pointerdown') e.preventDefault();
+    if(e.type!=='pointerdown') return;
     if(_tut2.wait){ _tut2.wait(e.target); return; }
     _tut2.next=true;
   };
-  document.addEventListener('click',_tut2.handler,true);
+  ['pointerdown','pointerup','click','mousedown','mouseup','touchstart','touchend'].forEach(t=>document.addEventListener(t,_tut2.handler,{capture:true,passive:false}));
   const skip=document.getElementById('demo-skip');
   if(skip){ let done=false; try{ done=!!readCcbStorage(TUT2_DONE_KEY); }catch(e){} skip.style.display=done?'':'none'; skip.onclick=()=>endGuideTutorial('skip'); }
   const P=G.p, E=G.e;
@@ -24930,7 +24934,7 @@ async function tut2Choice(){
 }
 function endGuideTutorial(next){
   _tut2.active=false; _tut2.wait=null; document.body.classList.remove('tut2-on');
-  if(_tut2.handler){ document.removeEventListener('click',_tut2.handler,true); _tut2.handler=null; }
+  if(_tut2.handler){ ['pointerdown','pointerup','click','mousedown','mouseup','touchstart','touchend'].forEach(t=>document.removeEventListener(t,_tut2.handler,{capture:true})); _tut2.handler=null; }
   document.querySelectorAll('.tut2-glow').forEach(x=>x.classList.remove('tut2-glow'));
   const gp=document.getElementById('grave-pick'); if(gp) gp.remove();
   if(G){ G._tutDice=null; G._tutInteractive=false; }
@@ -24954,6 +24958,7 @@ function startGuideTutorial(){
     '#tut2-btns{display:flex;gap:10px;margin-top:10px;justify-content:flex-end}'+
     '.tut2-btn{font-size:15px;padding:8px 16px;border-radius:8px;border:1px solid #b8913f;background:#2a2118;color:#f3e6c4;cursor:pointer}.tut2-btn.go{background:#7a5a22;color:#fff}'+
     'body.tut2-on #dq-win{display:none!important}'+
+    '.demo-guide.tut2-through,.demo-guide.tut2-through *{pointer-events:none!important}'+
     '.demo-guide.tut2-foe .demo-name{color:#ff8a7a}.demo-guide.tut2-foe .demo-portrait{border-radius:8px;object-fit:cover}';
   document.head.appendChild(css);
   const ro=runOpeningPhase;
@@ -24963,6 +24968,10 @@ function startGuideTutorial(){
   };
 })();
 
+// 2026-10-12：選ぶ窓の絵は、押したまま少し動くとブラウザが絵を引っ張ろうとして（画像のドラッグ）クリックが消える → 絵を引っ張れないようにする
+(function(){ const c=document.createElement('style'); c.textContent='#grave-pick img,#deck-peek img,#magic-popup img,.tut2-btn,#tut2-btns *{-webkit-user-drag:none;user-drag:none;pointer-events:none}#tut2-btns .tut2-btn{pointer-events:auto}'; document.head.appendChild(c);
+  document.addEventListener('dragstart',e=>{ if(e.target&&e.target.closest&&e.target.closest('#grave-pick,#deck-peek,#magic-popup,#tut2-btns')) e.preventDefault(); },true); })();
+
 </script>
 
 <style id="public-test-badge">
@@ -24970,10 +24979,10 @@ function startGuideTutorial(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.54</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.54%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.55</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.55%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.54";
+  var FORM="", PRE={}, V="0.1.55";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
