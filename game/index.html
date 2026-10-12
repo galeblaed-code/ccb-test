@@ -4482,10 +4482,9 @@ img[src*="ゼネラルデビル"]{object-fit:fill!important;}
   <img class="splash-logo" src="クリスタルカードバトル　ロゴ.webp" alt="クリスタルカードバトル">
   <div class="title-splash-text" id="title-splash-text">CLICK / TAP TO START BGM</div>
   <div class="splash-actions">
-    <button class="splash-tutorial-btn" type="button" onpointerup="event.stopPropagation()" onclick="event.stopPropagation();startTutorial()">チュートリアル</button>
+    <button class="splash-tutorial-btn" type="button" onpointerup="event.stopPropagation()" onclick="event.stopPropagation();startGuideTutorial()">チュートリアル</button>
     <button class="splash-tutorial-btn" type="button" onpointerup="event.stopPropagation()" onclick="event.stopPropagation();startCoachBattle()">案内人と一局</button>
-    <button class="splash-demo-btn" type="button" onpointerup="event.stopPropagation()" onclick="event.stopPropagation();startDemoBattle()">模擬戦を見る</button>
-    <button class="splash-demo-btn" type="button" onpointerup="event.stopPropagation()" onclick="event.stopPropagation();startDemoBattle(2)">伝説の一戦</button>
+    <!-- 2026-10-12 隆基：教える系はチュートリアル一つにまとめた（模擬戦を見る・最初の説明・旧チュートリアルを外す）。伝説の一戦は観戦の中へ -->
     <button class="splash-demo-btn" type="button" onpointerup="event.stopPropagation()" onclick="event.stopPropagation();openSpectatorMenu()">観戦する</button>
     <!-- 問いのくじ（openQuestionLottery）は 2026-10-05 隆基の判断でタイトルから外した。中身は残してある -->
     <button class="splash-dictionary-btn" type="button" onpointerup="event.stopPropagation()" onclick="event.stopPropagation();openRoleDictionary('roles')">発見の記録</button>
@@ -10391,9 +10390,7 @@ async function runOpeningPhase(){
     coachTip('intro');
   } else if(G.tutorialMode){
     tutAdvance('creed');
-  } else if(!readCcbStorage('ccb_skip_tutorial')){
-    await showOpeningTutorial();
-  }
+  }   // 2026-10-12：最初の説明は新しいチュートリアルにまとめたので出さない（showOpeningTutorial は残してある）
   setBtns([{label:'開幕配置を開始', cls:'green', fn:async()=>{
     setBtns([]);
     await openingCallFor('p');
@@ -10856,11 +10853,13 @@ function openSpectatorMenu(){
     +'<div class="sp-row"><label>一方</label><select id="sp-a">'+opts+'</select></div>'
     +'<div class="sp-row"><label>もう一方</label><select id="sp-b">'+opts+'</select></div>'
     +'<div id="sp-motto" class="er-sub"></div>'
-    +'<div class="er-actions"><button class="btn blue" type="button" id="sp-go">観戦を始める</button><button class="btn" type="button" id="sp-cancel">やめる</button></div></div>';
+    +'<div class="er-actions"><button class="btn blue" type="button" id="sp-go">観戦を始める</button><button class="btn" type="button" id="sp-cancel">やめる</button></div>'
+    +'<div class="er-sub" style="margin-top:10px">決まった名勝負を再現して見ることもできます。</div><div class="er-actions"><button class="btn" type="button" id="sp-legend">伝説の一戦（再現）を見る</button></div></div>';
   document.body.appendChild(el);
   const upd=()=>{ const a=document.getElementById('sp-a').value,b=document.getElementById('sp-b').value; const t=k=>k&&AI_FACTIONS[k]?AI_FACTIONS[k].name+'「'+AI_FACTIONS[k].motto+'」':'（おまかせ）'; document.getElementById('sp-motto').innerHTML=escHtml(t(a))+'<br>'+escHtml(t(b)); };
   el.querySelectorAll('select').forEach(x=>x.onchange=upd); upd();
   document.getElementById('sp-cancel').onclick=()=>el.remove();
+  document.getElementById('sp-legend').onclick=()=>{ el.remove(); startDemoBattle(2); };
   document.getElementById('sp-go').onclick=()=>{ const a=document.getElementById('sp-a').value,b=document.getElementById('sp-b').value; el.remove(); startSpectator(a,b); };
 }
 function startSpectator(fa,fb){
@@ -24479,7 +24478,7 @@ const JACK_STANDIN=new Set(['baker','cook','blacksmith','moneychanger','armsdeal
   document.head.appendChild(css);
   const cands=pd=>pd.graveyard.map((g,i)=>({g,i})).filter(x=>x.g&&x.g.id&&MD[x.g.id]&&!TRANSFORM_ONLY.includes(x.g.id));
   const best=list=>list.slice().sort((a,b)=>((MD[b.g.id].pv||0)-(MD[a.g.id].pv||0))||((MD[b.g.id].atk||0)-(MD[a.g.id].atk||0))||((MD[b.g.id].hp||0)-(MD[a.g.id].hp||0)))[0];
-  const human=side=>side==='p'&&G&&!G.spectate&&!G.demoMode&&typeof window.__ccbRun==='undefined';
+  const human=side=>side==='p'&&G&&!G.spectate&&(!G.demoMode||G._tutInteractive)&&typeof window.__ccbRun==='undefined';
   function pickUI(list){
     // 役発見の看板・お知らせの窓が消えてから出す（最長8秒待つ）
     const ready=()=>!document.querySelector('.role-discover-popup')&&!document.querySelector('#role-plate.show');
@@ -24708,6 +24707,262 @@ function deckGuarded(side){ try{ const r=EXTRA_ROLES.find(x=>x.id==='xBouchou');
   }
 })();
 
+// ══════════════════════════════════════════════════════
+//   新しいチュートリアル（2026-10-12 隆基×ヴァッシュ）
+//   案内人の女の子と一緒に、統べる者なき将の軍勢と戦う。一人の戦士の戦いと恋の物語。
+//   デッキもダイスも案内人の魔法で固定（最後に種明かし）。台本＝チュートリアル台本_下書き.md
+//   「この試合は案内人の女の子が紡いだ大切な物語だ」（隆基）→ 長さは削らない。初回はスキップなし
+// ══════════════════════════════════════════════════════
+const TUT2_PLAYER_CONFIG={ _demo:true, _tut2:true,
+  beasts:['ifrit','carbuncle','shiva'],
+  magic:['cure','raise','fire','blizzard','thunder','poisona'],
+  monsters:['warrior','whitewitch','monk','dragoon','fatetwins','warrior','whitewitch','monk','dragoon','fatetwins','knight','knight','paladin','paladin','acolyte','acolyte','platoon','platoon','archer','archer','sahagin','sahagin','chocobo','chocobo'] };
+const TUT2_ENEMY_CONFIG={ faction:'ruin', member:5, aiStyle:'gamble',
+  beasts:['odin','phoenix','leviathan'],
+  magic:['fire','ultima','death','meteor','gravide','haste'],
+  monsters:['goblin','zombie','skeleton','goblin','zombie','skeleton','joker','joker','demon','demon','bomb','bomb','mimic','mimic','cerberus','cerberus','nightmare','nightmare','tonberry','tonberry','gigas','gigas','werewolf','werewolf'] };
+const TUT2_DONE_KEY='ccb_tut2_done';
+let _tut2={active:false,next:false,wait:null,handler:null};
+
+// ダイスの目を決めておく（台本の時だけ）
+(function(){ const ro=rollOne; rollOne=function(){ if(G&&G._tutDice&&G._tutDice.length) return G._tutDice.shift(); return ro.apply(this,arguments); }; })();
+
+function tut2Face(n){ return demoPortraitSrc(n); }
+async function tut2Say(text, expr=1, speaker='案内人'){
+  if(!_tut2.active) return;
+  const panel=document.getElementById('demo-guide'); if(!panel) return;
+  const portrait=document.getElementById('demo-portrait'), textEl=document.getElementById('demo-text'), nameEl=panel.querySelector('.demo-name'), hint=panel.querySelector('.demo-auto-hint');
+  if(speaker==='将'){ if(portrait) portrait.src=(CARD_ASSETS.monsterarmy&&CARD_ASSETS.monsterarmy.img)||''; if(nameEl) nameEl.textContent='統べる者なき将'; panel.classList.add('tut2-foe'); }
+  else { if(portrait) portrait.src=tut2Face(expr); if(nameEl) nameEl.textContent='案 内 人'; panel.classList.remove('tut2-foe'); }
+  if(textEl) textEl.innerHTML=escHtml(text).replace(/\n/g,'<br>');
+  if(hint) hint.textContent='押すと次へ ▼';
+  panel.classList.remove('hide');
+  _tut2.next=false;
+  while(_tut2.active&&!_tut2.next) await delay(60);
+  _tut2.next=false;
+}
+// 光らせて、そこを押すまで待つ（getEl は毎回探し直す：盤面は描き直されるため）
+async function tut2WaitClick(getEl, text, expr=4){
+  if(!_tut2.active) return;
+  const panel=document.getElementById('demo-guide');
+  const portrait=document.getElementById('demo-portrait'), textEl=document.getElementById('demo-text'), nameEl=panel.querySelector('.demo-name'), hint=panel.querySelector('.demo-auto-hint');
+  if(portrait) portrait.src=tut2Face(expr); if(nameEl) nameEl.textContent='案 内 人'; panel.classList.remove('tut2-foe');
+  if(textEl) textEl.innerHTML=escHtml(text).replace(/\n/g,'<br>');
+  if(hint) hint.textContent='光っているところを押してください';
+  panel.classList.remove('hide');
+  let hit=false;
+  _tut2.wait=(target)=>{ const el=getEl(); if(el&&(el===target||el.contains(target))){ hit=true; return true; } return false; };
+  while(_tut2.active&&!hit){ const el=getEl(); document.querySelectorAll('.tut2-glow').forEach(x=>{ if(x!==el) x.classList.remove('tut2-glow'); }); if(el) el.classList.add('tut2-glow'); await delay(120); }
+  _tut2.wait=null;
+  document.querySelectorAll('.tut2-glow').forEach(x=>x.classList.remove('tut2-glow'));
+}
+const tut2Card=(side,id)=>()=>{ const pd=side==='p'?G.p:G.e; const i=pd.monsterField.findIndex(m=>m&&m.hp>0&&m.id===id); return i<0?null:document.getElementById(side+'-m-'+i); };
+const tut2Uid=(side,id)=>{ const pd=side==='p'?G.p:G.e; const m=pd.monsterField.find(x=>x&&x.hp>0&&x.id===id); return m?m.id:null; };
+function tut2OpenMagicPopup(){
+  const popup=document.getElementById('magic-popup'), grid=document.getElementById('magic-popup-grid'); if(!popup||!grid) return;
+  grid.innerHTML=G.p.magicHand.map((card,idx)=>{ const def=MG[card.id], asset=CARD_ASSETS[card.id]||{}, name=asset.en||def.name;
+    return '<button class="magic-popup-card" data-tut-idx="'+idx+'">'+(asset.img?'<img src="'+escHtml(asset.img)+'" alt="'+escHtml(name)+'">':'')+'<span class="magic-popup-card-name">'+escHtml(name)+'</span></button>'; }).join('');
+  popup.classList.remove('hide');
+}
+async function tut2Dice(vals,label,resultText,focusId,targetId){
+  G._tutDice=vals.slice();
+  try{ await rollDicePopup(vals.length,label,()=>resultText,()=>true,focusId||null,targetId||null); }catch(e){}
+  G._tutDice=null;
+  try{ closeAtkOv(true); }catch(e){}
+  await delay(250);
+}
+function tut2Shake(){ try{ screenShake(2); }catch(e){} }
+
+async function runGuideTutorial(){
+  _tut2.active=true; G_DEMO_SKIP=false; G._tut2=true; document.body.classList.add('tut2-on');
+  setBtns([]); G.phase='battle'; G.turnNumber=3;
+  setInfo('チュートリアル：案内人の指示に従って、カードを動かしてください。');
+  try{ document.getElementById('turn-num').textContent=''; }catch(e){}
+  renderAll(); await delay(300);
+  // 画面の押し方：案内人の吹き出しを読む時は、どこを押しても次へ。光っている所を待つ時は、そこだけ
+  _tut2.handler=(e)=>{
+    if(!_tut2.active) return;
+    if(e.target.closest('#grave-pick,#tut2-btns,#demo-skip,.role-discover-popup')) return;
+    e.stopPropagation(); e.preventDefault();
+    if(_tut2.wait){ _tut2.wait(e.target); return; }
+    _tut2.next=true;
+  };
+  document.addEventListener('click',_tut2.handler,true);
+  const skip=document.getElementById('demo-skip');
+  if(skip){ let done=false; try{ done=!!readCcbStorage(TUT2_DONE_KEY); }catch(e){} skip.style.display=done?'':'none'; skip.onclick=()=>endGuideTutorial('skip'); }
+  const P=G.p, E=G.e;
+
+  // ── 0. はじまり ──
+  log('=== チュートリアル：一人の戦士の物語 ===','sys');
+  await tut2Say('ようこそ、クリスタルカードバトルへ。私は案内人です。\n今日は、私と一緒に一局戦っていただけますか？\n私の指示に従って、カードを動かしてみてください。',1);
+  await tut2Say('お相手は、賽狂い派の「統べる者なき将」。\n……あまり、お行儀のよい方ではありません。',8);
+  await tut2Say('率いる者なんざいらねぇ。転がった目が、俺たちの行き先だ。',0,'将');
+
+  // ── 1. 信じたもの ──
+  await demoPlace('p','warrior'); await demoPlace('e','goblin');
+  await tut2Say('こちらは戦士。剣ひとつで、守りたいものの前に立つ人です。\nモンスターは、デッキから引いた瞬間に、自動で場へ出ます。',7);
+  await tut2WaitClick(tut2Card('p','warrior'),'それでは、戦わせてみましょう。\nまず、あなたの戦士を押してください。');
+  await tut2WaitClick(tut2Card('e','goblin'),'次に、攻撃する相手を押してください。\n……あのゴブリンです。');
+  await tut2Dice([5],'戦士の攻撃','出目 5 —— 強撃！','warrior','goblin');
+  log('戦士の一撃！','good'); await demoDmg('e','goblin',999);
+  await tut2Say('攻撃の結果は、ダイスが決めます。\nよい目が出れば強く、悪い目なら……自分に返ってくることもあります。',4);
+  await tut2Say('敵を倒すと、召喚ダイヤが手に入ります。覚えておいてくださいね。',1);
+
+  // ── 2. 守ったもの ──
+  await demoPlace('p','whitewitch'); await demoPlace('e','zombie');
+  await tut2Say('……ゾンビが、こちらを狙っています。',6);
+  await tut2Dice([4],'ゾンビの攻撃','出目 4 —— クリスタルへ！','zombie',null);
+  damageCrystal('p',45); tut2Shake(); log('[敵] ゾンビがあなたのクリスタルを殴った！ -45','bad'); renderAll(); await delay(500);
+  await tut2Say('後ろに光っているのが、あなたのクリスタル。あなたの命であり、城です。\nクリスタルを砕かれたら負け。\n相手の召喚獣を3体倒すか、相手のモンスターを全て尽きさせても勝ちです。',4);
+  await tut2Say('僧侶は、傷を癒やす人。……戦士のすぐ隣に並びましたね。',5);
+
+  // ── 3. 愛したもの ──
+  try{ discoverRole('mibunChigaiNoKoibito','p'); }catch(e){}
+  await delay(2600);
+  await tut2Say('あっ……今、何か起きましたね。\n特定のカードが並ぶと「役」が生まれます。これは「身分違いの恋人」。',6);
+  await tut2Say('……戦士と僧侶。身分の違う二人が、同じ戦場に並んでいるのですね。\nどれとどれが、どんな関係でつながるのか。それは、遊びながら見つけていくものです。',9);
+
+  // ── 4. 炎 ──
+  await tut2Say('仲良しごっこか？ 燃やしてやれ！',0,'将');
+  try{ showMagicCastCard(MG.fire,'e'); await revealMagicCastCard(MG.fire,'e'); }catch(e){}
+  await delay(500); try{ document.getElementById('magic-cast-ov').className='magic-cast-ov'; }catch(e){}
+  try{ showAreaEffect('エフェクト/ファイア.png',document.querySelector('.p-field-row .m-row'),3,900); }catch(e){}
+  log('[敵] イグニス！ 炎があなたの場を焼いた','bad');
+  await demoDmg('p','whitewitch',20);
+  await demoDmg('p','warrior',999);
+  await tut2Say('……！ 魔法です。魔法は、盤面全体を一度に変えることがあります。\n倒れたモンスターは、墓場へ行きます。',6);
+
+  // ── 5. 祈り ──
+  await demoPlace('p','monk');
+  await tut2Say('まだです。\n僧侶の祈りと、異国の僧の行。二人がそろえば、命をひとつ取り戻せます。',3);
+  await tut2Say('このあと開く窓で、墓場から戦士を選んでください。',4);
+  hideDemoGuide();
+  G._tutInteractive=true;
+  try{ demoFireRole('p','xMigawariNoInori'); }catch(e){}
+  for(let t=0;t<600&&_tut2.active&&!P.monsterField.some(m=>m&&m.id==='warrior');t++) await delay(100);
+  G._tutInteractive=false; renderAll(); await delay(500);
+  await tut2Say('戦士が、戻ってきました。\n……モンク僧は、自分の身を引いて、その場所を譲ってくれたのですね。',1);
+
+  // ── 6. 試練 ──
+  await demoPlace('p','dragoon');
+  try{ discoverRole('loveTriangle','p'); }catch(e){}
+  await delay(2600);
+  await tut2Say('まあ……！ ドラグナイトです。\n戦士の親友で……僧侶のことを、ずっと想っている人。\n戦士と僧侶とドラグナイト。これは「恋の三角関係」です。',9);
+  await tut2Say('……ごめんなさい、私、こういうお話にはつい……。\n役は、一つの組み合わせだけではありません。並ぶ顔ぶれが変われば、生まれる物語も変わります。',5);
+  await demoPlace('e','skeleton');
+  await tut2Say('召喚ダイヤが、溜まってきました。',4);
+  await demoGrant('p',Math.max(0,BD[P.beasts.activeId].cost-P.beasts.summonPts));
+  await tut2Say('召喚ダイヤがそろうと、召喚獣が現れます。\nあなたが呼んだのではありません。ダイヤがそろえば、勝手に現れるのです。',4);
+  if(P.beasts.summoned){
+    const bn=BD[P.beasts.activeId].name;
+    try{ showBeastEffect(P.beasts.activeId,document.querySelector('.enemy-crystal')); }catch(e){}
+    damageCrystal('e',150); tut2Shake(); log(bn+'の炎が、相手のクリスタルを焼いた！ -150','good'); renderAll(); await delay(700);
+    log('[敵] ゾンビとスケルトンが'+bn+'に群がる！','bad');
+    await demoDmgBeast('p',Math.floor(P.beasts.activeMaxHp*0.75));
+    P.beasts.berserk=true;
+    log('【暴走】'+bn+'が制御を離れた！','bad');
+    try{ showBeastEffect(P.beasts.activeId,document.querySelector('.player-crystal')); }catch(e){}
+    await delay(400); damageCrystal('p',60); tut2Shake(); log(bn+'の暴走——主のクリスタルを焼いた！ -60','bad'); renderAll(); await delay(700);
+    await tut2Say('……弱った召喚獣は、主の言うことを聞きません。\n召喚獣は味方ではなく、戦場に持ち込む「厄災」なのです。',8);
+    await tut2WaitClick(()=>document.querySelector('.battle-deck-zone.player.magic-deck'),'鎮めましょう。\nあなたのクリスタルの左にある、魔法の札を押してください。');
+    tut2OpenMagicPopup();
+    const ci0=P.magicHand.findIndex(c=>c.id==='cure');
+    await tut2WaitClick(()=>document.querySelector('#magic-popup-grid .magic-popup-card[data-tut-idx="'+ci0+'"]'),'「'+MG.cure.name+'」を押してください。\n傷を癒やす魔法です。');
+    try{ hideMagicPopup(); }catch(e){}
+    try{ showMagicCastCard(MG.cure,'p'); await revealMagicCastCard(MG.cure,'p'); }catch(e){}
+    await delay(400); try{ document.getElementById('magic-cast-ov').className='magic-cast-ov'; }catch(e){}
+    P.beasts.activeHp=P.beasts.activeMaxHp; P.beasts.berserk=false;
+    const ci=P.magicHand.findIndex(c=>c.id==='cure'); if(ci>=0){ const c=P.magicHand.splice(ci,1)[0]; P.vanished.push({id:c.id}); }
+    try{ showAreaEffect('エフェクト/ケアル.png',document.querySelector('.player-crystal'),2,900); }catch(e){}
+    log(MG.cure.name+'！ '+bn+'の傷が癒え、暴走が止まった','good'); renderAll(); await delay(600);
+    await tut2Say('魔法は、攻撃のためだけのものではありません。\n癒やせば、厄災も鎮まります。',3);
+  }
+
+  // ── 7. 突然の変身 ──
+  await demoPlace('e','goblin');
+  try{ checkTransforms('e'); }catch(e){}
+  await delay(4200);
+  await tut2Say('来たぞ、軍勢だ！ どっちへ走るかは、賽に聞け！',0,'将');
+  await tut2Dice([3],'魔の軍勢の攻撃','出目 3 —— 統制が崩れた！','monsterarmy',null);
+  damageCrystal('e',ARMY_RIOT_DMG); tut2Shake(); log('[敵] 【統べる者なし】魔の軍勢が、自分のクリスタルへなだれ込んだ！ -'+ARMY_RIOT_DMG,'good'); renderAll(); await delay(600);
+  await tut2Say('味方の城が燃えてる？ いい音だ、もっと鳴らせ！',0,'将');
+  await tut2Say('……驚きましたか？\nこのゲームには、そろうとカードそのものが姿を変えるものがいます。',6);
+  await tut2Say('どのカードとどのカードで何が起きるのかは、どこにも書いてありません。\nその隠れたカードを探すのも、CCBの遊びです。',4);
+  await tut2Dice([6],'魔の軍勢の攻撃','出目 6 —— 軍勢の蹂躙！','monsterarmy','warrior');
+  log('[敵] 軍勢の蹂躙！ 戦士が踏みつぶされた','bad'); await demoDmg('p','warrior',999);
+  await tut2Say('……祈りは、もう届きません。モンク僧は、デッキの中です。',8);
+  await tut2Say('……ドラグナイトが、僧侶の前に立ちました。\n親友がいなくなった場所に、今度は自分が。',5);
+
+  // ── 8. 継承 ──
+  await demoPlace('p','fatetwins');
+  try{ discoverRole('hahaNoKomoriuta','p'); }catch(e){}
+  await delay(2600);
+  await tut2Say('……あ。運命の双子です。\n戦士はいなくなってしまいましたが、二人の子供が、ちゃんと残りました。',6);
+  await tut2Say('今日は、ここまでにしましょう。',1);
+
+  // ── 9. 語り ──
+  await tut2Say('一人の戦士がいました。剣ひとつで、守りたいものの前に立つ人でした。\n隣には、身分の違う僧侶がいました。',7);
+  await tut2Say('戦士の親友のドラグナイトも、同じ僧侶を想っていました。\nそれでも、二人は並んで戦いました。',5);
+  await tut2Say('一度は炎に倒れた戦士を、僧侶の祈りと、異国の僧の行が呼び戻しました。\n二度目は、もう祈りが届きませんでした。\n……でも、届かなかった祈りのかわりに、二人の子供が残ったのですね。',1);
+  await tut2Say('戦士が倒れたあと、最後まで僧侶のそばにいたのは、ドラグナイトでした。\n……片思いというのは、こういうものなのでしょうか。',5);
+  await tut2Say('あなたは、誰の恋のお話だと思いましたか？',7);
+
+  // ── 10. 種明かしと誘い ──
+  await tut2Say('実は、この試合はCCBの魅力をお伝えするために、ダイスも、カードの巡りも、私の魔法で少しだけ操作しておりました。\nあの軍勢がそろったのも、そのせいです。もちろん、実際の試合では禁止です。',4);
+  await tut2Say('本当の勝負では、ダイスは誰の味方もしませんし、あの軍勢も、めったに姿を見せません。',1);
+  try{ writeCcbStorage(TUT2_DONE_KEY,'1'); writeCcbStorage('ccb_skip_tutorial','1'); }catch(e){}
+  await tut2Choice();
+}
+async function tut2Choice(){
+  const panel=document.getElementById('demo-guide');
+  const portrait=document.getElementById('demo-portrait'), textEl=document.getElementById('demo-text'), hint=panel.querySelector('.demo-auto-hint');
+  if(portrait) portrait.src=tut2Face(7);
+  if(textEl) textEl.innerHTML=escHtml('それでは、チュートリアルはこれくらいにして、私と試しに一局、対戦してみますか？\nそれとも、ここで終わりにしますか？').replace(/\n/g,'<br>');
+  if(hint) hint.textContent='';
+  let box=document.getElementById('tut2-btns'); if(box) box.remove();
+  box=document.createElement('div'); box.id='tut2-btns';
+  box.innerHTML='<button class="tut2-btn go">一局、お願いします</button><button class="tut2-btn">今日はここまで</button>';
+  panel.querySelector('.demo-bubble').appendChild(box);
+  panel.classList.remove('hide');
+  const pick=await new Promise(res=>{ const b=box.querySelectorAll('button'); b[0].onclick=()=>res('coach'); b[1].onclick=()=>res('title'); });
+  box.remove();
+  endGuideTutorial(pick);
+}
+function endGuideTutorial(next){
+  _tut2.active=false; _tut2.wait=null; document.body.classList.remove('tut2-on');
+  if(_tut2.handler){ document.removeEventListener('click',_tut2.handler,true); _tut2.handler=null; }
+  document.querySelectorAll('.tut2-glow').forEach(x=>x.classList.remove('tut2-glow'));
+  const gp=document.getElementById('grave-pick'); if(gp) gp.remove();
+  if(G){ G._tutDice=null; G._tutInteractive=false; }
+  G_SESSION++; G_DEMO_SKIP=true;
+  try{ closeAtkOv(true); }catch(e){}
+  hideDemoGuide();
+  if(next==='coach'){ startCoachBattle(); return; }
+  try{ location.reload(); }catch(e){}
+}
+function startGuideTutorial(){
+  G_DEMO_VARIANT=3;
+  _titleSplashDone=true; _titleBgmStarted=true;
+  const splash=document.getElementById('title-splash'); if(splash) splash.classList.add('hide');
+  playBgm('battle');
+  initGame(JSON.parse(JSON.stringify(TUT2_PLAYER_CONFIG)),JSON.parse(JSON.stringify(TUT2_ENEMY_CONFIG)));
+}
+(function installGuideTutorial(){
+  const css=document.createElement('style');
+  css.textContent='.tut2-glow{position:relative}.tut2-glow::after{content:"";position:absolute;inset:-7px;border:3px solid #ffd76a;border-radius:12px;box-shadow:0 0 22px 8px rgba(255,215,106,.85),inset 0 0 14px rgba(255,215,106,.6);animation:tut2Pulse 1s ease-in-out infinite;pointer-events:none;z-index:50}'+
+    '@keyframes tut2Pulse{0%,100%{opacity:.55}50%{opacity:1}}'+
+    '#tut2-btns{display:flex;gap:10px;margin-top:10px;justify-content:flex-end}'+
+    '.tut2-btn{font-size:15px;padding:8px 16px;border-radius:8px;border:1px solid #b8913f;background:#2a2118;color:#f3e6c4;cursor:pointer}.tut2-btn.go{background:#7a5a22;color:#fff}'+
+    'body.tut2-on #dq-win{display:none!important}'+
+    '.demo-guide.tut2-foe .demo-name{color:#ff8a7a}.demo-guide.tut2-foe .demo-portrait{border-radius:8px;object-fit:cover}';
+  document.head.appendChild(css);
+  const ro=runOpeningPhase;
+  runOpeningPhase=async function(){
+    if(G&&G.demoMode&&G_DEMO_VARIANT===3){ G.phase='opening'; await runGuideTutorial(); return; }
+    return ro.apply(this,arguments);
+  };
+})();
+
 </script>
 
 <style id="public-test-badge">
@@ -24715,10 +24970,10 @@ function deckGuarded(side){ try{ const r=EXTRA_ROLES.find(x=>x.id==='xBouchou');
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.53</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.53%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.54</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.54%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.53";
+  var FORM="", PRE={}, V="0.1.54";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
