@@ -8897,6 +8897,7 @@ async function applyAttackResolveCore(side, attacker, result, targetType, target
   // イージスの盾（2026-10-03 隆基）：敵の単体攻撃を、HPが尽きるまで一身に受け続ける（全体攻撃と空からの急襲は除く）
   { const ai=defPd.monsterField.findIndex(x=>x&&x.hp>0&&x.id==='aegis');
     if(ai>=0&&result&&result.atk>0&&!result.aoeEnemy&&!(targetType==='monster'&&targetSlot===ai)&&!(attacker&&attacker.def&&attacker.def.skyRaid&&targetType==='crystal')){
+      try{ await playSubstituteFx(side==='p'?'e':'p',attacker,targetType,targetSlot,ai); }catch(e){}
       log('【イージスの盾】聖なる大盾が、'+attacker.def.name+'の攻撃を一身に受け止めた','gold'); targetType='monster'; targetSlot=ai; } }
   // 空城の計の伏兵：最初の攻撃だけ1.5倍
   if(attacker&&attacker.ambush&&result&&result.atk>0){ attacker.ambush=false; const nb=Math.round(result.atk*1.5); log((side==='p'?'':'[敵] ')+'【伏兵】'+attacker.def.name+'が空の城から躍り出た——'+result.atk+'→'+nb,'gold'); result=Object.assign({},result,{atk:nb}); }
@@ -9448,6 +9449,7 @@ function monsterCounterIfSurvived(defenderSide,defender,attackerSide,attacker){
   const defPd=defenderSide==='p'?G.p:G.e;
   const attackerSlot=atkPd.monsterField.findIndex(m=>m&&m.uid===attacker.uid);
   if(attackerSlot<0) return;
+  try{ queueCounterFx(defenderSide,defender,attackerSide,attacker,dmg); }catch(e){}
   attacker.hp-=dmg;
   showMonsterDamage(attackerSide,attackerSlot,dmg);
   scheduleMonsterHit(attackerSide,attackerSlot);
@@ -25039,6 +25041,81 @@ async function announceGuard(defSide,idx,attacker,targetType){
   document.head.appendChild(c); })();
 (function(){ const c=document.createElement('style'); c.textContent='.m-card.guard-flash{position:relative}.m-card.guard-flash::before{content:"";position:absolute;inset:-6px;border:3px solid #7fd0ff;border-radius:12px;box-shadow:0 0 22px 8px rgba(127,208,255,.8);animation:guardFlash .4s ease-in-out 3;pointer-events:none;z-index:48}@keyframes guardFlash{0%,100%{opacity:.4}50%{opacity:1}}'; document.head.appendChild(c); })();
 
+// ===== カウンターと身代わりの演出（2026-10-13 隆基「カウンターと身代わりも同じ演出にして」）=====
+function cardFxImg(id){ return (CARD_ASSETS[id]&&CARD_ASSETS[id].img)||''; }
+function cardFxTargetHtml(defSide,targetType,slot){
+  const pd=defSide==='p'?G.p:G.e;
+  if(targetType==='crystal'){ const core=defSide==='e'?'バトルフィールドパーツ_v3/crystal_core_red_user.png':'バトルフィールドパーツ_v3/crystal_core_blue_user.png', fr=defSide==='e'?'バトルフィールドパーツ_v2_clean/enemy_crystal.png':'バトルフィールドパーツ_v2_clean/player_crystal.png';
+    return '<div class="gf-tgt crystal" style="background-image:url(\''+core+'\'),url(\''+fr+'\')"></div>'; }
+  const id=targetType==='beast'?pd.beasts.activeId:(pd.monsterField[slot]&&pd.monsterField[slot].id);
+  return '<div class="gf-tgt card" style="background-image:url(\''+cardFxImg(id)+'\')"></div>';
+}
+async function cardFxRun(build){
+  const ov=document.createElement('div'); ov.id='guard-fx'; ov.className='cfx'; document.body.appendChild(ov);
+  const A=(e,kf,o)=>e.animate(kf,Object.assign({fill:'forwards',easing:'ease-out'},o));
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  try{ await build(ov,A,wait); }catch(e){}
+  try{ A(ov,[{opacity:1},{opacity:0}],{duration:240}); await wait(250); }catch(e){}
+  ov.remove();
+}
+// 身代わり：狙われた者の前に、イージスの盾が飛び込む
+async function playSubstituteFx(defSide,attacker,targetType,targetSlot,aegisSlot){
+  const pd=defSide==='p'?G.p:G.e, ag=pd.monsterField[aegisSlot]; if(!ag) return;
+  const atkId=attacker&&(attacker.id||(attacker.def&&attacker.def.id));
+  const msg='聖なる大盾が、'+(attacker&&attacker.def?attacker.def.name:'敵')+'の攻撃を一身に受け止めた！';
+  try{ btPush(defSide,msg); }catch(e){}
+  await cardFxRun(async(ov,A,wait)=>{
+    ov.innerHTML='<div class="gf-atk" style="background-image:url(\''+cardFxImg(atkId)+'\')"></div>'+cardFxTargetHtml(defSide,targetType,targetSlot)
+      +'<div class="gf-guard" style="background-image:url(\''+cardFxImg(ag.id)+'\')"></div><div class="gf-text"><div class="gf-title">身代わり！</div><div class="gf-line"></div></div>';
+    ov.querySelector('.gf-line').textContent=msg;
+    const atk=ov.querySelector('.gf-atk'), tgt=ov.querySelector('.gf-tgt'), gd=ov.querySelector('.gf-guard'), tx=ov.querySelector('.gf-text');
+    gd.style.outlineColor='#ffe08a'; gd.style.boxShadow='0 0 26px 8px rgba(255,224,138,.8),0 8px 28px rgba(0,0,0,.7)';
+    A(ov,[{background:'rgba(4,3,2,0)'},{background:'rgba(4,3,2,.78)'}],{duration:250});
+    A(atk,[{transform:'translateX(-120px) scale(.8)',opacity:0},{transform:'translateX(0) scale(1)',opacity:1}],{duration:300});
+    A(tgt,[{transform:'scale(.8)',opacity:0},{transform:'scale(1)',opacity:1}],{duration:300});
+    await wait(380);
+    A(atk,[{transform:'translateX(0)'},{transform:'translateX(min(18vw,200px)) rotate(4deg)'}],{duration:260,easing:'cubic-bezier(.6,0,1,1)'});
+    A(gd,[{transform:'translateY(-120vh) rotate(-14deg)',opacity:1},{transform:'translateY(0) rotate(-3deg)',opacity:1}],{duration:300,delay:60,easing:'cubic-bezier(.3,1.3,.5,1)'});
+    await wait(360);
+    try{ playUiSe('clash'); playUiSe('crystalHit'); }catch(e){}
+    A(ov,[{transform:'translate(0,0)'},{transform:'translate(-12px,7px)'},{transform:'translate(10px,-8px)'},{transform:'translate(0,0)'}],{duration:320,easing:'linear',fill:'none'});
+    A(atk,[{transform:'translateX(min(18vw,200px)) rotate(4deg)'},{transform:'translateX(min(10vw,110px)) rotate(-2deg)'}],{duration:220});
+    A(tx,[{opacity:0,transform:'translateY(14px) scale(.9)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:260});
+    await wait(1050);
+  });
+}
+// カウンター：耐えた者が、攻撃してきた者に斬り返す
+function queueCounterFx(defenderSide,defender,attackerSide,attacker,dmg){
+  if(!G||G._noCounterFx) return;
+  const game=G;
+  const run=()=>cardFxRun(async(ov,A,wait)=>{
+    const msg=(defenderSide==='p'?'あなたの':'敵の')+defender.def.name+'が斬り返した！（'+attacker.def.name+'に '+dn(dmg).toLocaleString()+'）';
+    ov.innerHTML='<div class="gf-atk" style="background-image:url(\''+cardFxImg(attacker.id)+'\')"></div><div class="gf-tgt card" style="background-image:url(\''+cardFxImg(defender.id)+'\')"></div>'
+      +'<div class="gf-text"><div class="gf-title" style="color:#ffb59a;text-shadow:0 2px 8px #000,0 0 16px rgba(255,120,80,.8)">カウンター！</div><div class="gf-line"></div></div>';
+    ov.querySelector('.gf-line').textContent=msg;
+    const atk=ov.querySelector('.gf-atk'), tgt=ov.querySelector('.gf-tgt'), tx=ov.querySelector('.gf-text');
+    A(ov,[{background:'rgba(4,3,2,0)'},{background:'rgba(4,3,2,.78)'}],{duration:220});
+    A(atk,[{transform:'translateX(-100px) scale(.85)',opacity:0},{transform:'translateX(0) scale(1)',opacity:1}],{duration:260});
+    A(tgt,[{transform:'scale(.85)',opacity:0},{transform:'scale(1)',opacity:1}],{duration:260});
+    await wait(300);
+    // 攻撃が当たる → 耐える
+    A(atk,[{transform:'translateX(0)'},{transform:'translateX(min(14vw,150px)) rotate(4deg)'},{transform:'translateX(0)'}],{duration:420});
+    await wait(200);
+    A(tgt,[{transform:'translateX(0)'},{transform:'translateX(14px) rotate(3deg)'},{transform:'translateX(-6px)'},{transform:'translateX(0)'}],{duration:320});
+    await wait(420);
+    // 斬り返す
+    try{ playUiSe('counterSe'); }catch(e){}
+    A(tgt,[{transform:'translateX(0) scale(1)'},{transform:'translateX(calc(min(14vw,150px) * -1)) scale(1.12) rotate(-5deg)'},{transform:'translateX(0) scale(1)'}],{duration:380,easing:'cubic-bezier(.5,0,.3,1)'});
+    await wait(190);
+    A(atk,[{filter:'brightness(1)',transform:'translateX(0)'},{filter:'brightness(2.2) saturate(.3) sepia(1) hue-rotate(-30deg)',transform:'translateX(-26px) rotate(-6deg)'},{filter:'brightness(1)',transform:'translateX(-10px) rotate(-3deg)'}],{duration:420});
+    A(ov,[{transform:'translate(0,0)'},{transform:'translate(10px,-6px)'},{transform:'translate(-8px,5px)'},{transform:'translate(0,0)'}],{duration:300,easing:'linear',fill:'none'});
+    A(tx,[{opacity:0,transform:'translateY(14px) scale(.9)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:240});
+    await wait(1000);
+  });
+  game._fxN=(game._fxN||0)+1; const my=game._fxN, prev=game._fxHold||Promise.resolve();
+  game._fxHold=prev.then(run).catch(()=>{}).then(()=>{ if(game._fxN===my) game._fxHold=null; });
+}
+
 </script>
 
 <style id="public-test-badge">
@@ -25046,10 +25123,10 @@ async function announceGuard(defSide,idx,attacker,targetType){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.61</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.61%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.62</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.62%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.61";
+  var FORM="", PRE={}, V="0.1.62";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
