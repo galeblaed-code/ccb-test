@@ -5942,7 +5942,7 @@ const MD = {
   yakuza:{id:'yakuza', name:'渡世人', emoji:'🎲', hp:150, atk:90, dc:1, dt:2, pv:2, canAtkCrystal:true, canAtkBeast:true, fail:'none'},
   tavern:{id:'tavern', name:'酒場の女主人', emoji:'🍺', hp:120, atk:35, dc:1, dt:2, pv:1, canAtkCrystal:true, canAtkBeast:false, fail:'none'},
   aquacat:{id:'aquacat', name:'アクアキャット', emoji:'🐱', hp:80, atk:50, dc:1, dt:2, pv:1, canAtkCrystal:true, canAtkBeast:false, fail:'none'},
-  shipworm:{id:'shipworm', name:'シップワーム', emoji:'🪱', hp:150, atk:85, dc:1, dt:3, pv:2, canAtkCrystal:true, canAtkBeast:false, fail:'selfCrystal20'},
+  shipworm:{id:'shipworm', name:'シップワーム', emoji:'🪱', hp:320, atk:130, dc:1, dt:3, pv:3, canAtkCrystal:true, canAtkBeast:true, fail:'selfCrystal30'},   // 2026-10-12 隆基「シップワームは巨大」→大型に
   bigtusk:{id:'bigtusk', name:'ビッグタスク', emoji:'🦭', hp:380, atk:130, dc:1, dt:3, pv:3, canAtkCrystal:true, canAtkBeast:true, fail:'selfCrystal30'},
   porkfish:{id:'porkfish', name:'ポークフィッシュ', emoji:'🐟', hp:140, atk:60, dc:1, dt:2, pv:2, canAtkCrystal:true, canAtkBeast:false, fail:'none'},
   fangedclam:{id:'fangedclam', name:'噛みつき貝', emoji:'🦪', hp:180, atk:70, dc:1, dt:2, pv:2, canAtkCrystal:false, canAtkBeast:false, fail:'none', counterOnSurvive:60},
@@ -6008,8 +6008,8 @@ MONSTER_SIZE_TIERS.large.push('swordmaster');
 MONSTER_SIZE_TIERS.mid.push('frogprince','flowermantis','myconid','moneychanger','mercenary','cook');
 MONSTER_SIZE_TIERS.large.push('deathcrab','lightningbear');
 MONSTER_SIZE_TIERS.small.push('thief','bard','tavern','aquacat','kelpmimic');
-MONSTER_SIZE_TIERS.mid.push('baker','monk','ronin','yakuza','shipworm','porkfish','fangedclam','armoredjelly');
-MONSTER_SIZE_TIERS.large.push('bigtusk');
+MONSTER_SIZE_TIERS.mid.push('baker','monk','ronin','yakuza','porkfish','fangedclam','armoredjelly');
+MONSTER_SIZE_TIERS.large.push('bigtusk','shipworm');
 MONSTER_SIZE_TIERS.mid.push('kunoichi');
 Object.entries(MONSTER_SIZE_TIERS).forEach(([tier,ids])=>{
   ids.forEach(id=>{ if(MD[id]) MD[id].sizeTier=tier; });
@@ -6923,7 +6923,7 @@ function monsterRoleText(id){
     yakuza:'丁半博打で生きる流れ者。偶数（丁）なら倍付けの一撃、奇数（半）なら空振り',
     tavern:'在野の者が集まる酒場の女主人。場に出た時、ツケの取り立てで召喚ダイヤ+1（その一体につき1回）',
     aquacat:'海に棲む猫。手土産：場に出た時、召喚ダイヤ+1（その一体につき1回）。魚が大好物で、魚への攻撃は2倍',
-    shipworm:'船底を食い破る巨大な蛆。木の船や兵器が大好物：海賊・海洋騎士・ポセイドン・ゴリアテへの攻撃は2倍',
+    shipworm:'船を丸ごと食い破る、巨大な海の蛆。木の船や兵器が大好物：海賊・海洋騎士・ポセイドン・ゴリアテへの攻撃は2倍',
     bigtusk:'巨大な牙のセイウチ。分厚い脂肪で、単体攻撃で受けるダメージを3割減らす。出目6で大波を起こす（敵全体へ）',
     porkfish:'豚の顔をした魚。脂が乗っていて旨い。倒されると、その身が味方全体のHPを30回復する（ご馳走）',
     fangedclam:'牙の生えた大貝。動かないので攻撃はモンスターにしか届かない。殴られて生き残ると噛み返す（カウンター60）',
@@ -8448,7 +8448,7 @@ const RESOLVE_TABLES = {
   yakuza:{dice:1,resolve(d){const s=diceSum(d);if(s%2===1)return{type:'miss',label:'半！ 外れ',atk:0,chouhanMiss:true};if(s===6)return{type:'special',label:'丁！ 大勝ち',atk:200};return{type:'strong',label:'丁！ 倍付け',atk:180};}},
   tavern:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'miss',label:'酔っ払いに絡まれる',atk:0};if(s<=4)return{type:'normal',label:'ジョッキで殴る',atk:35};if(s===5)return{type:'strong',label:'一杯おごる',atk:30,selfHeal:50};return{type:'special',label:'ツケを取り立てる 召喚ダイヤ+1',atk:40,selfPt:1};}},
   aquacat:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'miss',label:'毛づくろい',atk:0};if(s<=4)return{type:'normal',label:'猫パンチ',atk:50};if(s===5)return{type:'strong',label:'ひっかき',atk:65};return{type:'special',label:'魚をくわえて逃げる',atk:75};}},
-  shipworm:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'木屑が詰まる',atk:0,selfDmg:20};if(s<=3)return{type:'normal',label:'食い破る',atk:85};if(s<=5)return{type:'strong',label:'船底を穿つ',atk:105};return{type:'special',label:'穴だらけにする',atk:125,targetAtkDown:20};}},
+  shipworm:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'木屑が詰まる',atk:0,selfDmg:40};if(s<=3)return{type:'normal',label:'食い破る',atk:130};if(s<=5)return{type:'strong',label:'船底を穿つ',atk:160};return{type:'special',label:'船ごと呑み込む',atk:190,targetAtkDown:30};}},
   bigtusk:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'氷の上で滑る',atk:0,selfDmg:40};if(s<=3)return{type:'normal',label:'牙突き',atk:130};if(s<=5)return{type:'strong',label:'のしかかり',atk:160};return{type:'special',label:'大波を起こす 敵全体へ',atk:0,aoeEnemy:true,aoeDmg:80};}},
   porkfish:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'miss',label:'網に引っかかる',atk:0};if(s<=4)return{type:'normal',label:'体当たり',atk:60};if(s===5)return{type:'strong',label:'鼻で突き上げる',atk:75};return{type:'special',label:'脂の乗った一撃',atk:70,selfHeal:40};}},
   fangedclam:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'miss',label:'殻を閉じたまま',atk:0};if(s<=4)return{type:'normal',label:'噛みつく',atk:70};if(s===5)return{type:'strong',label:'噛み砕く',atk:95};return{type:'special',label:'離さない',atk:80,targetAtkDown:25};}},
@@ -12575,7 +12575,7 @@ const EXTRA_ROLES=[
   {id:'xAkashio',name:'赤潮',reading:'アカシオ',cards:[['@sea'],['@sea'],['armoredjelly','kelpmimic']],
    meaning:'海が赤く染まる日、陸の者は魚を食べない。',desc:'汚染海洋生態系のモンスター3体（うち1体は装甲海月か海藻魚）が同時に場にいる。自分の番の始めに、敵モンスター全体を毒にする。',hint:'海月と藻が、潮を赤く染める'},
   {id:'xShinkaiNoOukoku',name:'深海の王国',reading:'シンカイノオウコク',cards:[['@bigsea'],['@bigsea']],once:{enemyAllDmg:100},
-   meaning:'光の届かない場所にも、王はいる。',desc:'汚染海洋生態系の大型（魔王鯨・レッドオルカ・モササウルス・メガロドン・クラーケン・ホワイトスティングレイ・ビッグタスク）が2体、同時に場にいる。1ゲームに1度、敵モンスター全体に100ダメージ。',hint:'深海の巨影が、二つ並ぶ'},
+   meaning:'光の届かない場所にも、王はいる。',desc:'汚染海洋生態系の大型（魔王鯨・レッドオルカ・モササウルス・メガロドン・クラーケン・シップワーム・ホワイトスティングレイ・ビッグタスク）が2体、同時に場にいる。1ゲームに1度、敵モンスター全体に100ダメージ。',hint:'深海の巨影が、二つ並ぶ'},
   {id:'xKaiteiNoWana',name:'海底の罠',reading:'カイテイノワナ',cards:[['fangedclam'],['armoredjelly']],
    meaning:'海の底で、口を開けて待つものがいる。',desc:'噛みつき貝と装甲海月が同時に場にいる。噛みつき貝のカウンターが2倍になり、噛まれた相手は毒になる。',hint:'貝の口のそばで、海月が揺れる'},
   {id:'xMoNoMori',name:'藻の森',reading:'モノモリ',cards:[['kelpmimic'],['aquacat']],
@@ -12818,7 +12818,7 @@ function fieldAcronym(f){ const live=f.filter(m=>m&&m.hp>0); if(live.length!==3)
 const SEA_FAMILY_MONSTERS=new Set(['demonwhale','redorca','mosasaurus','megalodon','kraken','whitestingray','deathcrab','blacklobster','swordfish','spearsquid','lardfish','bomb','jewelfish','mermaid','bigtusk','armoredjelly','fangedclam','shipworm','porkfish','kelpmimic','aquacat']);
 // 海に生きる男達（2026-10-11 隆基）
 const SEAMAN_MONSTERS=new Set(['pirate','oceanknight','poseidon','sahagin']);
-const BIG_SEA_MONSTERS=new Set(['demonwhale','redorca','mosasaurus','megalodon','kraken','whitestingray','bigtusk']);
+const BIG_SEA_MONSTERS=new Set(['demonwhale','redorca','mosasaurus','megalodon','kraken','whitestingray','bigtusk','shipworm']);
 function xKindSet(name){
   return ({'@dragon':DRAGON_KIND_MONSTERS,'@reptile':REPTILE_KIND_MONSTERS,'@human':HUMAN_KIND_MONSTERS,'@trump':TRUMP_KIND_MONSTERS,
     '@beast':BEAST_KIND_MONSTERS,'@plant':PLANT_KIND_MONSTERS,'@insect':INSECT_KIND_MONSTERS,'@poison':POISON_KIND_MONSTERS,
@@ -24371,10 +24371,10 @@ function kataribeMult(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.42</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.42%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.43</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.43%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.42";
+  var FORM="", PRE={}, V="0.1.43";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
