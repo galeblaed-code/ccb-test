@@ -18134,7 +18134,7 @@ function doAttackMonster(targetSlot){
   })();
 }
 
-function doAttackBeast(){
+async function doAttackBeast(){
   if(!playerActionReady()||G.selSlot<0) return;
   const attacker=G.p.monsterField[G.selSlot];
   if(!attacker||!attacker.def.canAtkBeast) return;
@@ -18144,13 +18144,14 @@ function doAttackBeast(){
   const guardIdx=enemyChooseGuard(attacker,'beast');
   if(guardIdx>=0){
     log('[敵] '+G.e.monsterField[guardIdx].def.name+' がガード！','enemy');
+    await announceGuard('e',guardIdx,attacker,'beast');
     resolveAttackEnemyMonster(attacker,guardIdx);
   } else {
     resolveAttackBeast(attacker);
   }
 }
 
-function doAttackCrystal(){
+async function doAttackCrystal(){
   if(!playerActionReady()||G.selSlot<0) return;
   const attacker=G.p.monsterField[G.selSlot];
   if(!attacker||!canMonsterAttackCrystal('p',attacker)) return;
@@ -18158,6 +18159,7 @@ function doAttackCrystal(){
   const guardIdx=enemyChooseGuard(attacker,'crystal');
   if(guardIdx>=0){
     log('[敵] '+G.e.monsterField[guardIdx].def.name+' がガード！','enemy');
+    await announceGuard('e',guardIdx,attacker,'crystal');
     if(isSiegeDragon(attacker)) attacker._siegeGuard=true;
     resolveAttackEnemyMonster(attacker,guardIdx);
   } else {
@@ -18409,6 +18411,7 @@ function beastAtkEnemyBeast(){
   const guardIdx=enemyChooseGuard({def:bDef},'beast');
   if(guardIdx>=0){
     log('[敵] '+G.e.monsterField[guardIdx].def.name+' が召喚獣攻撃をガード！','enemy');
+    announceGuard('e',guardIdx,{def:bDef},'beast');
     resolveBeastAttack('monster',guardIdx);
   } else {
     resolveBeastAttack('beast');
@@ -18419,6 +18422,7 @@ function beastAtkCrystal(){
   const guardIdx=enemyChooseGuard({def:bDef},'crystal');
   if(guardIdx>=0){
     log('[敵] '+G.e.monsterField[guardIdx].def.name+' が召喚獣攻撃をガード！','enemy');
+    announceGuard('e',guardIdx,{def:bDef},'crystal');
     resolveBeastAttack('monster',guardIdx);
   } else {
     resolveBeastAttack('crystal');
@@ -20007,7 +20011,7 @@ async function enemyResolveBeastAction(beastTarget){
   if(target.type==='crystal'||target.type==='beast'){
     guard=await new Promise(resolve=>showPlayerGuardChoice({def:bdf},target.type,(kind,idx)=>resolve({kind,idx})));
     if(guard.kind==='guard' && G.p.monsterField[guard.idx]){
-      log('あなたの '+G.p.monsterField[guard.idx].def.name+' がガード！','good');
+      log('あなたの '+G.p.monsterField[guard.idx].def.name+' がガード！','good'); announceGuard('p',guard.idx,null,target.type);
       target={type:'monster',idx:guard.idx,target:G.p.monsterField[guard.idx]};
     } else {
       log('ガードせずスルー。','sys');
@@ -20206,7 +20210,7 @@ async function runEnemyTurn(){
         if(targetChoice.type==='crystal'||targetChoice.type==='beast'){
           const guard=await new Promise(resolve=>showPlayerGuardChoice(em,targetChoice.type,(kind,idx)=>resolve({kind,idx})));
           if(guard.kind==='guard' && G.p.monsterField[guard.idx]){
-            log('あなたの '+G.p.monsterField[guard.idx].def.name+' がガード！','good');
+            log('あなたの '+G.p.monsterField[guard.idx].def.name+' がガード！','good'); announceGuard('p',guard.idx,em,targetChoice.type);
             if(targetChoice.type==='crystal'&&isSiegeDragon(em)) em._siegeGuard=true;
             targetChoice={type:'monster',idx:guard.idx,target:G.p.monsterField[guard.idx]};
           } else {
@@ -20302,7 +20306,7 @@ async function runEnemyTurn(){
       if(beastTarget.type==='crystal'||beastTarget.type==='beast'){
         guard=await new Promise(resolve=>showPlayerGuardChoice({def:bdf},beastTarget.type,(kind,idx)=>resolve({kind,idx})));
         if(guard.kind==='guard' && G.p.monsterField[guard.idx]){
-          log('あなたの '+G.p.monsterField[guard.idx].def.name+' がガード！','good');
+          log('あなたの '+G.p.monsterField[guard.idx].def.name+' がガード！','good'); announceGuard('p',guard.idx,null,beastTarget.type);
           beastTarget={type:'monster',idx:guard.idx,target:G.p.monsterField[guard.idx]};
         } else {
           log('ガードせずスルー。','sys');
@@ -24982,6 +24986,22 @@ function startGuideTutorial(){
 (function(){ const c=document.createElement('style'); c.textContent='#grave-pick img,#deck-peek img,#magic-popup img,.tut2-btn,#tut2-btns *{-webkit-user-drag:none;user-drag:none;pointer-events:none}#tut2-btns .tut2-btn{pointer-events:auto}'; document.head.appendChild(c);
   document.addEventListener('dragstart',e=>{ if(e.target&&e.target.closest&&e.target.closest('#grave-pick,#deck-peek,#magic-popup,#tut2-btns')) e.preventDefault(); },true); })();
 
+// ===== ガードの知らせ（2026-10-13 隆基「モンスターでクリスタルを直接狙うがモンスターに阻まれたとアナウンスしないと、行動ミスかと勘違いする」）=====
+// 守った側のモンスターを光らせ、画面の真ん中とお知らせのウインドウに「立ちはだかった」と出してから、守った者との戦いに移る
+async function announceGuard(defSide,idx,attacker,targetType){
+  try{
+    const pd=defSide==='p'?G.p:G.e, m=pd.monsterField[idx]; if(!m) return;
+    const who=(defSide==='p'?'あなたの':'敵の')+m.def.name;
+    const msg=targetType==='beast'?who+'が身を挺して、召喚獣への攻撃をかばった！':who+'が立ちはだかり、クリスタルへの攻撃を受け止めた！';
+    try{ showCenterNotice('ガード！',msg,defSide,1300); }catch(e){}
+    try{ btPush(defSide,msg); }catch(e){}
+    const el=document.getElementById(defSide+'-m-'+idx); if(el){ el.classList.add('guard-flash'); setTimeout(()=>el.classList.remove('guard-flash'),1200); }
+    try{ playUiSe('clash'); }catch(e){}
+    await delay(900);
+  }catch(e){}
+}
+(function(){ const c=document.createElement('style'); c.textContent='.m-card.guard-flash{position:relative}.m-card.guard-flash::before{content:"";position:absolute;inset:-6px;border:3px solid #7fd0ff;border-radius:12px;box-shadow:0 0 22px 8px rgba(127,208,255,.8);animation:guardFlash .4s ease-in-out 3;pointer-events:none;z-index:48}@keyframes guardFlash{0%,100%{opacity:.4}50%{opacity:1}}'; document.head.appendChild(c); })();
+
 </script>
 
 <style id="public-test-badge">
@@ -24989,10 +25009,10 @@ function startGuideTutorial(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.59</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.59%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.60</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.60%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.59";
+  var FORM="", PRE={}, V="0.1.60";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
