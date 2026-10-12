@@ -12619,6 +12619,10 @@ const EXTRA_ROLES=[
   {id:'xMigawariNoInori',name:'身代わりの祈り',reading:'ミガワリノイノリ',cards:[['whitewitch'],['monk']],once:{migawari:true},
    onceReady:side=>{ const pd=side==='p'?G.p:G.e; return pd.graveyard.some(g=>g&&g.id&&MD[g.id]&&!TRANSFORM_ONLY.includes(g.id)); },
    meaning:'僧侶が祈り、異国の僧が己の行を差し出した。命は、ひとつ戻る。',desc:'僧侶とモンク僧が同時に場にいる。自分の墓場から好きなモンスターを1体選び、モンク僧のいた場所に呼び戻す（HP全快）。モンク僧は代わりにデッキへ戻る（シャッフル）。モンク僧がまた場に出て僧侶とそろえば、もう一度起きる。',hint:'祈る者のそばで、修行僧が静かに目を閉じる'},
+  // 2026-10-12 隆基「サキュバス×スカウト×スカウトで、相手のデッキの中から好きなカードを墓場送り。この役のやばさ＝相手のデッキの中身を全て確認できる」
+  {id:'xNeyaNoMittei',name:'閨の密偵',reading:'ネヤノミッテイ',cards:[['succubus'],['ahriman'],['ahriman']],once:{neyaMittei:true},
+   onceReady:side=>{ const od=side==='p'?G.e:G.p; return od.deck.some(c=>c&&c.type==='monster'); },
+   meaning:'閨で囁かれた秘密は、戦場で血になる。',desc:'サキュバスとスカウト2体が同時に場にいる。1ゲームに1度、相手のデッキの中身を引く順番どおりにすべて覗き見て、好きなモンスターを1体、墓場へ送る。',hint:'夢魔の囁きと、二つの見張りの目'},
   {id:'xJingi',name:'仁義',reading:'ジンギ',cards:[['yakuza'],['yojimbo']],
    meaning:'賽の目は裏切っても、筋は裏切らない。',desc:'渡世人と用心棒が同時に場にいる。渡世人の丁半が外れ（半）でも、用心棒が筋を通して半分の攻撃が入る。',hint:'賭場の入口に、用心棒が立つ'},
   {id:'xMakanai',name:'まかない',reading:'マカナイ',cards:[['aquacat'],['cook']],once:{healAllies:60},
@@ -21464,6 +21468,7 @@ function onceEffectText(o){
   if(o.mdSecret) t.push('メタルドラゴンのHP全快、攻撃+60（ずっと）');
   if(o.cockatriceFry) t.push('味方全体 HP +60（6回に1回、料理人が頭の目を見て石化しかける）');
   if(o.whaleFeast) t.push('魔王鯨のHP全快');
+  if(o.neyaMittei) t.push('相手のデッキをすべて覗き、好きなモンスター1体を墓場へ');
   if(o.migawari) t.push('墓場から好きなモンスター1体を呼び戻す（モンク僧はデッキへ）');
   if(o.fleetSortie) t.push('敵モンスター全体に120（汚染海洋生態系には240）');
   if(o.shipHole) t.push('船乗り（海賊か海洋騎士）の最大HPを半分に');
@@ -24503,6 +24508,61 @@ const JACK_STANDIN=new Set(['baker','cook','blacksmith','moneychanger','armsdeal
   };
 })();
 
+// ===== 閨の密偵（2026-10-12 隆基「サキュバス×スカウト×スカウト。相手のデッキから好きなカードを墓場送り。相手のデッキの中身を全て確認できる」）=====
+// 人が遊んでいる側は、相手のデッキを引く順番どおりに全部見せて選ばせる（30秒で自動選択）。AIは一番強いモンスターを選ぶ
+(function installNeyaMittei(){
+  const css=document.createElement('style');
+  css.textContent='#deck-peek{position:fixed;inset:0;z-index:120;background:rgba(10,3,8,.78);display:flex;align-items:center;justify-content:center}'+
+    '#deck-peek .dp-box{background:#1c1016;border:2px solid #b6436b;border-radius:12px;padding:18px 20px;max-width:min(94vw,1000px);color:#f3dfe6;box-shadow:0 10px 40px rgba(0,0,0,.6)}'+
+    '#deck-peek h3{margin:0 0 4px;font-size:20px;color:#f08bb0}#deck-peek p{margin:0 0 12px;font-size:13px;opacity:.85}'+
+    '#deck-peek .dp-list{display:flex;flex-wrap:wrap;gap:8px;max-height:62vh;overflow:auto}'+
+    '#deck-peek .dp-c{width:84px;text-align:center;font-size:11px;border-radius:8px;padding:4px;border:1px solid transparent;position:relative}'+
+    '#deck-peek .dp-c.mon{cursor:pointer}#deck-peek .dp-c.mon:hover{border-color:#f08bb0;background:rgba(240,139,176,.12)}'+
+    '#deck-peek .dp-c.off{opacity:.35}#deck-peek .dp-c img{width:76px;border-radius:5px;display:block;margin:0 auto 2px}'+
+    '#deck-peek .dp-n{position:absolute;left:4px;top:4px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;border-radius:4px;padding:0 4px}';
+  document.head.appendChild(css);
+  const human=side=>side==='p'&&G&&!G.spectate&&!G.demoMode&&typeof window.__ccbRun==='undefined';
+  const best=list=>list.slice().sort((a,b)=>((MD[b.c.id].pv||0)-(MD[a.c.id].pv||0))||((MD[b.c.id].atk||0)-(MD[a.c.id].atk||0))||((MD[b.c.id].hp||0)-(MD[a.c.id].hp||0)))[0];
+  function pickUI(deck,list){
+    const ready=()=>!document.querySelector('.role-discover-popup')&&!document.querySelector('#role-plate.show');
+    return new Promise(r0=>{ let t=0; const w=()=>{ if(ready()||t>80) r0(); else { t++; setTimeout(w,100); } }; w(); }).then(()=>new Promise(res=>{
+      const ov=document.createElement('div'); ov.id='deck-peek';
+      ov.innerHTML='<div class="dp-box"><h3>閨の密偵</h3><p>相手のデッキを、引く順番どおりにすべて覗き見ています。墓場へ送るモンスターを1体選んでください。</p><div class="dp-list"></div></div>';
+      const L=ov.querySelector('.dp-list'); let done=false;
+      const finish=x=>{ if(done) return; done=true; try{ ov.remove(); }catch(e){} res(x); };
+      deck.forEach((c,i)=>{ const d=document.createElement('div'); const mon=c&&c.type==='monster'&&MD[c.id];
+        d.className='dp-c '+(mon?'mon':'off'); const a=c&&CARD_ASSETS[c.id];
+        d.innerHTML='<span class="dp-n">'+(i+1)+'</span>'+(a&&a.img?'<img src="'+a.img+'">':'')+escHtml(mon?MD[c.id].name:(c&&c.id)||'');
+        if(mon){ const x=list.find(y=>y.i===i); d.onclick=()=>finish(x); }
+        L.appendChild(d); });
+      document.body.appendChild(ov);
+      setTimeout(()=>finish(best(list)),30000);
+    }));
+  }
+  function perform(side,pick,label){
+    const os=side==='p'?'e':'p', od=side==='p'?G.e:G.p, pre=side==='p'?'':'[敵] ';
+    if(!pick) return;
+    const i=od.deck.indexOf(pick.c); if(i<0) return;
+    od.deck.splice(i,1); const d=MD[pick.c.id];
+    od.graveyard.push({uid:'neya-'+Date.now()+'-'+Math.random(),id:pick.c.id,def:d,maxHp:d?d.hp:0});
+    try{ addReveal(os,pick.c,'milled'); }catch(e){}
+    log(pre+'【'+label+'】夢魔が囁き、二つの目が覗いた——相手のデッキはすべて見られた。'+(d?d.name:pick.c.id)+'が、戦う前に墓場へ消えた','gold');
+    try{ showCenterNotice(label,(d?d.name:pick.c.id)+'を墓場へ',side,1600); }catch(e){}
+    try{ recEvent(side,'role','閨の密偵：相手のデッキをすべて覗き、'+(d?d.name:pick.c.id)+'を墓場へ送った'); }catch(e){}
+    try{ renderCounts&&renderCounts(); renderAll(); }catch(e){}
+  }
+  const ao=applyOnceEffects;
+  applyOnceEffects=function(side,o,label){
+    if(o&&o.neyaMittei){
+      const od=side==='p'?G.e:G.p, list=od.deck.map((c,i)=>({c,i})).filter(x=>x.c&&x.c.type==='monster'&&MD[x.c.id]);
+      if(!list.length) return;
+      if(human(side)) pickUI(od.deck.slice(),list).then(x=>perform(side,x,label)); else perform(side,best(list),label);
+      return;
+    }
+    return ao.apply(this,arguments);
+  };
+})();
+
 </script>
 
 <style id="public-test-badge">
@@ -24510,10 +24570,10 @@ const JACK_STANDIN=new Set(['baker','cook','blacksmith','moneychanger','armsdeal
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.49</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.49%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.50</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.50%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.49";
+  var FORM="", PRE={}, V="0.1.50";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
