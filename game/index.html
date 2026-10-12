@@ -12615,6 +12615,10 @@ const EXTRA_ROLES=[
    meaning:'捨てた者と、堕ちた者。答えは、刃の中にしかない。',desc:'浪人とダークエルフが、敵と味方に分かれて場にいる（同じ側では成立しない）。両者の攻撃 +60。おたがいを攻撃する時は、さらに1.5倍。',hint:'紅葉の散る古い神殿で、二つの孤高が向かい合う'},
   {id:'xRoujinToUmi',name:'老人と海',reading:'ロウジントウミ',cards:[['demonwhale'],['oldman']],bothSides:true,
    meaning:'人は打ち負かされることはあっても、海に屈することはない。老人は、それを知っていた。',desc:'魔王鯨と老人がそろう（魔王鯨は敵の場にいてもよい。老人は自分の場に）。場にいる間、相手の場の汚染海洋生態系のモンスターの攻撃 -40。',hint:'小舟の老人が、巨鯨の影を見つめている'},
+  // 2026-10-12 隆基「僧侶とモンクで、墓場から任意のカードを場に戻せる役。モンクは代わりにデッキに戻る」
+  {id:'xMigawariNoInori',name:'身代わりの祈り',reading:'ミガワリノイノリ',cards:[['whitewitch'],['monk']],once:{migawari:true},
+   onceReady:side=>{ const pd=side==='p'?G.p:G.e; return pd.graveyard.some(g=>g&&g.id&&MD[g.id]&&!TRANSFORM_ONLY.includes(g.id)); },
+   meaning:'僧侶が祈り、異国の僧が己の行を差し出した。命は、ひとつ戻る。',desc:'僧侶とモンク僧が同時に場にいる。自分の墓場から好きなモンスターを1体選び、モンク僧のいた場所に呼び戻す（HP全快）。モンク僧は代わりにデッキへ戻る（シャッフル）。モンク僧がまた場に出て僧侶とそろえば、もう一度起きる。',hint:'祈る者のそばで、修行僧が静かに目を閉じる'},
   {id:'xJingi',name:'仁義',reading:'ジンギ',cards:[['yakuza'],['yojimbo']],
    meaning:'賽の目は裏切っても、筋は裏切らない。',desc:'渡世人と用心棒が同時に場にいる。渡世人の丁半が外れ（半）でも、用心棒が筋を通して半分の攻撃が入る。',hint:'賭場の入口に、用心棒が立つ'},
   {id:'xMakanai',name:'まかない',reading:'マカナイ',cards:[['aquacat'],['cook']],once:{healAllies:60},
@@ -21460,6 +21464,7 @@ function onceEffectText(o){
   if(o.mdSecret) t.push('メタルドラゴンのHP全快、攻撃+60（ずっと）');
   if(o.cockatriceFry) t.push('味方全体 HP +60（6回に1回、料理人が頭の目を見て石化しかける）');
   if(o.whaleFeast) t.push('魔王鯨のHP全快');
+  if(o.migawari) t.push('墓場から好きなモンスター1体を呼び戻す（モンク僧はデッキへ）');
   if(o.fleetSortie) t.push('敵モンスター全体に120（汚染海洋生態系には240）');
   if(o.shipHole) t.push('船乗り（海賊か海洋騎士）の最大HPを半分に');
   if(o.meifuMadou) t.push('自分のデッキの上から3枚を墓場へ。浪人・渡世人・用心棒の攻撃+80・HP+100（ずっと）');
@@ -24437,6 +24442,67 @@ const JACK_STANDIN=new Set(['baker','cook','blacksmith','moneychanger','armsdeal
   };
 })();
 
+// ===== 身代わりの祈り（2026-10-12 隆基「僧侶とモンクで墓場から任意のカードを場に戻せる役。モンクは代わりにデッキに戻る」）=====
+// 人が遊んでいる側は、墓場から選ぶ窓を出す（20秒で自動選択）。AI・観戦・自動対戦は、一番強いカードを選ぶ。モンク僧がまた僧侶とそろえば、もう一度起きる
+(function installMigawari(){
+  const css=document.createElement('style');
+  css.textContent='#grave-pick{position:fixed;inset:0;z-index:120;background:rgba(5,4,3,.72);display:flex;align-items:center;justify-content:center}'+
+    '#grave-pick .gp-box{background:#1d1712;border:2px solid #b8913f;border-radius:12px;padding:18px 20px;max-width:min(92vw,880px);color:#f3e6c4;box-shadow:0 10px 40px rgba(0,0,0,.6)}'+
+    '#grave-pick h3{margin:0 0 4px;font-size:20px;color:#e7c46a}#grave-pick p{margin:0 0 12px;font-size:13px;opacity:.85}'+
+    '#grave-pick .gp-list{display:flex;flex-wrap:wrap;gap:10px;max-height:60vh;overflow:auto}'+
+    '#grave-pick .gp-c{width:96px;cursor:pointer;text-align:center;font-size:12px;border-radius:8px;padding:4px;border:1px solid transparent}'+
+    '#grave-pick .gp-c:hover{border-color:#e7c46a;background:rgba(231,196,106,.12)}#grave-pick .gp-c img{width:88px;border-radius:5px;display:block;margin:0 auto 3px}';
+  document.head.appendChild(css);
+  const cands=pd=>pd.graveyard.map((g,i)=>({g,i})).filter(x=>x.g&&x.g.id&&MD[x.g.id]&&!TRANSFORM_ONLY.includes(x.g.id));
+  const best=list=>list.slice().sort((a,b)=>((MD[b.g.id].pv||0)-(MD[a.g.id].pv||0))||((MD[b.g.id].atk||0)-(MD[a.g.id].atk||0))||((MD[b.g.id].hp||0)-(MD[a.g.id].hp||0)))[0];
+  const human=side=>side==='p'&&G&&!G.spectate&&!G.demoMode&&typeof window.__ccbRun==='undefined';
+  function pickUI(list){
+    // 役発見の看板・お知らせの窓が消えてから出す（最長8秒待つ）
+    const ready=()=>!document.querySelector('.role-discover-popup')&&!document.querySelector('#role-plate.show');
+    return new Promise(r0=>{ let t=0; const w=()=>{ if(ready()||t>80) r0(); else { t++; setTimeout(w,100); } }; w(); }).then(()=>new Promise(res=>{
+      const ov=document.createElement('div'); ov.id='grave-pick';
+      ov.innerHTML='<div class="gp-box"><h3>身代わりの祈り</h3><p>墓場から呼び戻すモンスターを選んでください。モンク僧は代わりにデッキへ戻ります。</p><div class="gp-list"></div></div>';
+      const L=ov.querySelector('.gp-list'); let done=false;
+      const finish=x=>{ if(done) return; done=true; try{ ov.remove(); }catch(e){} res(x); };
+      list.forEach(x=>{ const d=document.createElement('div'); d.className='gp-c'; const a=CARD_ASSETS[x.g.id];
+        d.innerHTML=(a&&a.img?'<img src="'+a.img+'">':'')+escHtml(MD[x.g.id].name); d.onclick=()=>finish(x); L.appendChild(d); });
+      document.body.appendChild(ov);
+      setTimeout(()=>finish(best(list)),20000);
+    }));
+  }
+  function perform(side,pick,label){
+    const pd=side==='p'?G.p:G.e, pre=side==='p'?'':'[敵] ';
+    const mi=pd.monsterField.findIndex(m=>m&&m.hp>0&&m.id==='monk');
+    if(mi<0||!pick) return;
+    const gi=pd.graveyard.indexOf(pick.g); if(gi<0) return;
+    pd.graveyard.splice(gi,1);
+    pd.monsterField[mi]=null;
+    pd.deck.push({type:'monster',id:'monk'}); pd.deck=shuffle(pd.deck);
+    const nm=makeMonsterInst(pick.g.id,false,side); pd.monsterField[mi]=nm;
+    try{ handleMonsterEnter(side,nm); markMonsterFlip(side,mi); }catch(e){}
+    log(pre+'【'+label+'】僧侶が祈り、モンク僧が己の行を差し出した——'+MD[pick.g.id].name+'が墓場から戻った（モンク僧はデッキへ、シャッフル）','gold');
+    try{ showCenterNotice(label,MD[pick.g.id].name+'が戻った',side,1600); }catch(e){}
+    try{ recEvent(side,'role','身代わりの祈り：モンク僧が身を引き、'+MD[pick.g.id].name+'が墓場から戻った'); }catch(e){}
+    try{ renderAll(); }catch(e){}
+  }
+  const ao=applyOnceEffects;
+  applyOnceEffects=function(side,o,label){
+    if(o&&o.migawari){
+      const pd=side==='p'?G.p:G.e, list=cands(pd); if(!list.length) return;
+      if(human(side)) pickUI(list).then(x=>perform(side,x,label)); else perform(side,best(list),label);
+      return;
+    }
+    return ao.apply(this,arguments);
+  };
+  // モンク僧が去って役が崩れたら、次にそろった時にもう一度起きる
+  const ce=checkExtraRoles;
+  checkExtraRoles=function(side){
+    try{ const pd=side==='p'?G.p:G.e, r=EXTRA_ROLES.find(x=>x.id==='xMigawariNoInori');
+      if(r&&pd.roleOnce&&pd.roleOnce[r.id]&&!extraRoleHolds(side,r)) delete pd.roleOnce[r.id]; }catch(e){}
+    return ce.apply(this,arguments);
+  };
+})();
+
 </script>
 
 <style id="public-test-badge">
@@ -24444,10 +24510,10 @@ const JACK_STANDIN=new Set(['baker','cook','blacksmith','moneychanger','armsdeal
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.48</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.48%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.49</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.49%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.48";
+  var FORM="", PRE={}, V="0.1.49";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
