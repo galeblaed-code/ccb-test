@@ -24774,6 +24774,8 @@ async function tut2Dice(vals,label,resultText,focusId,targetId){
 }
 function tut2Shake(){ try{ screenShake(2); }catch(e){} }
 
+// 倒す時は、残りHPちょうどのダメージ（999 と決め打ちすると画面に -9990 のような数字が出る）
+async function tut2Kill(side,id){ const pd=side==='p'?G.p:G.e; const m=pd.monsterField.find(x=>x&&x.hp>0&&x.id===id); if(m) await demoDmg(side,id,m.hp); }
 async function runGuideTutorial(){
   _tut2.active=true; G_DEMO_SKIP=false; G._tut2=true; document.body.classList.add('tut2-on');
   setBtns([]); G.phase='battle'; G.turnNumber=3;
@@ -24808,7 +24810,7 @@ async function runGuideTutorial(){
   await tut2WaitClick(tut2Card('p','warrior'),'それでは、戦わせてみましょう。\nまず、あなたの戦士を押してください。');
   await tut2WaitClick(tut2Card('e','goblin'),'次に、攻撃する相手を押してください。\n……あのゴブリンです。');
   await tut2Dice([5],'戦士の攻撃','出目 5 —— 強撃！','warrior','goblin');
-  log('戦士の一撃！','good'); await demoDmg('e','goblin',999);
+  log('戦士の一撃！','good'); await tut2Kill('e','goblin');
   await tut2Say('攻撃の結果は、ダイスが決めます。\nよい目が出れば強く、悪い目なら……自分に返ってくることもあります。',4);
   await tut2Say('敵を倒すと、召喚ダイヤが手に入ります。覚えておいてくださいね。',1);
 
@@ -24833,7 +24835,7 @@ async function runGuideTutorial(){
   try{ showAreaEffect('エフェクト/ファイア.png',document.querySelector('.p-field-row .m-row'),3,900); }catch(e){}
   log('[敵] イグニス！ 炎があなたの場を焼いた','bad');
   await demoDmg('p','whitewitch',20);
-  await demoDmg('p','warrior',999);
+  await tut2Kill('p','warrior');
   await tut2Say('……！ 魔法です。魔法は、盤面全体を一度に変えることがあります。\n倒れたモンスターは、墓場へ行きます。',6);
 
   // ── 5. 祈り ──
@@ -24893,7 +24895,7 @@ async function runGuideTutorial(){
   await tut2Say('……驚きましたか？\nこのゲームには、そろうとカードそのものが姿を変えるものがいます。',6);
   await tut2Say('どのカードとどのカードで何が起きるのかは、どこにも書いてありません。\nその隠れたカードを探すのも、CCBの遊びです。',4);
   await tut2Dice([6],'魔の軍勢の攻撃','出目 6 —— 軍勢の蹂躙！','monsterarmy','warrior');
-  log('[敵] 軍勢の蹂躙！ 戦士が踏みつぶされた','bad'); await demoDmg('p','warrior',999);
+  log('[敵] 軍勢の蹂躙！ 戦士が踏みつぶされた','bad'); await tut2Kill('p','warrior');
   await tut2Say('……祈りは、もう届きません。モンク僧は、デッキの中です。',8);
   await tut2Say('……ドラグナイトが、僧侶の前に立ちました。\n親友がいなくなった場所に、今度は自分が。',5);
 
@@ -24979,10 +24981,10 @@ function startGuideTutorial(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.55</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.55%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.56</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.56%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.55";
+  var FORM="", PRE={}, V="0.1.56";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
