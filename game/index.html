@@ -6604,7 +6604,7 @@ function setBuilderMonsterFilter(f){
   renderBuilderList();
 }
 
-const BUILDER_MONSTER_GROUPS=[{name:'ハイランド王国',ids:['pope','king','chancellor','senate','joker','queen','prince','sage','paladin','dragoon','poseidon','redmage','whitewitch','acolyte','blackmage','knight','oceanknight','wyvernknight','templar','spade','heart','club','diamond','platoon','archer','irongiant','metaldragon','assassin','chocobo']},{name:'在野',ids:['frogprince','fatetwins','warrior','monk','elf','oldman','samurai','femmefatale','swordsman','blacksmith','moneychanger','baker','cook','tavern','bard','sworddancer','armsdealer','gladiator','mercenary','yojimbo','ninja','blackknight','jack','pirate','ronin','yakuza','thief','graverobber']},{name:'竜',ids:['chaosdragon','hydra','crystaldragon','doublehead','dragon','dragonsoldier','wyvern','dragonbaby']},{name:'魔族',ids:['dullahan','devilknight','madking','werewolf','gigas','minotaur','cyclops','demon','nightmare','tonberry','orc','vampire','succubus','shrub','goliath','blackgob','sahagin','lamia','cultist','harpy','bat','skeleton','zombie','lizardman','ahriman','mimic','ghost','grudge','frog','kobold','goblin']},{name:'聖遺物',ids:['relic','aegis','dragonslave','muramasa','arbiter','mindflayer','golem']},{name:'暗黒生態系',ids:['behemoth','godhercules','lightningbear','cerberus','adamantoise','yeti','chimera2','griffin','roc','manticore','sabertiger','icicletooth','flowermantis','icescorpion','ochu','aspis','morbol','coeurl','myconid','flamefly','basilisk','flan','cockatrice','leafraven','wolf','cactuar','mandra','spider']},{name:'汚染海洋生態系',ids:['demonwhale','megalodon','mosasaurus','kraken','shipworm','redorca','bigtusk','whitestingray','deathcrab','blacklobster','mermaid','swordfish','armoredjelly','fangedclam','lardfish','porkfish','spearsquid','kelpmimic','aquacat','jewelfish','bomb']}];
+const BUILDER_MONSTER_GROUPS=[{name:'ハイランド王国',ids:['pope','king','chancellor','senate','joker','queen','prince','sage','paladin','dragoon','poseidon','redmage','whitewitch','acolyte','blackmage','knight','oceanknight','wyvernknight','templar','spade','heart','club','diamond','platoon','archer','irongiant','metaldragon','assassin','chocobo']},{name:'在野',ids:['frogprince','fatetwins','warrior','monk','elf','oldman','samurai','femmefatale','swordsman','blacksmith','moneychanger','baker','cook','tavern','bard','sworddancer','jack','armsdealer','gladiator','mercenary','yojimbo','ninja','blackknight','pirate','ronin','yakuza','thief','graverobber']},{name:'竜',ids:['chaosdragon','hydra','crystaldragon','doublehead','dragon','dragonsoldier','wyvern','dragonbaby']},{name:'魔族',ids:['dullahan','devilknight','madking','werewolf','gigas','minotaur','cyclops','demon','nightmare','tonberry','orc','vampire','succubus','shrub','goliath','blackgob','sahagin','lamia','cultist','harpy','bat','skeleton','zombie','lizardman','ahriman','mimic','ghost','grudge','frog','kobold','goblin']},{name:'聖遺物',ids:['relic','aegis','dragonslave','muramasa','arbiter','mindflayer','golem']},{name:'暗黒生態系',ids:['behemoth','godhercules','lightningbear','cerberus','adamantoise','yeti','chimera2','griffin','roc','manticore','sabertiger','icicletooth','flowermantis','icescorpion','ochu','aspis','morbol','coeurl','myconid','flamefly','basilisk','flan','cockatrice','leafraven','wolf','cactuar','mandra','spider']},{name:'汚染海洋生態系',ids:['demonwhale','megalodon','mosasaurus','kraken','shipworm','redorca','bigtusk','whitestingray','deathcrab','blacklobster','mermaid','swordfish','armoredjelly','fangedclam','lardfish','porkfish','spearsquid','kelpmimic','aquacat','jewelfish','bomb']}];
 function builderMonsterOrder(){ const seen=new Set(); const out=[]; BUILDER_MONSTER_GROUPS.forEach(g=>g.ids.forEach(id=>{ if(MONSTER_POOL.includes(id)&&!seen.has(id)){ seen.add(id); out.push(id); } })); MONSTER_POOL.forEach(id=>{ if(!seen.has(id)) out.push(id); }); return out; }
 const BUILDER_MAGIC_GROUPS=[{name:'炎',ids:['fire','firaga']},{name:'氷',ids:['blizzard','blizzaga']},{name:'雷',ids:['thunder','thundaga']},{name:'回復',ids:['cure','curaga','poisona']},{name:'復活',ids:['raise','arise','reraise']},{name:'毒',ids:['poison','bio']},{name:'闇',ids:['drain','death','gravide']},{name:'天変',ids:['meteor','ultima']},{name:'時',ids:['haste']}];
 function builderMagicOrder(){ const seen=new Set(); const out=[]; BUILDER_MAGIC_GROUPS.forEach(g=>g.ids.forEach(id=>{ if(MAGIC_POOL.includes(id)&&!seen.has(id)){ seen.add(id); out.push(id); } })); MAGIC_POOL.forEach(id=>{ if(!seen.has(id)) out.push(id); }); return out; }
@@ -6829,7 +6829,7 @@ function monsterRoleText(id){
     skeleton:  '墓場の数で攻撃力強化。グラッジと組ませると凶悪',
     spade:     '安定した中堅前衛。被弾後に反撃ボーナス',
     club:      '攻撃しながら仲間を回復。召喚獣攻撃も可',
-    jack:      '横取り斬りとジャックポット。トランプ役の要',
+    jack:      '横取り斬りとジャックポット。トランプ役の要。名もなき民（every man jack）',
     adamantoise:'超高HPの壁。全体震動で召喚獣・クリスタルにも届く',
     golem:     '岩壁再生で驚異的な持久力。大地震で全体攻撃。単独召喚時はデッキへ帰還し墓場から仲間を呼ぶ',
     sabertiger:'安定した速攻型アタッカー。疾走牙の一撃が重い。登場時、場の虫系・植物系を喰らいATK+30/体',
@@ -24404,6 +24404,39 @@ function kataribeMult(){
   };
 })();
 
+// ===== ジャック：誰でもない者は、誰にでもなれる（2026-10-12 隆基「ジャックは個人名ではない。民、労働者、その他大勢という意味」「CCB内においてもあらゆるカードの軸になるような重要な汎用カードにしたい。プレイヤーが気が付くかは知らんが」）=====
+// 追加の役（EXTRA_ROLES）をそろえる時、ジャックは「民」のカード1枚分の代わりになれる（1つの役につき1枚分だけ）。
+// 王・女王・教皇・賢者・英雄のような、身分ある者や特別な者の代わりにはなれない。説明は大きく書かない（気づいた人だけが分かる）
+const JACK_STANDIN=new Set(['baker','cook','blacksmith','moneychanger','armsdealer','tavern','bard','mercenary','gladiator','swordsman','platoon','archer','pirate','thief','graverobber','ronin','yakuza','yojimbo','acolyte','cultist','sahagin']);
+(function installEveryManJack(){
+  const holds=extraRoleHolds;
+  const jackOn=(side,r)=>{ const own=(side==='p'?G.p:G.e).monsterField, opp=(side==='p'?G.e:G.p).monsterField;
+    return own.some(m=>m&&m.hp>0&&m.id==='jack')||(r.bothSides&&opp.some(m=>m&&m.hp>0&&m.id==='jack')); };
+  function standInVariant(side,r){
+    if(!r||r.opposite||!r.cards||r.cards.some(g=>g.includes('jack'))) return null;
+    if(!jackOn(side,r)) return null;
+    for(let gi=0;gi<r.cards.length;gi++){
+      const g=r.cards[gi]; if(!g.some(it=>JACK_STANDIN.has(it))) continue;
+      const r2=Object.assign({},r,{cards:r.cards.map((x,i)=>i===gi?x.concat(['jack']):x)});
+      if(holds(side,r2)) return r2;
+    }
+    return null;
+  }
+  extraRoleHolds=function(side,r){
+    if(holds.apply(this,arguments)) return true;
+    try{ return !!standInVariant(side,r); }catch(e){ return false; }
+  };
+  // 役の掲示板の内訳には、代わりに立ったジャックの名前を出す
+  const rm=roleMembers;
+  roleMembers=function(side,id){
+    try{
+      const r=EXTRA_ROLES.find(x=>x.id===id);
+      if(r&&!holds(side,r)){ const r2=standInVariant(side,r); if(r2){ const keep=r.cards; r.cards=r2.cards; try{ return rm.apply(this,arguments); } finally { r.cards=keep; } } }
+    }catch(e){}
+    return rm.apply(this,arguments);
+  };
+})();
+
 </script>
 
 <style id="public-test-badge">
@@ -24411,10 +24444,10 @@ function kataribeMult(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.47</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.47%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.48</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.48%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.47";
+  var FORM="", PRE={}, V="0.1.48";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
