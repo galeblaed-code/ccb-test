@@ -6148,16 +6148,16 @@ const BD = {
   ramuh:    {id:'ramuh',    name:'雷帝',         emoji:'⚡', hp:260, cost:6,  atkName:'雷神の怒り',       atk:230, dc:2, dt:8,  backfire:100, passive:'allyAtk30',       onDeath:'thunderStrike', elementAura:'thunder'},
   titan:    {id:'titan',    name:'タイタン',       emoji:'⛰', hp:360, cost:7,  atkName:'ガイアグラビティ',atk:200, dc:2, dt:8,  backfire:110, passive:'largeBothHpBuff',   onDeath:'quakeAll70'},
   garuda:   {id:'garuda',   name:'ガルーダ',       emoji:'🪽', hp:240, cost:7,  atkName:'煌鳥乱',            atk:180, dc:2, dt:7,  backfire:120, passive:'poisonFieldBoost', onDeath:'windDrain'},
-  phoenix:  {id:'phoenix',  name:'フェニックス',   emoji:'🕊', hp:300, cost:8,  atkName:'フェニックシアオーラ',atk:220, dc:2, dt:7,  backfire:160, passive:'reraise',          onDeath:'phoenixBlaze'},
-  leviathan:{id:'leviathan',name:'リヴァイアサン', emoji:'🌊', hp:380, cost:8,  atkName:'海魔波動',         atk:200, dc:2, dt:8,  backfire:180, passive:'allBothAtkBuff',  onDeath:'tidalWave80'},
+  phoenix:  {id:'phoenix',  name:'フェニックス',   emoji:'🕊', hp:300, cost:7,  atkName:'フェニックシアオーラ',atk:220, dc:2, dt:7,  backfire:160, passive:'reraise',          onDeath:'phoenixBlaze'},
+  leviathan:{id:'leviathan',name:'リヴァイアサン', emoji:'🌊', hp:380, cost:7,  atkName:'海魔波動',         atk:200, dc:2, dt:8,  backfire:180, passive:'allBothAtkBuff',  onDeath:'tidalWave80'},
   alexander:{id:'alexander',name:'パルテナス', emoji:'🏰', hp:420, cost:9,  atkName:'天秤の裁き',       atk:300, dc:2, dt:7,  backfire:130, passive:'shield180',       onDeath:'holyJudgment'},
   odin:     {id:'odin',     name:'オーディン',     emoji:'⚔️', hp:350, cost:9,  atkName:'天譴絶刀一文字斬り',atk:999, dc:1, dt:5,  backfire:400, passive:'humanBothBuff',    onDeath:'zantetsuken'},
   fenrir:   {id:'fenrir',   name:'フェンリル',     emoji:'🐺', hp:400, cost:9,  atkName:'神喰らいの顎',     atk:320, dc:2, dt:8,  backfire:200, passive:'godEater',        onDeath:'gleipnirSnap'},
   // 2026-10-12 隆基「召喚獣に四神追加してみた。コストや効果は任せていい？」：朱雀・青竜・白虎・玄武
-  suzaku:   {id:'suzaku',   name:'レドラ',         emoji:'🔥', hp:280, cost:7,  atkName:'朱き焔翼',           atk:230, dc:2, dt:7,  backfire:110, passive:'suzakuFlame',  onDeath:'suzakuEmber', elementAura:'fire'},
-  seiryu:   {id:'seiryu',   name:'ライトニング',   emoji:'🐉', hp:320, cost:8,  atkName:'蒼雷の昇り龍',       atk:250, dc:2, dt:8,  backfire:130, passive:'seiryuStorm',  onDeath:'seiryuBolt',  elementAura:'thunder'},
-  byakko:   {id:'byakko',   name:'ゼブライガー',   emoji:'🐯', hp:300, cost:7,  atkName:'白金の爪牙',         atk:240, dc:2, dt:7,  backfire:110, passive:'byakkoFang',   onDeath:'byakkoRoar'},
-  genbu:    {id:'genbu',    name:'ヨルムンガンド', emoji:'🐢', hp:450, cost:8,  atkName:'黒水の大顎',         atk:200, dc:2, dt:8,  backfire:120, passive:'genbuShell',   onDeath:'genbuQuake'},
+  suzaku:   {id:'suzaku',   name:'朱雀',           emoji:'🔥', hp:280, cost:8,  atkName:'朱き焔翼',           atk:230, dc:2, dt:7,  backfire:110, passive:'suzakuFlame',  onDeath:'suzakuEmber', elementAura:'fire'},
+  seiryu:   {id:'seiryu',   name:'青竜',           emoji:'🐉', hp:320, cost:8,  atkName:'蒼雷の昇り龍',       atk:250, dc:2, dt:8,  backfire:130, passive:'seiryuStorm',  onDeath:'seiryuBolt',  elementAura:'thunder'},
+  byakko:   {id:'byakko',   name:'白虎',           emoji:'🐯', hp:300, cost:8,  atkName:'白金の爪牙',         atk:240, dc:2, dt:7,  backfire:110, passive:'byakkoFang',   onDeath:'byakkoRoar'},
+  genbu:    {id:'genbu',    name:'玄武',           emoji:'🐢', hp:450, cost:8,  atkName:'黒水の大顎',         atk:200, dc:2, dt:8,  backfire:120, passive:'genbuShell',   onDeath:'genbuQuake'},
   // 2026-10-12 隆基：召喚獣フォルダに用意した2体。どちらもコスト10
   arz:      {id:'arz',      name:'アーズ',         emoji:'☯', hp:450, cost:10, atkName:'アルファ・ゼータ',   atk:360, dc:2, dt:8,  backfire:220, passive:'arzDual',         onDeath:'arzMobius'},
   fenghuang:{id:'fenghuang',name:'鳳凰',           emoji:'🪶', hp:400, cost:10, atkName:'五色の瑞光',         atk:260, dc:2, dt:7,  backfire:150, passive:'fenghuangHanten', onDeath:'fenghuangDepart'},
@@ -24411,10 +24411,10 @@ function kataribeMult(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.46</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.46%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.47</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.47%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.46";
+  var FORM="", PRE={}, V="0.1.47";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
