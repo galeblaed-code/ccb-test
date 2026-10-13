@@ -24073,6 +24073,11 @@ function dqLinesFor(side,text,cls,plate){
   const t2=t.replace(/召喚石/g,'召喚ダイヤ');
   return [[/[。！？」）]$/.test(t2)?t2:t2+'。']];
 }
+let G_openingShown=false;
+function openingBtnReveal(){
+  G_openingShown=true;
+  document.querySelectorAll('button[data-wait-dq]').forEach(b=>{ b.style.visibility=''; delete b.dataset.waitDq; try{ b.animate([{opacity:0,transform:'scale(.92)'},{opacity:1,transform:'scale(1)'}],{duration:280,easing:'ease-out'}); }catch(e){} });
+}
 function dqPush(side,text,cls,plate){
   if(!G||G.phase==='gameover') return;
   // バトルラインは同じ知らせを続けて出さない・溜めておいて後で出し直すので、2秒以内の同じ知らせは1回だけ
@@ -24102,7 +24107,7 @@ function dqRun(){
   DQ.lines.push(it); while(DQ.lines.length>3) DQ.lines.shift();
   body.innerHTML=DQ.lines.map((l,i)=>'<div class="dq-line '+(l.cls||'')+'">'+(i<DQ.lines.length-1?escHtml(l.line):'')+'</div>').join('');
   const cur=body.lastElementChild; let k=0, done=false;
-  const finishType=()=>{ if(done) return; done=true; clearInterval(tt); cur.textContent=it.line; hold(); };
+  const finishType=()=>{ if(done) return; done=true; clearInterval(tt); cur.textContent=it.line; if(it.after) setTimeout(it.after,500); hold(); };
   const step=DQ.q.length>=3?3:1;
   const tt=setInterval(()=>{ k+=step; cur.textContent=it.line.slice(0,k); if(k>=it.line.length) finishType(); },26);
   let ht=null;
@@ -24115,7 +24120,18 @@ function dqRun(){
   // 文を出している途中でサイコロの窓が開いても追いかける
   setInterval(()=>{ try{ const el=DQ.el; if(el&&el.classList.contains('show')) dqPlace(el); }catch(e){} },150);
   const ig=initGame;
-  initGame=function(){ const r=ig.apply(this,arguments); try{ DQ.q.length=0; DQ.lines=[]; DQ.seen={}; setTimeout(()=>{ if(!G||G.phase==='gameover') return; DQ.q.push({line:G.spectate?(announcementOwner('p')+'と '+announcementOwner('e')+'の 戦いが 始まった！'):'対戦相手が あらわれた！',cls:''}); dqRun(); },600); }catch(e){} return r; };
+  initGame=function(){ const r=ig.apply(this,arguments); try{ DQ.q.length=0; DQ.lines=[]; DQ.seen={}; setTimeout(()=>{ if(!G||G.phase==='gameover') return; DQ.q.push({line:G.spectate?(announcementOwner('p')+'と '+announcementOwner('e')+'の 戦いが 始まった！'):'対戦相手が あらわれた！',cls:'',after:openingBtnReveal}); dqRun(); },600); }catch(e){} return r; };
+  // 2026-10-13 隆基「初期配置のボタンは、対戦相手が現れたのアナウンスの後に」：開幕配置のボタンは、知らせを出し終えてから見せる
+  const rop=runOpeningPhase;
+  runOpeningPhase=async function(){
+    const sid=G_SESSION; G_openingShown=false;
+    const r=await rop.apply(this,arguments);
+    if(sid===G_SESSION&&G&&G.phase==='opening'&&!G.spectate&&!G.demoMode&&!G_openingShown){
+      const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes('開幕配置を開始'));
+      if(b){ b.style.visibility='hidden'; b.dataset.waitDq='1'; setTimeout(openingBtnReveal,4000); }   // 知らせが出なかった時の保険
+    }
+    return r;
+  };
   const bp=btPush;
   btPush=function(side,text,cls,plate){ const r=bp.apply(this,arguments); try{ dqPush(side,text,cls,plate); }catch(e){} return r; };
   const go=gameOver;
@@ -25120,10 +25136,10 @@ function queueCounterFx(defenderSide,defender,attackerSide,attacker,dmg){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.63</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.63%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.64</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.64%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.63";
+  var FORM="", PRE={}, V="0.1.64";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
