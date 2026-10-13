@@ -4483,7 +4483,7 @@ img[src*="ゼネラルデビル"]{object-fit:fill!important;}
   <div class="title-splash-text" id="title-splash-text">CLICK / TAP TO START BGM</div>
   <div class="splash-actions">
     <button class="splash-tutorial-btn" type="button" onpointerup="event.stopPropagation()" onclick="event.stopPropagation();startGuideTutorial()">チュートリアル</button>
-    <button class="splash-tutorial-btn" type="button" onpointerup="event.stopPropagation()" onclick="event.stopPropagation();startCoachBattle()">案内人と一局</button>
+    <!-- 2026-10-13 隆基：「案内人と一局」はタイトルから外した。チュートリアルの最後の誘いからだけ入れる（普通の対戦） -->
     <!-- 2026-10-12 隆基：教える系はチュートリアル一つにまとめた（模擬戦を見る・最初の説明・旧チュートリアルを外す）。伝説の一戦は観戦の中へ -->
     <button class="splash-demo-btn" type="button" onpointerup="event.stopPropagation()" onclick="event.stopPropagation();openSpectatorMenu()">観戦する</button>
     <!-- 問いのくじ（openQuestionLottery）は 2026-10-05 隆基の判断でタイトルから外した。中身は残してある -->
@@ -22058,11 +22058,8 @@ function startCoachBattle(){
   const splash=document.getElementById('title-splash'); if(splash) splash.classList.add('hide');
   playBgm('battle');
   const deck={beasts:['moogle','grimbulsti','ifrit'],magic:['cure','fire','blizzard','thunder','raise','haste'],monsters:[...COACH_MONSTERS]};
-  initGame(Object.assign({_coach:true},JSON.parse(JSON.stringify(deck))),Object.assign({aiStyle:'random'},JSON.parse(JSON.stringify(deck))));
-  // 最初の数枚は、早めに役が見えるように並べておく（侍→侍→料理人→ラードフィッシュ→キング→騎士）
-  try{ const front=['samurai','samurai','cook','lardfish','king','knight']; const d=G.p.deck, out=[];
-    front.forEach(id=>{ const i=d.findIndex(c=>c.type==='monster'&&c.id===id); if(i>=0) out.push(d.splice(i,1)[0]); });
-    G.p.deck=[...out,...d]; }catch(e){}
+  // 2026-10-13 隆基：チュートリアルの後の一局は普通の対戦。ヒントの吹き出しも、デッキの頭に侍を置く細工もなし（侍どうしの鞘当てで開幕から両陣営が空になっていた）
+  initGame(JSON.parse(JSON.stringify(deck)),Object.assign({aiStyle:'random'},JSON.parse(JSON.stringify(deck))));
 }
 let G_coachQueue=[];
 function coachTip(id){
@@ -25123,10 +25120,10 @@ function queueCounterFx(defenderSide,defender,attackerSide,attacker,dmg){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.62</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.62%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.63</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.63%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.62";
+  var FORM="", PRE={}, V="0.1.63";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
