@@ -9556,6 +9556,7 @@ function dragonSlaveEnter(side){
   if(sent.length){ log((side==='p'?'':'[敵] ')+'【ドラゴンスレイブ】竜殺しの剣が抜かれた——'+sent.join('・')+'はデッキへ退き、'+(came.join('・')||'誰も')+'が代わりに現れた','gold'); try{ recEvent(side,'role','ドラゴンスレイブ：'+sent.join('・')+'を退けた'); }catch(e){} renderAll(); }
 }
 function handleMonsterEnter(side,m){
+  window._ccbLastFlip=Date.now();   // 2026-10-14：役の判定はこの中で走るので、ここで「カードが出た瞬間」を記録（掲示板・発見の窓を待たせるため）
   if(m&&m.id==='crystaldragon') Promise.resolve().then(()=>crystalDragonEnter(side));
   if(m&&m.id==='dragonslave') Promise.resolve().then(()=>dragonSlaveEnter(side));
   if(m&&m.id==='madking') Promise.resolve().then(()=>madKingEnter(side));
@@ -13416,7 +13417,9 @@ function showRoleDiscoveryPopup(def){
     +'';
   el.style.pointerEvents='auto';
   el.style.cursor='pointer';
-  document.body.appendChild(el);
+  // 2026-10-14 隆基「カードが場に出てから役の掲示板。どんなモンスターがドローされるかがドキドキポイントだから隠したらダメ」
+  //   カードがめくれている最中なら、めくれ終わって少し見せてから出す（ゲームの進行は今すぐ止めておく）
+  const _wait=Math.max(0,(window._ccbLastFlip||0)+1300-Date.now());
   // 2026-10-04 隆基：ウインドウが消えるまで、次の行動に進まない（delay() が G._fxHold を待つ）
   let release=()=>{};
   if(typeof G!=='undefined'&&G){
@@ -13439,7 +13442,7 @@ function showRoleDiscoveryPopup(def){
   };
   el.addEventListener('click',dismiss);
   // 2026-10-04 隆基：数秒で勝手に消える（タップでも早く消せる）
-  setTimeout(dismiss,4000);
+  setTimeout(()=>{ document.body.appendChild(el); setTimeout(dismiss,4000); },_wait);
 }
 
 function discoverRole(id,side){
@@ -21072,6 +21075,9 @@ async function showTurnCall(side){
 }
 
 function showCenterNotice(mainText,subText,side='p',ms=760){
+  // 2026-10-14 隆基：カードがめくれている最中は出さない（めくれ終わってから）
+  const _w=mainText==='MONSTER DRAW'?0:(window._ccbLastFlip||0)+1100-Date.now();
+  if(_w>0){ setTimeout(()=>showCenterNotice(mainText,subText,side,ms),_w); return; }
   const ov=document.getElementById('turn-call-ov');
   const main=document.getElementById('turn-call-main');
   const sub=document.getElementById('turn-call-sub');
@@ -25146,10 +25152,10 @@ function queueCounterFx(defenderSide,defender,attackerSide,attacker,dmg){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.67</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.67%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.68</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.68%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.67";
+  var FORM="", PRE={}, V="0.1.68";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
