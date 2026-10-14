@@ -6931,7 +6931,7 @@ function monsterRoleText(id){
     monk:'素手で岩を割る修行僧。ダイス2個の連打。修行の体は毒を受け付けない',
     bard:'酒場で歌う流れの詩人。自分は弱いが、場にいる間、味方全員の攻撃 +15（士気の歌）',
     ronin:'主を失った剣士。殴られて生き残ると斬り返す（カウンター40）',
-    yakuza:'丁半博打で生きる流れ者。偶数（丁）なら倍付けの一撃、奇数（半）なら空振り',
+    yakuza:'丁半博打で生きる流れ者。攻撃はサイコロ1個：偶数（丁）なら倍付けの一撃、奇数（半）なら空振り。味方のいない場に一人で出ると、サイコロ2個で大博打を打つ',
     tavern:'在野の者が集まる酒場の女主人。場に出た時、ツケの取り立てで召喚ダイヤ+1（その一体につき1回）',
     aquacat:'海に棲む猫。手土産：場に出た時、召喚ダイヤ+1（その一体につき1回）。魚が大好物で、魚への攻撃は2倍',
     shipworm:'船を丸ごと食い破る、巨大な海の蛆。木の船や兵器が大好物：海賊・海洋騎士・ポセイドン・ゴリアテへの攻撃は2倍',
@@ -12649,6 +12649,9 @@ const EXTRA_ROLES=[
   {id:'xKageNoMisuji',name:'影の三筋',reading:'カゲノミスジ',cards:[['assassin'],['ninja'],['thief']],once:{kageMisuji:true},
    onceReady:side=>{ const od=side==='p'?G.e:G.p; return od.deck.some(c=>c&&c.type==='monster'&&MAZOKU_IDS().includes(c.id)); },
    meaning:'国に潜む魔は、国の影が狩る。',desc:'アサシン・忍者・シーフが同時に場にいる。1ゲームに1度、相手のデッキを引く順番どおりにすべて覗き、潜んでいる魔族を1体選んで墓場へ送る。',hint:'暗殺者と忍びと盗人、三つの影が一つになる'},
+  // 英雄譚（2026-10-14 隆基「吟遊詩人は英雄の伝説を流布し人々を鼓舞する。つまりアイドルだ」）
+  {id:'xEiyuutan',name:'英雄譚',reading:'エイユウタン',cards:[['bard'],['warrior','paladin','dragoon','samurai','knight','prince','swordmaster']],aura:{warrior:{atk:50},paladin:{atk:50},dragoon:{atk:50},samurai:{atk:50},knight:{atk:50},prince:{atk:50},swordmaster:{atk:50}},
+   meaning:'剣を振るうのは英雄だ。だが、その名を国じゅうに届けるのは詩人だ。歌われた者は、歌に負けぬよう前へ出る。',desc:'吟遊詩人と、英雄（戦士・パラディン・ドラグナイト・侍・騎士・王子・剣聖のいずれか）が同時に場にいる。場にいる間、歌われた英雄の攻撃 +50。',hint:'詩人が、英雄の名を歌う'},
   {id:'xJingi',name:'仁義',reading:'ジンギ',cards:[['yakuza'],['yojimbo']],
    meaning:'賽の目は裏切っても、筋は裏切らない。',desc:'渡世人と用心棒が同時に場にいる。渡世人の丁半が外れ（半）でも、用心棒が筋を通して半分の攻撃が入る。',hint:'賭場の入口に、用心棒が立つ'},
   {id:'xMakanai',name:'まかない',reading:'マカナイ',cards:[['aquacat'],['cook']],once:{healAllies:60},
@@ -25362,16 +25365,49 @@ async function aiCrystalActions(side){
 })();
 </script>
 
+<script>
+// 渡世人の大博打（2026-10-14 隆基）：味方のいない場に一人で出ると、サイコロ2個で丁半博打
+//   丁（合計が偶数）＝自分を中強化／半（奇数）＝相手の場の全員を中強化
+//   ゾロ目は必ず丁になるので、偶数のゾロ目（2・4・6）＝自分を超強化、奇数のゾロ目（1・3・5）＝相手を超強化
+(function(){
+  const MID={atk:40,hp:40}, SUP={atk:100,hp:100};
+  const buff=(m,b)=>{ m.def=Object.assign({},m.def,{atk:(m.def.atk||0)+b.atk}); m.maxHp+=b.hp; m.hp+=b.hp; };
+  const FACE=['','⚀','⚁','⚂','⚃','⚄','⚅'];
+  const orig=handleMonsterEnter;
+  handleMonsterEnter=function(side,m){
+    const r=orig.apply(this,arguments);
+    try{
+      if(!m||m.id!=='yakuza'||!G||G.phase!=='battle') return r;
+      const pd=side==='p'?G.p:G.e, od=side==='p'?G.e:G.p;
+      if(pd.monsterField.some(x=>x&&x!==m&&x.hp>0)) return r;   // 一人の時だけ
+      const a=1+Math.floor(Math.random()*6), b=1+Math.floor(Math.random()*6), zoro=a===b, chou=(a+b)%2===0;
+      const foes=od.monsterField.filter(x=>x&&x.hp>0);
+      let head, txt;
+      if(zoro&&a%2===0){ buff(m,SUP); head='ゾロ目の丁！'; txt='渡世人 超強化（攻撃 +'+SUP.atk+'・最大HP +'+SUP.hp+'）'; }
+      else if(zoro){ foes.forEach(x=>buff(x,SUP)); head='ゾロ目の半……'; txt='相手の場の'+foes.length+'体が超強化（攻撃 +'+SUP.atk+'・最大HP +'+SUP.hp+'）'; }
+      else if(chou){ buff(m,MID); head='丁！'; txt='渡世人 強化（攻撃 +'+MID.atk+'・最大HP +'+MID.hp+'）'; }
+      else { foes.forEach(x=>buff(x,MID)); head='半……'; txt='相手の場の'+foes.length+'体が強化（攻撃 +'+MID.atk+'・最大HP +'+MID.hp+'）'; }
+      const pre=side==='p'?'':'[敵]';
+      log(pre+'【丁半博打】'+FACE[a]+FACE[b]+'（'+a+'・'+b+'）'+head+' '+txt,(head.indexOf('丁')>=0)?'gold':'bad');
+      try{ showCenterNotice('丁半博打 '+FACE[a]+FACE[b],head+' '+txt,side,1800); }catch(e){}
+      try{ recEvent(side,'place','渡世人の丁半博打：'+head); }catch(e){}
+      try{ renderAll(); }catch(e){}
+    }catch(e){ console.warn('chouhan',e); }
+    return r;
+  };
+})();
+</script>
+
 
 <style id="public-test-badge">
 #pt-badge{position:fixed;left:8px;bottom:8px;z-index:99990;display:flex;gap:6px;align-items:center;font:12px/1.2 "Hiragino Sans",sans-serif}
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.74</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.74%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.75</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.75%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.74";
+  var FORM="", PRE={}, V="0.1.75";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
