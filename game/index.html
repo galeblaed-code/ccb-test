@@ -25269,6 +25269,23 @@ async function aiCrystalActions(side){
   }
 }
 
+// ══════════════════════════════════════════════════════
+// 自分の番のお知らせ（2026-10-14 暁子さん「今が自分のターンか相手のターンかわからなくなる時がある」→ 隆基）
+//   自分の番の間だけ、自分のモンスターを置く板を青く光らせる（観戦では光らせない）
+// ══════════════════════════════════════════════════════
+(function installMyTurnGlow(){
+  const css=document.createElement('style');
+  // 板の絵の形に沿って光らせる（drop-shadow）。板は #p-m-row
+  css.textContent='@keyframes ccbMyTurnGlow{0%,100%{filter:drop-shadow(0 0 3px rgba(190,235,255,.95)) drop-shadow(0 0 12px rgba(80,170,255,.8)) drop-shadow(0 0 26px rgba(40,130,255,.55))}50%{filter:drop-shadow(0 0 5px rgba(230,248,255,1)) drop-shadow(0 0 18px rgba(110,195,255,1)) drop-shadow(0 0 40px rgba(40,130,255,.9))}}'
+    +'body.ccb-myturn #p-m-row{animation:ccbMyTurnGlow 1.6s ease-in-out infinite;}';
+  document.head.appendChild(css);
+  setInterval(()=>{
+    let on=false;
+    try{ on=!!(G&&G.phase==='battle'&&G.activePlayer==='p'&&!G.spectate); }catch(e){}
+    document.body.classList.toggle('ccb-myturn',on);
+  },200);
+})();
+
 </script>
 
 <style id="public-test-badge">
@@ -25276,10 +25293,10 @@ async function aiCrystalActions(side){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.70</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.70%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.71</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.71%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.70";
+  var FORM="", PRE={}, V="0.1.71";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
