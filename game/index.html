@@ -10609,6 +10609,7 @@ function showCrystalMenu(){
   else if(G.p.magicHand.length) btns.push({label:'マジックカードを使用（主行動は減らない）',cls:'purple',fn:showMagicHand});
   else btns.push({label:'マジック手札なし',disabled:true});
   btns.push({label:'戻る',fn:showMainActionBtns});
+  try{ crystalExtraBtns(btns); }catch(e){}
   setInfo(isPreparationRound()?'準備巡：モンスターカードを引いて盤面を整えてください。':'クリスタル操作：モンスターカードを引くか、手札のマジックカードを選んで使用。');
   setBtns(btns);
 }
@@ -20107,6 +20108,8 @@ async function runEnemyTurn(){
 
   if(checkWin()) return;
 
+  try{ await aiCrystalActions('e'); }catch(e){}
+  if(checkWin()) return;
   if(G.e.mainActionsRem>0 && enemyShouldCallMonster()){
     enemyCallMonster();
     renderAll();
@@ -21074,10 +21077,10 @@ async function showTurnCall(side){
   await delay(120);
 }
 
-function showCenterNotice(mainText,subText,side='p',ms=760){
-  // 2026-10-14 隆基：カードがめくれている最中は出さない（めくれ終わってから）
-  const _w=mainText==='MONSTER DRAW'?0:(window._ccbLastFlip||0)+1100-Date.now();
-  if(_w>0){ setTimeout(()=>showCenterNotice(mainText,subText,side,ms),_w); return; }
+function showCenterNotice(mainText,subText,side='p',ms=760,_waited){
+  // 2026-10-14 隆基：カードがめくれている最中は出さない（めくれ終わってから。待つのは一度だけ）
+  const _w=(_waited||mainText==='MONSTER DRAW')?0:(window._ccbLastFlip||0)+1100-Date.now();
+  if(_w>0){ setTimeout(()=>showCenterNotice(mainText,subText,side,ms,true),_w); return; }
   const ov=document.getElementById('turn-call-ov');
   const main=document.getElementById('turn-call-main');
   const sub=document.getElementById('turn-call-sub');
@@ -22737,10 +22740,11 @@ function btRun(){
   // 2026-10-13 隆基「役の掲示板はモンスターが場に出てから。どんなモンスターがドローされるかがドキドキポイントだから隠したらダメ」
   //   カードがめくれ終わり（0.68秒）、「〜があらわれた！」を読めるまで待ってから掲示板を出す（待つのは最大3秒）
   if(it.plate){
-    const now=Date.now(); it._w=it._w||now; const waited=now-it._w;
-    const flipLeft=(window._ccbLastFlip||0)+1150-now;
+    // 待つ回数で数える（100ms×最大30回＝3秒）。時計で数えると、待ち時間を0にした自動対戦ツールの中で空回りする
+    it._t=(it._t||0)+1;
+    const flipLeft=(window._ccbLastFlip||0)+1150-Date.now();
     const dqBusy=typeof DQ!=='undefined'&&(DQ.busy||DQ.q.length>0);
-    if(waited<3000&&(flipLeft>0||(dqBusy&&waited<1800))){ BT.q.unshift(it); BT.busy=true; setTimeout(()=>{ BT.busy=false; btRun(); },100); return; }
+    if(it._t<=30&&(flipLeft>0||(dqBusy&&it._t<=18))){ BT.q.unshift(it); BT.busy=true; setTimeout(()=>{ BT.busy=false; btRun(); },100); return; }
   }
   // 役が揃った時は、1行の代わりに小さい掲示板（自分＝木、相手＝鉄）を1.6秒（2026-10-05 隆基）
   if(it.plate){ el.classList.remove('show'); btShowPlate(it,el); setTimeout(()=>{ btHidePlate(); BT.busy=false; btRun(); },1600); return; }
@@ -25145,6 +25149,126 @@ function queueCounterFx(defenderSide,defender,attackerSide,attacker,dmg){
   game._fxHold=prev.then(run).catch(()=>{}).then(()=>{ if(game._fxN===my) game._fxHold=null; });
 }
 
+// ══════════════════════════════════════════════════════
+// クリスタルの力・引き直し（2026-10-14 隆基とゲイルの案。数字と操作はヴァッシュのおすすめで様子見）
+//  ① 力を取り出す：主行動を1つ使う。自分のクリスタルに150（画面では1500）。召喚ダイヤ+1、場の仲間のHPを最大HPの1割回復。
+//     削った結果が0以下になるなら使えない。
+//  ② 引き直し：1ターン1回、召喚ダイヤ1個。主行動は減らない。場の自分のモンスター1体をデッキに戻してシャッフルし、1枚引いて同じ場所に出す。
+//     同じカードが戻ってくることもある。役は普通に判定する。変身でしか出ないカードは戻せない。
+//  AIも派閥の性格に合わせて使う（賽狂いは引き直しに賭ける、獣断ち・厄災狩りは顕現を遅らせる、荒神は削って厄災を急ぐ、など）
+// ══════════════════════════════════════════════════════
+const CRYSTAL_DRAW_COST=150;
+function canCrystalExtract(side){ const pd=side==='p'?G.p:G.e; return !!(pd&&pd.crystalHp-CRYSTAL_DRAW_COST>0&&!isPreparationRound()); }
+function redrawTargets(side){ const pd=side==='p'?G.p:G.e; return pd.monsterField.map((m,i)=>({m,i})).filter(({m})=>m&&m.hp>0&&!(typeof TRANSFORM_ONLY!=='undefined'&&TRANSFORM_ONLY.includes(m.id))); }
+function canRedraw(side){ const pd=side==='p'?G.p:G.e;
+  return !!(pd&&!isPreparationRound()&&pd._redrawTurn!==pd.turnCount&&pd.beasts.summonPts>=1&&pd.deck.some(c=>c&&c.type==='monster')&&redrawTargets(side).length); }
+function crystalExtraBtns(btns){
+  if(isPreparationRound()) return;
+  btns.push(canCrystalExtract('p')?{label:'力を取り出す（クリスタル -'+CRYSTAL_DRAW_COST+'／召喚ダイヤ+1・仲間のHP回復／主行動を使う）',cls:'red',fn:()=>doCrystalExtract('p')}
+    :{label:'力を取り出す（クリスタルが足りない）',disabled:true});
+  const used=G.p._redrawTurn===G.p.turnCount;
+  btns.push(canRedraw('p')?{label:'引き直し（召喚ダイヤ1／1ターン1回／主行動は減らない）',cls:'blue',fn:startRedrawPick}
+    :{label:used?'引き直しは使用済み（1ターン1回）':'引き直しできない（召喚ダイヤ・デッキ・場が足りない）',disabled:true});
+}
+async function doCrystalExtract(side){
+  if(!G||G.phase!=='battle'||!canCrystalExtract(side)) return;
+  const pd=side==='p'?G.p:G.e;
+  if(side==='p'){ if(!playerActionReady()) return; setBtns([]); G.acting=true; }
+  beginAnnouncementAction(side,'クリスタルの力を取り出す');
+  pd.crystalHp-=CRYSTAL_DRAW_COST;
+  try{ showCrystalDamage(side,CRYSTAL_DRAW_COST); const el=document.querySelector(side==='p'?'.player-crystal':'.enemy-crystal'); if(el){ playCrystalHitSe(); el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); setTimeout(()=>el.classList.remove('hit'),380); } }catch(e){}
+  grantPts(side,1,'クリスタルの力');
+  const healed=[];
+  pd.monsterField.forEach(m=>{ if(m&&m.hp>0&&m.hp<m.maxHp){ const h=Math.max(1,Math.round(m.maxHp*0.1)); m.hp=Math.min(m.maxHp,m.hp+h); healed.push(m.def.name); } });
+  log((side==='p'?'':'[敵] ')+'【クリスタルの力】自分のクリスタルを削り、召喚ダイヤを1つ取り出した。'+(healed.length?'仲間の傷が癒えた：'+healed.join('・'):'癒やす傷はなかった。'),'gold');
+  btPush(side,'クリスタルを削って 力を取り出した');
+  if(healed.length) btPush(side,healed.join('と ')+'の 傷が 癒えた。');
+  try{ recEvent(side,'crystal','クリスタルを削って力を取り出した',{}); }catch(e){}
+  renderAll();
+  await delay(500);
+  if(side==='p'){ G.acting=false; finishMainAction(); }
+  else { pd.mainActionsRem=Math.max(0,(pd.mainActionsRem||0)-1); pd.turnActionDone=true; }
+}
+function startRedrawPick(){
+  if(!G||G.activePlayer!=='p'||G.phase!=='battle'||G.acting||!canRedraw('p')) return;
+  G.mode='redraw_pick';
+  setInfo('引き直すモンスターを、自分の場から1体選んでください。そのカードはデッキに戻ってシャッフルされ、新しく1枚引きます（同じカードが戻ることもあります）。');
+  setBtns([{label:'やめる',fn:()=>{ G.mode=null; showMainActionBtns(); }}]);
+}
+async function doRedraw(side,slot){
+  const pd=side==='p'?G.p:G.e; const m=pd.monsterField[slot];
+  if(!m||!canRedraw(side)) return false;
+  if(typeof TRANSFORM_ONLY!=='undefined'&&TRANSFORM_ONLY.includes(m.id)){ if(side==='p') setInfo(m.def.name+' は変身でしか現れない存在。デッキには戻せない。'); return false; }
+  if(side==='p'){ G.mode=null; setBtns([]); G.acting=true; }
+  pd._redrawTurn=pd.turnCount;
+  pd.beasts.summonPts=Math.max(0,pd.beasts.summonPts-1);
+  renderSummonBar(side,pd);
+  try{ captureAnnouncementStones('引き直しの代償'); }catch(e){}
+  btPush(side,'召喚ダイヤを 1つ 使って '+m.def.name+'を デッキへ 戻した');
+  log((side==='p'?'':'[敵] ')+'【引き直し】'+m.def.name+' をデッキに戻してシャッフル（召喚ダイヤ -1）。','sys');
+  pd.monsterField[slot]=null;
+  pd.deck.push({type:'monster',id:m.id}); pd.deck=shuffle(pd.deck);
+  renderAll();
+  await delay(450);
+  const ci=pd.deck.findIndex(c=>c&&c.type==='monster');
+  if(ci>=0&&!pd.monsterField[slot]){
+    const card=pd.deck.splice(ci,1)[0];
+    addReveal(side,card,'redraw');
+    playCardDrawSe();
+    pd.monsterField[slot]=makeMonsterInst(card.id,false,side);
+    handleMonsterEnter(side,pd.monsterField[slot]);
+    playCardPlaceSe();
+    markMonsterFlip(side,slot);
+    btPush(side,MD[card.id].name+' をドロー');
+    log((side==='p'?'':'[敵] ')+'【引き直し】'+MD[card.id].name+' を引いた'+(card.id===m.id?'（同じカードが戻ってきた）':'')+'。','good');
+    try{ recEvent(side,'redraw','引き直し：'+m.def.name+' → '+MD[card.id].name,{}); }catch(e){}
+  }
+  renderAll();
+  await delay(500);
+  if(side==='p'){ G.acting=false; if(checkWin()) return true; showMainActionBtns(); }
+  return true;
+}
+(function installRedrawPick(){
+  const ofc=onFieldClick;
+  onFieldClick=function(side,slotIdx){
+    if(G&&G.mode==='redraw_pick'){
+      if(side==='p'&&G.p.monsterField[slotIdx]) doRedraw('p',slotIdx);
+      return;
+    }
+    return ofc.apply(this,arguments);
+  };
+})();
+async function aiCrystalActions(side){
+  if(!G||G.phase!=='battle'||isPreparationRound()) return;
+  const pd=side==='p'?G.p:G.e; const st=pd.aiStyle||'win'; const R=Math.random();
+  const max=crystalMaxOf(pd), frac=pd.crystalHp/max, pts=pd.beasts.summonPts;
+  const nearBeast=!pd.beasts.summoned&&pts>=5;
+  // 引き直し（主行動は減らない）
+  if(canRedraw(side)){
+    let want=false;
+    if(st==='gamble') want=R<0.45;
+    else if(st==='nobeast'||st==='hunter') want=nearBeast||R<0.12;
+    else if(st==='aragami') want=false;
+    else if(st==='romance'||st==='transform') want=R<0.25;
+    else if(st==='win') want=R<0.10;
+    else want=R<0.18;
+    if(want){
+      const ts=redrawTargets(side).sort((a,b)=>((a.m.def.atk||0)+a.m.maxHp)-((b.m.def.atk||0)+b.m.maxHp));
+      if(ts.length){ await doRedraw(side,ts[0].i); if(checkWin()) return; }
+    }
+  }
+  // 力を取り出す（主行動を使う）
+  if(pd.mainActionsRem>0&&canCrystalExtract(side)){
+    const hurt=pd.monsterField.filter(m=>m&&m.hp>0).reduce((s,m)=>s+(m.maxHp-m.hp),0), hurtMax=pd.monsterField.filter(m=>m&&m.hp>0).reduce((s,m)=>s+m.maxHp,0)||1;
+    let want=false;
+    if(st==='aragami') want=frac>0.5&&!pd.beasts.summoned&&R<0.35;
+    else if(st==='gamble') want=frac>0.6&&R<0.10;
+    else if(st==='romance'||st==='hero') want=frac>0.55&&hurt/hurtMax>0.4&&R<0.30;
+    else if(st==='random') want=frac>0.5&&R<0.08;
+    if(want) await doCrystalExtract(side);
+  }
+}
+
 </script>
 
 <style id="public-test-badge">
@@ -25152,10 +25276,10 @@ function queueCounterFx(defenderSide,defender,attackerSide,attacker,dmg){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.68</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.68%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.69</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.69%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.68";
+  var FORM="", PRE={}, V="0.1.69";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
