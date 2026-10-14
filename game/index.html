@@ -12789,6 +12789,8 @@ const EXTRA_ROLES=[
    meaning:'小鬼は大喜びで剣を買った。柄が抜けたのは、最初の一振りの時だった。',desc:'武器商人と、ゴブリン・ブラックゴブリン・コボルドのいずれかが同時に場にいる。1ゲームに1度、召喚ダイヤ +3、ただし自クリスタル -20。',hint:'小鬼が、武器商人の店先で目を輝かせる'},
   {id:'xShiNoShounin',name:'死の商人',reading:'シノショウニン',cards:[['armsdealer'],['madking','devillord']],once:{pts:4,enemyPts:1},
    meaning:'商人は狂った王に剣を売った。同じ日の夕方、敵国にも同じ剣を売った。',desc:'武器商人と、狂王かゼネラルデビルが同時に場にいる。1ゲームに1度、召喚ダイヤ +4。ただし相手にも +1（両方に売っている）。',hint:'武器商人が、狂気の王に謁見する'},
+  {id:'xAkumaNoSasayaki',name:'悪魔の囁き',reading:'アクマノササヤキ',cards:[['king'],['joker']],once:{kingBetray:true,pts:2},
+   meaning:'悪魔が化けた道化師の策略により、王がおかしな行動をとるようになった。',desc:'キングとジョーカーが同時に場にいる。1ゲームに1度、キングが自軍のクリスタルを攻撃する（威力はキングの攻撃のダイスで決まる）。召喚ダイヤ +2。',hint:'王のそばで、道化が何かを囁いている'},
   {id:'xKyououNoDouke',name:'狂王の道化',reading:'キョウオウノドウケ',cards:[['madking'],['joker']],once:{enemyCrystal:200,selfCrystal:60},
    meaning:'道化は王を笑わせるのが仕事だった。王が笑わなくなってから、道化は別の仕事を始めた。',desc:'狂王とジョーカーが同時に場にいる。1ゲームに1度、敵クリスタル -200、自クリスタル -60。',hint:'狂った王の隣で、道化が笑う'},
   {id:'xYamakaji',name:'山火事',reading:'ヤマカジ',cards:[['flamefly'],['shrub','mandra','ochu']],once:{bothAllDmg:80},
@@ -12984,6 +12986,11 @@ function applyOnceEffects(side,o,label){
   if(o.spell){ const sp=o.spell, up=_beastActive(side,sp.boost), k=up?1.5:1; o=Object.assign({},o);
     if(sp.all) o.enemyAllDmg=Math.round(sp.all*k); if(sp.beast) o.beastDmg=Math.round(sp.beast*k);
     parts.push(sp.name+(up?'（'+BD[sp.boost].name+'の加護で威力1.5倍）':'')); }
+  if(o.kingBetray){   // 悪魔の囁き（2026-10-14 隆基）：キングが自軍のクリスタルを攻撃する。威力はキングの攻撃のダイス
+    const pdK=side==='p'?G.p:G.e, k=pdK.monsterField.find(m=>m&&m.id==='king'&&m.hp>0);
+    if(k){ const d=rollOne(), r=RESOLVE_TABLES.king.resolve([d]); const dmg=r.type==='fail'?(r.selfDmg||30):r.type==='special'?(r.aoeDmg||80):(r.atk||90);
+      log((side==='p'?'':'[敵] ')+'【悪魔の囁き】道化に化けた悪魔が王の耳元で囁いた——キングが自軍のクリスタルに剣を向けた（出目'+d+'：'+({fail:'ためらいの一太刀',normal:'王剣',strong:'王の突撃',special:'自軍への号令'})[r.type]+'）','bad');
+      damageCrystal(side,dmg); parts.push('キングが自クリスタルを攻撃 -'+dmg); try{ showCenterNotice('悪魔の囁き','キングが 自軍のクリスタルを 攻撃した',side,1200); }catch(e){} } }
   if(o.pts){ grantPts(side,o.pts); parts.push('召喚ダイヤ +'+o.pts); }
   if(o.enemyPts){ grantPts(os,o.enemyPts); parts.push('相手の召喚ダイヤ +'+o.enemyPts); }
   if(o.kanseiDango){
@@ -25293,10 +25300,10 @@ async function aiCrystalActions(side){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.71</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.71%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.72</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.72%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.71";
+  var FORM="", PRE={}, V="0.1.72";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
