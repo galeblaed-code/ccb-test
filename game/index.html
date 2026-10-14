@@ -12467,6 +12467,9 @@ const EXTRA_ROLES=[
   // ── 2026-10-02 海のシリーズ5枚の役 ──
   {id:'xSanguNoShou',name:'三軍の将',reading:'サングンノショウ',cards:[['paladin'],['dragoon'],['poseidon']],aura:{paladin:{atk:30},dragoon:{atk:30},poseidon:{atk:30}},once:{beastDmg:120},
    meaning:'地を守る者、空を守る者、海を取り戻す者。三人が同じ戦場に立つのは、王国が本当の危機にある時だけだ。',desc:'パラディン・ドラグナイト・ポセイドンが同時に場にいる。場にいる間、3体の攻撃 +30。揃った時に1度だけ、陸海空の共同作戦で相手の召喚獣に120ダメージ。',hint:'陸と空と海の将が、一つの戦場に並ぶ'},
+  // Joint Operation（2026-10-14 隆基）：三軍の将と同じ顔ぶれ。揃った瞬間に召喚石が3個なければ不成立で、この試合はもう発動しない
+  {id:'xJointOperation',name:'Joint Operation',reading:'ジョイントオペレーション',cards:[['paladin'],['poseidon'],['dragoon']],once:{jointOp:70},
+   meaning:'陸が押さえ、空が裂き、海が呑む。三軍が同じ時計で動く作戦は、王国の蓄えを惜しみなく注ぎ込んだ時にしか成り立たない。蓄えが足りなければ、作戦は机の上で終わる。',desc:'パラディン・ポセイドン・ドラグナイトが同時に場にいる。1ゲームに1度、召喚石を3個使い、陸・空・海の三連続波状攻撃で敵モンスター全体に70ダメージを3回。揃った時に召喚石が3個なければ作戦は不成立になり、この試合ではもう発動しない。',hint:'陸と海と空の将が、同じ時計で動く'},
   {id:'xHighlandKaigun',name:'ハイランド海軍',reading:'ハイランドカイグン',cards:[['poseidon'],['oceanknight']],aura:{poseidon:{atk:40,hp:60},oceanknight:{atk:60,hp:60}},
    meaning:'艦隊が沖を押さえ、海洋騎士が波間を駆ける。長いあいだ人の領域ではなかった海に、王国の旗が立った。',desc:'ポセイドンと海洋騎士が同時に場にいる。場にいる間、ポセイドンの攻撃 +40、海洋騎士の攻撃 +60、両者の最大HP +60。',hint:'海の将と、イルカに乗る騎兵が並ぶ'},
   {id:'xKaijuuGari',name:'海獣狩り',reading:'カイジュウガリ',cards:[['oceanknight'],['mosasaurus']],bothSides:true,aura:{oceanknight:{atk:70}},
@@ -13248,6 +13251,14 @@ function applyOnceEffects(side,o,label){
   if(o.fleetSortie){ const tpd=od; let n=0; tpd.monsterField.forEach((m,i)=>{ if(!m||m.hp<=0) return; const dmg=SEA_FAMILY_MONSTERS.has(m.id)?240:120; m.hp-=dmg; n++; showMonsterDamage(os,i,dmg);
       if(m.hp<=0){ animateMonsterBreakToDiamond(os,i,side); tpd.graveyard.push({uid:m.uid,id:m.id,def:m.def,maxHp:m.maxHp}); tpd.monsterField[i]=null; grantMonsterKillPts(side); } });
     parts.push('旗艦が港を出た——敵モンスター'+n+'体に砲撃（海の怪物には2倍）'); try{ recEvent(side,'role','艦隊出撃：旗艦が港を出て、敵の場を砲撃した'); }catch(e){} }
+  if(o.jointOp){
+    if(pd.beasts.summonPts<3){ parts.push('召喚石が足りず、作戦は机の上で終わった（この試合ではもう発動しない）'); try{ showCenterNotice(label,'作戦不成立',side,1500); }catch(e){} }
+    else{
+      pd.beasts.summonPts-=3; parts.push('召喚石を3個使った');
+      [['陸','パラディン隊'],['空','ドラグナイト隊'],['海','ポセイドン艦隊']].forEach(([w,nm])=>{ hitField(os,o.jointOp); parts.push(w+'：'+nm+'の波状攻撃 '+o.jointOp); });
+      try{ showCenterNotice(label,'陸・空・海 三連続波状攻撃',side,1600); }catch(e){}
+    }
+  }
   if(o.enemyAllDmg){ hitField(os,o.enemyAllDmg); parts.push('敵モンスター全体に '+o.enemyAllDmg); }
   if(o.bothAllDmg){ hitField(os,o.bothAllDmg); hitField(side,o.bothAllDmg); parts.push('敵味方すべてのモンスターに '+o.bothAllDmg); }
   log(pre+'【'+label+'】'+parts.join('、'),'gold');
@@ -25357,10 +25368,10 @@ async function aiCrystalActions(side){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.73</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.73%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.74</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.74%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.73";
+  var FORM="", PRE={}, V="0.1.74";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
