@@ -12652,6 +12652,15 @@ const EXTRA_ROLES=[
   // 英雄譚（2026-10-14 隆基「吟遊詩人は英雄の伝説を流布し人々を鼓舞する。つまりアイドルだ」）
   {id:'xEiyuutan',name:'英雄譚',reading:'エイユウタン',cards:[['bard'],['warrior','paladin','dragoon','samurai','knight','prince','swordmaster']],aura:{warrior:{atk:50},paladin:{atk:50},dragoon:{atk:50},samurai:{atk:50},knight:{atk:50},prince:{atk:50},swordmaster:{atk:50}},
    meaning:'剣を振るうのは英雄だ。だが、その名を国じゅうに届けるのは詩人だ。歌われた者は、歌に負けぬよう前へ出る。',desc:'吟遊詩人と、英雄（戦士・パラディン・ドラグナイト・侍・騎士・王子・剣聖のいずれか）が同時に場にいる。場にいる間、歌われた英雄の攻撃 +50。',hint:'詩人が、英雄の名を歌う'},
+  // 宿房（2026-10-14 隆基）：中世の酒場は、酒と食事と宿と賭場がひとつ屋根の下。女主人が二人いれば、客は帰れない
+  {id:'xShukubou',name:'宿房',reading:'シュクボウ',cards:[['tavern'],['tavern']],once:{drunkFoes:30},aura:{pirate:{atk:80,hp:80},mercenary:{atk:80,hp:80},yojimbo:{atk:80,hp:80},yakuza:{atk:80,hp:80},ronin:{atk:80,hp:80},bard:{atk:80,hp:80},blacksmith:{atk:80,hp:80},orc:{atk:80,hp:80},gigas:{atk:80,hp:80},gladiator:{atk:80,hp:80}},
+   meaning:'酒、飯、寝床、賭場。ひとつ屋根の下に全部ある。敵は酔い潰れ、酒好きは水を得た魚になる。',desc:'酒場の女主人が2体そろう。揃った時に1度だけ、相手の場の全員を酔わせる（攻撃 -30、ずっと）。場にいる間、酒好き（海賊・傭兵・用心棒・渡世人・浪人・吟遊詩人・鍛冶士・オーク・ギガス・剣闘士）の攻撃 +80・最大HP +80。',hint:'酒場の女主人が、二人で客をもてなす'},
+  // 賭場（2026-10-14 隆基「賭場も作ろう、女主人と渡世人で」）
+  {id:'xTobaa',name:'賭場',reading:'トバ',cards:[['tavern'],['yakuza']],
+   meaning:'酒場の奥の、灯りの落ちた一間。女主人が場所を貸し、渡世人が壺を振る。客が勝つ夜もあるが、寺銭だけは必ず落ちる。',desc:'酒場の女主人と渡世人が同時に場にいる。自分の番の始めに、渡世人が壺を振る（サイコロ2個）。丁なら寺銭で召喚石 +1、ゾロ目なら総取りで +2。半なら客の勝ちで、相手の召喚石 +1。',hint:'酒場の奥で、壺が鳴る'},
+  // 兵站（2026-10-14 隆基「パン屋も強いぞ。兵站の担い手だし」）
+  {id:'xHeitan',name:'兵站',reading:'ヘイタン',cards:[['baker'],['platoon','archer','knight','mercenary','oceanknight']],aura:{platoon:{atk:40,hp:40},archer:{atk:40,hp:40},knight:{atk:40,hp:40},mercenary:{atk:40,hp:40},oceanknight:{atk:40,hp:40}},
+   meaning:'腹が減っては戦はできぬ。夜明け前の窯の火が、昼の戦線を支えている。',desc:'パン職人と、兵士（小隊・弓兵・騎士・傭兵・海洋騎士のいずれか）が同時に場にいる。場にいる間、兵士の攻撃 +40・最大HP +40。',hint:'パン職人が、兵士に焼きたてを配る'},
   {id:'xJingi',name:'仁義',reading:'ジンギ',cards:[['yakuza'],['yojimbo']],
    meaning:'賽の目は裏切っても、筋は裏切らない。',desc:'渡世人と用心棒が同時に場にいる。渡世人の丁半が外れ（半）でも、用心棒が筋を通して半分の攻撃が入る。',hint:'賭場の入口に、用心棒が立つ'},
   {id:'xMakanai',name:'まかない',reading:'マカナイ',cards:[['aquacat'],['cook']],once:{healAllies:60},
@@ -13254,6 +13263,7 @@ function applyOnceEffects(side,o,label){
   if(o.fleetSortie){ const tpd=od; let n=0; tpd.monsterField.forEach((m,i)=>{ if(!m||m.hp<=0) return; const dmg=SEA_FAMILY_MONSTERS.has(m.id)?240:120; m.hp-=dmg; n++; showMonsterDamage(os,i,dmg);
       if(m.hp<=0){ animateMonsterBreakToDiamond(os,i,side); tpd.graveyard.push({uid:m.uid,id:m.id,def:m.def,maxHp:m.maxHp}); tpd.monsterField[i]=null; grantMonsterKillPts(side); } });
     parts.push('旗艦が港を出た——敵モンスター'+n+'体に砲撃（海の怪物には2倍）'); try{ recEvent(side,'role','艦隊出撃：旗艦が港を出て、敵の場を砲撃した'); }catch(e){} }
+  if(o.drunkFoes){ let n=0; od.monsterField.forEach(x=>{ if(x&&x.hp>0){ x.def=Object.assign({},x.def,{atk:Math.max(0,(x.def.atk||0)-o.drunkFoes)}); n++; } }); parts.push('相手の'+n+'体が酔い潰れた（攻撃 -'+o.drunkFoes+'、ずっと）'); }
   if(o.jointOp){
     if(pd.beasts.summonPts<3){ parts.push('召喚石が足りず、作戦は机の上で終わった（この試合ではもう発動しない）'); try{ showCenterNotice(label,'作戦不成立',side,1500); }catch(e){} }
     else{
@@ -25398,16 +25408,41 @@ async function aiCrystalActions(side){
 })();
 </script>
 
+<script>
+// 賭場（2026-10-14 隆基）：自分の番の始めに丁半。丁＝寺銭 召喚石+1、ゾロ目＝総取り +2、半＝客の勝ち 相手+1
+(function(){
+  const FACE=['','⚀','⚁','⚂','⚃','⚄','⚅'];
+  const regen=applyKindRoleRegen;
+  applyKindRoleRegen=function(side){
+    const r=regen.apply(this,arguments);
+    try{
+      const rr=EXTRA_ROLES.find(x=>x.id==='xTobaa');
+      if(!rr||!G||G.phase!=='battle'||!extraRoleHolds(side,rr)) return r;
+      discoverRole(rr.id,side);
+      const os=side==='p'?'e':'p', a=1+Math.floor(Math.random()*6), b=1+Math.floor(Math.random()*6);
+      let txt;
+      if(a===b){ grantPts(side,2,'賭場'); txt='ゾロ目！ 胴元の総取り、召喚石 +2'; }
+      else if((a+b)%2===0){ grantPts(side,1,'賭場'); txt='丁！ 寺銭で召喚石 +1'; }
+      else { grantPts(os,1,'賭場'); txt='半…… 客の勝ち、相手の召喚石 +1'; }
+      const pre=side==='p'?'':'[敵]';
+      log(pre+'【賭場】'+FACE[a]+FACE[b]+'（'+a+'・'+b+'）'+txt,(a+b)%2===0?'gold':'bad');
+      try{ showCenterNotice('賭場 '+FACE[a]+FACE[b],txt,side,1600); }catch(e){}
+    }catch(e){ console.warn('toba',e); }
+    return r;
+  };
+})();
+</script>
+
 
 <style id="public-test-badge">
 #pt-badge{position:fixed;left:8px;bottom:8px;z-index:99990;display:flex;gap:6px;align-items:center;font:12px/1.2 "Hiragino Sans",sans-serif}
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.75</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.75%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.76</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.76%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.75";
+  var FORM="", PRE={}, V="0.1.76";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
