@@ -11755,7 +11755,7 @@ const ROLE_DEFS=[
   {id:'royalStraightFlush',name:'ロイヤルストレートフラッシュ',hidden:'???',reading:'ロイヤルストレートフラッシュ',meaning:'敵味方合わせて6種のトランプが揃う。カードゲームが戦場を飲み込んだ瞬間。',desc:'両フィールドに6種類以上のトランプ兵が存在する。全トランプ兵ATK +120、攻撃時ダイヤ +2。'},
   {id:'knightsOrder',name:'騎士団結成',hidden:'???',reading:'キシダンケッセイ',meaning:'流派も出自も違う騎士たちが一堂に会す。揃った時、陣形の力が目覚める。',desc:'騎士系モンスターが2体以上で陣形が揺らぎ始め、3体で完成。2体で騎士系ATK +20、3体で +50。カウンター反撃2倍、毎ターンHP +10。'},
   {id:'bouryaku',name:'謀略',hidden:'???',reading:'ボウリャク',meaning:'クイーンが宮廷への道を開き、ジョーカーが絵を描き、忍者が影から実行する。王を狂わせる計画に、王妃が加担しているとは誰も思わない。どこかで侍が王を守っていることを、忍者は知っている。',desc:'クイーン・ジョーカー・忍者が同時に場にいる。クイーン/忍者ATK +40、ジョーカーATK +70。ジョーカー攻撃時55%で敵の召喚ダイヤ奪取。'},
-  {id:'loveTriangle',name:'恋の三角関係',hidden:'???',reading:'コイノサンカクカンケイ',meaning:'戦士と僧侶は、身分違いの恋をした。戦士の親友のドラグナイトは、ずっと僧侶を想っていた。愛は力になり、嫉妬は刃になる。',desc:'戦士・僧侶・ドラグナイトが同時に場にいる（身分違いの恋人・片思い・友情と嫉妬は、この役ひとつにまとまる）。戦士とドラグナイトのATK +40。僧侶の回復量1.5倍。ドラグナイトが攻撃するたび25%で嫉妬が暴走し自クリスタル -20。'},
+  {id:'loveTriangle',name:'恋の三角関係',hidden:'???',reading:'コイノサンカクカンケイ',meaning:'戦士と僧侶は、身分違いの恋をした。戦士の親友のドラグナイトは、ずっと僧侶を想っていた。愛は力になり、嫉妬は刃になる。',desc:'戦士・僧侶・ドラグナイトが同時に場にいる（身分違いの恋人・片思い・友情と嫉妬、光と影と祈り・光の三位一体は、この役ひとつにまとまる）。戦士とドラグナイトのATK +60。僧侶の回復量2倍。毎ターン自クリスタルシールド +20。ドラグナイトが攻撃するたび25%で嫉妬が暴走し自クリスタル -20。'},
   {id:'darkMusketeers',name:'暗黒三銃士',hidden:'???',reading:'アンコクサンジュウシ',meaning:'闇に生きる三者が一線を結ぶ。呪いと死の気配が戦場を覆う。',desc:'ブラックゴブリン・ブラックナイト・デュラハンが同時に場にいる。三者ATK +45。攻撃ごとに35%で対象にATK呪い -20。デュラハンの墓場強化が2倍。'},
   {id:'shishiNoUtagе',name:'屍の宴',hidden:'???',reading:'シカバネノウタゲ',meaning:'死者が集い、墓場から力を引き出す。死が多ければ多いほど、宴は盛り上がる。',desc:'ゾンビ・スケルトン・ゴーストが同時に場にいる。三者ATK +30、さらに墓場1体ごとにATK +6（最大+60）。'},
   {id:'hakaArashi',name:'墓荒らし',hidden:'???',reading:'ハカアラシ',meaning:'ゾンビは死を知っている。墓の下に何が眠るかも。仲間の骸を拾い上げ、再び戦場へ引きずり出す。',desc:'ゾンビが2体以上同時に場にいる。ターン開始時、自分の墓場から1体をランダムにデッキへ戻す。（デッキ再生）'},
@@ -12548,13 +12548,15 @@ const EXTRA_ROLES=[
    meaning:'雷を纏う熊は、賢者の前でだけおとなしい。賢者が空を指すと、熊の毛から雷が昇った。',desc:'賢者・雷熊が同時に場にいる。役成立時に一度だけ発動：敵モンスター全体に雷魔法40、敵の召喚獣に60ダメージ。雷帝召喚中は威力1.5倍。暴発しない。',hint:'雷を纏う熊が、賢者の前で伏せる'},
   // ── 2026-10-05 ゲイルの指摘（バランス提案２）から：弱い札を3枚完成の報酬で活かす役 ──
   {id:'xYamiNoGishiki',name:'闇の儀式',reading:'ヤミノギシキ',cards:[['vampire'],['bat'],['spider']],once:{darkRite:true},
-   meaning:'吸血鬼が名を呼び、蝙蝠が夜を運び、蜘蛛が糸を張る。倒れた者たちが、もう一度立ち上がる順番を待っている。',desc:'ヴァンパイア・蝙蝠・スパイダーが同時に場にいる。1ゲームに1度、相手の墓場のモンスターの数だけ（自分の墓場にいる分まで）、自分の墓場の仲間をデッキに戻す。',hint:'夜の城の三者が、墓場で円を描く'},
+   onceReady:side=>{ const pd=side==='p'?G.p:G.e, od=side==='p'?G.e:G.p; return od.graveyard.length>0&&pd.graveyard.some(g=>g&&MD[g.id]&&!TRANSFORM_ONLY.includes(g.id)); },   // 空振りで一回分を失わない（2026-10-14 ゲイル監査）
+   meaning:'吸血鬼が名を呼び、蝙蝠が夜を運び、蜘蛛が糸を張る。倒れた者たちが、もう一度立ち上がる順番を待っている。',desc:'ヴァンパイア・蝙蝠・スパイダーが同時に場にいる。1ゲームに1度、相手の墓場のモンスターの数だけ（自分の墓場にいる分まで）、自分の墓場の仲間をデッキに戻す（どちらかの墓場が空の間は、儀式を待つ）。',hint:'夜の城の三者が、墓場で円を描く'},
   {id:'xYaInNoSu',name:'夜陰の巣',reading:'ヤインノス',cards:[['bat'],['spider']],
    meaning:'蝙蝠は糸にかからない。蜘蛛は蝙蝠を喰わない。夜の間だけの、小さな約束。',desc:'蝙蝠とスパイダーが同時に場にいる。自分の番の始めに、その2体のHP +5（闇の儀式が揃っている間は働かない）。',hint:'暗い巣に、羽音が帰ってくる'},
   {id:'xKyuugoKekkai',name:'救護結界',reading:'キュウゴケッカイ',cards:[['whitewitch'],['heart'],['club']],once:{selfCrystalHeal:180,shield:60},
    meaning:'祈る者がいて、運ぶ者がいて、守る者がいる。戦場の真ん中に、小さな救護所が建った。',desc:'僧侶・ハート兵・クラブ兵が同時に場にいる。1ゲームに1度、自クリスタル +180、クリスタルに障壁 +60。',hint:'祈りの横で、兵たちが盾を並べる'},
   {id:'xReijuuNoRyouyoushoku',name:'霊獣の療養食',reading:'レイジュウノリョウヨウショク',cards:[['mandra'],['flan'],['cook']],once:{beastFullHeal:true},
-   meaning:'薬草の根と、ぷるぷるの何か。料理人は味見をしなかった。召喚獣は、全部食べた。',desc:'マンドラゴラ・グリーンジャム・料理人が同時に場にいる。1ゲームに1度、自分の召喚獣のHPを全快する（倒れた召喚獣は戻らない）。',hint:'料理人が、根と粘液で何かを煮込む'},
+   onceReady:side=>{ const b=(side==='p'?G.p:G.e).beasts; return !!(b&&b.activeId&&b.activeHp<b.activeMaxHp); },   // 傷ついた召喚獣がいる時だけ
+   meaning:'薬草の根と、ぷるぷるの何か。料理人は味見をしなかった。召喚獣は、全部食べた。',desc:'マンドラゴラ・グリーンジャム・料理人が同時に場にいる。1ゲームに1度、自分の召喚獣のHPを全快する（倒れた召喚獣は戻らない。召喚獣が傷つくまで、料理は待つ）。',hint:'料理人が、根と粘液で何かを煮込む'},
   {id:'xGitaiNoKariba',name:'擬態の狩場',reading:'ギタイノカリバ',cards:[['flowermantis'],['spider'],['mandra']],once:{enemyAllDmg:80},
    meaning:'花だと思ったものが、動いた。草むらだと思ったところに、糸があった。根を踏んだ者は、悲鳴を聞いた。',desc:'フラワーマンティス・スパイダー・マンドラゴラが同時に場にいる。1ゲームに1度、敵モンスター全体に80ダメージ。',hint:'花と糸と根が、同じ草むらに潜む'},
   {id:'xYouheiKeiyaku',name:'傭兵契約',reading:'ヨウヘイケイヤク',cards:[['mercenary'],['moneychanger'],['armsdealer']],once:{graveReturn:3,healMembers:['mercenary']},
@@ -12713,7 +12715,8 @@ const EXTRA_ROLES=[
   {id:'xShominIn',name:'庶民院',reading:'ショミンイン',cards:[['senate'],['jack']],aura:{jack:{atk:40,hp:40}},
    meaning:'議員の半分は、もとは鉱夫だった。だから元老院は、坑道の予算だけは削らない。',desc:'元老院とジャックが同時に場にいる。場にいる間、ジャックの攻撃 +40・最大HP +40（叩き上げ）。元老院の税収が毎ターン召喚ダイヤ +2になる（公共事業）。',hint:'議会に、つるはしを担いだ労働者が並ぶ'},
   {id:'xKokuminKaiHoken',name:'国民皆保険',reading:'コクミンカイホケン',cards:[['senate'],['whitewitch','acolyte']],once:{graveReturn:3},
-   meaning:'元老院は、施療院の予算を通した。墓場と呼ばれていた場所は、その日から入院病棟と呼ばれるようになった。',desc:'元老院と、僧侶か侍祭が同時に場にいる。1ゲームに1度、墓場の仲間3体（新しい順、変身でしか出ないカードは除く）をデッキに戻す。デッキが増えるので、元老院の国力も上がる。',hint:'議会が、施療院の予算を審議する'},
+   onceReady:side=>{ const pd=side==='p'?G.p:G.e; return pd.graveyard.some(g=>g&&MD[g.id]&&!TRANSFORM_ONLY.includes(g.id)); },   // 墓場に戻れる仲間がいる時だけ
+   meaning:'元老院は、施療院の予算を通した。墓場と呼ばれていた場所は、その日から入院病棟と呼ばれるようになった。',desc:'元老院と、僧侶か侍祭が同時に場にいる。1ゲームに1度、墓場の仲間3体（新しい順、変身でしか出ないカードは除く）をデッキに戻す（墓場が空の間は待つ）。デッキが増えるので、元老院の国力も上がる。',hint:'議会が、施療院の予算を審議する'},
   {id:'xOukenToGikai',name:'王権と議会',reading:'オウケントギカイ',cards:[['senate'],['king']],once:{actNow:1},
    meaning:'王と議会が、珍しく同じ意見だった。その日のうちに、全てが決まった。',desc:'元老院とキングが同時に場にいる。1ゲームに1度、このターンもう1回行動できる。',hint:'王と議会が、同じ方を向く'},
   {id:'xGunjuYosan',name:'軍需予算',reading:'グンジュヨサン',cards:[['senate'],['armsdealer']],once:{pts:3},
@@ -14366,7 +14369,7 @@ function hasIgyouNoKenja(side){ const ids=new Set((side==='p'?G.p:G.e).monsterFi
 function hasHachuuruiGunzei(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('lizardman')&&ids.has('basilisk')&&ids.has('lamia'); }
 function hasKaosNoShisha(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('devillord')&&ids.has('nightmare')&&ids.has('vampire'); }
 function hasArakureNoSanninshuu(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('orc')&&ids.has('minotaur')&&ids.has('gigas'); }
-function hasHikariNoSanmiIttai(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('whitewitch')&&ids.has('warrior')&&ids.has('dragoon'); }
+function hasHikariNoSanmiIttai(side){ return false; /* 2026-10-14 恋の三角関係にまとめた */ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('whitewitch')&&ids.has('warrior')&&ids.has('dragoon'); }
 function hasYomiNoShisha(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('vampire')&&ids.has('dullahan')&&ids.has('blackknight'); }
 function hasSanMasho(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('dullahan')&&ids.has('vampire')&&ids.has('lamia'); }
 function hasKiNoSansei(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('mandra')&&ids.has('morbol')&&ids.has('ochu'); }
@@ -14380,7 +14383,7 @@ function hasSekaiHoukai(side){
 }
 function hasGarouShuu(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('yojimbo')&&ids.has('ninja')&&ids.has('samurai'); }
 function hasJaakuNaKuwadate(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('dragoon')&&ids.has('joker'); }
-function hasHikariToKageToInori(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('warrior')&&ids.has('dragoon')&&ids.has('whitewitch'); }
+function hasHikariToKageToInori(side){ return false; /* 2026-10-14 恋の三角関係にまとめた */ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('warrior')&&ids.has('dragoon')&&ids.has('whitewitch'); }
 function hasYuujouToShitto(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('warrior')&&ids.has('dragoon')&&!hasHikariToKageToInori(side)&&!hasLoveTriangle(side); }
 function hasBeastRoyalty(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('griffin')&&ids.has('chimera2')&&ids.has('manticore'); }
 function hasMageOrder(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('whitewitch')&&ids.has('redmage')&&ids.has('blackmage'); }
@@ -15293,11 +15296,11 @@ function applyKindRoleRegen(side){
       log((side==='p'?'あなた':'敵')+'の呪縛の目：'+t.def.name+' ATK -8（呪縛の視線）','good');
     }
   }
-  if(hasHikariNoSanmiIttai(side)){
-    discoverRole('hikariNoSanmiIttai',side);
+  if(hasLoveTriangle(side)){
+    discoverRole('loveTriangle',side);
     if(pd.shield<240){
       pd.shield=Math.min(240,(pd.shield||0)+20);
-      log((side==='p'?'あなた':'敵')+'の光の三位一体：クリスタルシールド +20','good');
+      log((side==='p'?'あなた':'敵')+'の恋の三角関係：三人の旅の光がクリスタルを守る（シールド +20）','good');
     }
   }
   if(hasKiNoSansei(side)){
@@ -16995,16 +16998,17 @@ function applyDynamicAttackTraits(side,attacker,result){
   // 恋の三角関係（戦士 × 僧侶 × ドラグナイト）：恋人・親友・片思いの効果をこの一役にまとめる（2026-10-05）
   if(['warrior','dragoon','whitewitch'].includes(attacker.id)&&hasLoveTriangle(side)&&(result.atk||result.aoeEnemy)){
     discoverRole('loveTriangle',side);
-    const add=attacker.id==='whitewitch'?0:40;
+    // 2026-10-14：光と影と祈り・光の三位一体もこの役の内訳にまとめた（攻撃 +60、僧侶の祈り 2倍、毎ターン光の盾 +20）
+    const add=attacker.id==='whitewitch'?0:60;
     if(result.atk) result.atk+=add;
     else if(result.aoeEnemy&&result.aoeDmg) result.aoeDmg+=Math.floor(add/2);
-    if(attacker.id==='whitewitch'&&result.selfHeal) result.selfHeal=Math.floor(result.selfHeal*1.5);
+    if(attacker.id==='whitewitch'&&result.selfHeal) result.selfHeal=Math.floor(result.selfHeal*2);
     // 嫉妬するのは、片想いのドラグナイト
     if(attacker.id==='dragoon'&&Math.random()<0.25){
       damageCrystal(side,20);
       log(attacker.def.name+'の嫉妬心が暴走！ 自クリスタル -20','bad');
     }
-    log('恋の三角関係！ '+(attacker.id==='whitewitch'?'僧侶の回復1.5倍':attacker.def.name+' ATK +'+add),'gold');
+    log('恋の三角関係！ '+(attacker.id==='whitewitch'?'僧侶の祈り 回復2倍':attacker.def.name+' ATK +'+add),'gold');
   }
   if(['queen','joker','ninja'].includes(attacker.id)&&hasBouryaku(side)&&(result.atk||result.aoeEnemy)){
     discoverRole('bouryaku',side);
@@ -21838,7 +21842,7 @@ const ROLE_COMBOS=[
   {name:'巨人軍',      cards:['gigas','irongiant']},
   {name:'コインの裏表',cards:['whitewitch','blackmage']},
   {name:'禁断の恋',    cards:['queen','jack']},
-  {name:'光の三位一体',cards:['whitewitch','warrior','dragoon']},
+  {name:'恋の三角関係',cards:['warrior','whitewitch','dragoon']},
   {name:'キングダム',  cards:['king','queen','jack']},
   {name:'三匹が斬る',  cards:['samurai','ninja','warrior']},
   {name:'三竜の覇',    cards:['dragon','wyvern','hydra']},
@@ -22024,7 +22028,7 @@ function evaluateDeckAdvice(){
   // デメリット役の警告
   const DEMERIT_ROLES={
     '友情と嫉妬':   '25%で嫉妬発動、パートナーATK -15',
-    '光の三位一体': 'ドラグナイトの嫉妬30%で戦士ATK -15',
+    '恋の三角関係': 'ドラグナイトの嫉妬25%で自クリスタル -20',
     '百獣の王族':   '攻撃のたびに自クリスタル -10',
     '愛の代償':     '30%で呪いが暴走、ジャックHP -30（ジャック不在なら自クリスタル -30）',
     '悲しみの運命': '毎ターンクイーンHP -10（運命の重さが蝕む）',
@@ -25245,24 +25249,60 @@ async function doRedraw(side,slot){
     return ofc.apply(this,arguments);
   };
 })();
+
+// 役を狙う引き直しの計算（2026-10-14）：場のどの1体をデッキに戻すと、役がそろう見込みが一番上がるか
+//   場を仮の並びに差し替えて、本物の判定（extraRoleHolds）・役の組み合わせ表（ROLE_COMBOS）・変身表（TRANSFORMS）で数える
+function aiRoleScore(side,ids){
+  const pd=side==='p'?G.p:G.e, save=pd.monsterField;
+  pd.monsterField=ids.map((id,i)=>id?{id,hp:1,maxHp:1,def:MD[id],uid:-1000-i}:null);
+  let s=0;
+  try{
+    EXTRA_ROLES.forEach(r=>{ if(r.opposite) return; let ok=false; try{ ok=extraRoleHolds(side,r); }catch(e){}
+      if(!ok) return; const used=pd.roleOnce&&pd.roleOnce[r.id]; let w=r.once?(used?(r.aura?0.6:0):1.5):1; w*=1+0.5*Math.max(0,(r.cards||[]).length-2); s+=w; });
+    const have=ids.filter(Boolean);
+    const sub=(need)=>{ const pool=have.slice(); return need.every(x=>{ const k=pool.indexOf(x); if(k<0) return false; pool.splice(k,1); return true; }); };
+    (typeof ROLE_COMBOS!=='undefined'?ROLE_COMBOS:[]).forEach(c=>{ if(c.cards&&sub(c.cards)) s+=1+0.5*Math.max(0,c.cards.length-2); });
+    (typeof TRANSFORMS!=='undefined'?TRANSFORMS:[]).forEach(tf=>{ if(sub([tf.a,tf.b,tf.c].filter(Boolean))) s+=2.5; });
+  }catch(e){}
+  pd.monsterField=save;
+  return s;
+}
+function aiRedrawPlan(side){
+  const pd=side==='p'?G.p:G.e;
+  const ids=pd.monsterField.map(m=>m&&m.hp>0?m.id:null);
+  const deck=pd.deck.filter(c=>c&&c.type==='monster'&&MD[c.id]).map(c=>c.id); if(!deck.length) return null;
+  const cnt={}; deck.forEach(id=>cnt[id]=(cnt[id]||0)+1);
+  const v0=aiRoleScore(side,ids);
+  let best=null;
+  redrawTargets(side).forEach(({m,i})=>{
+    // 戻したカードもシャッフルされてデッキに入る
+    const c2=Object.assign({},cnt); c2[m.id]=(c2[m.id]||0)+1; const n=deck.length+1;
+    let e=0; Object.keys(c2).forEach(id=>{ const f=ids.slice(); f[i]=id; e+=c2[id]/n*aiRoleScore(side,f); });
+    const gain=e-v0;
+    if(!best||gain>best.gain) best={slot:i,gain,e,v0};
+  });
+  return best;
+}
 async function aiCrystalActions(side){
   if(!G||G.phase!=='battle'||isPreparationRound()) return;
   const pd=side==='p'?G.p:G.e; const st=pd.aiStyle||'win'; const R=Math.random();
   const max=crystalMaxOf(pd), frac=pd.crystalHp/max, pts=pd.beasts.summonPts;
   const nearBeast=!pd.beasts.summoned&&pts>=5;
   // 引き直し（主行動は減らない）
+  // 2026-10-14 隆基「AIの引き直しは役を狙うように。ちゃんと意図して自軍の強化を目指して。ゴブリン軍師・変身愛好家・召喚獣信仰はそんなこと考えないままでいい」
   if(canRedraw(side)){
-    let want=false;
-    if(st==='gamble') want=R<0.45;
-    else if(st==='nobeast'||st==='hunter') want=nearBeast||R<0.12;
-    else if(st==='aragami') want=false;
-    else if(st==='romance'||st==='transform') want=R<0.25;
-    else if(st==='win') want=R<0.10;
-    else want=R<0.18;
-    if(want){
-      const ts=redrawTargets(side).sort((a,b)=>((a.m.def.atk||0)+a.m.maxHp)-((b.m.def.atk||0)+b.m.maxHp));
-      if(ts.length){ await doRedraw(side,ts[0].i); if(checkWin()) return; }
-    }
+    const NO_AIM={goblin:1,transform:1,aragami:1};
+    let pick=null;
+    if(!NO_AIM[st]){
+      const plan=aiRedrawPlan(side);
+      const need={win:0.35,random:0.4,gamble:0.1}[st]??0.25;
+      if(plan&&plan.gain>=need) pick=plan.slot;
+      // 獣断ち・厄災狩り：召喚獣が出そうなら、役の得がなくても石を使って顕現を遅らせる
+      if(pick==null&&(st==='nobeast'||st==='hunter')&&nearBeast) pick=plan?plan.slot:null;
+    } else if(st==='goblin') { if(R<0.18) pick=-1; }
+    else if(st==='transform') { if(R<0.25) pick=-1; }
+    if(pick===-1){ const ts=redrawTargets(side).sort((a,b)=>((a.m.def.atk||0)+a.m.maxHp)-((b.m.def.atk||0)+b.m.maxHp)); pick=ts.length?ts[0].i:null; }
+    if(pick!=null){ await doRedraw(side,pick); if(checkWin()) return; }
   }
   // 力を取り出す（主行動を使う）
   if(pd.mainActionsRem>0&&canCrystalExtract(side)){
@@ -25294,16 +25334,33 @@ async function aiCrystalActions(side){
 })();
 
 </script>
+<script>
+// 2026-10-14（ゲイル監査→隆基「ヴァッシュのオススメで」）：役の整理
+//  ・光と影と祈り／光の三位一体は恋の三角関係の内訳になったので、図鑑から外す
+//  ・同じ2枚でまとめた役（ROLE_MERGES）は、図鑑の説明に「この2枚だけの時は○○にまとまる」と書く
+(function(){
+  try{
+    ['hikariToKageToInori','hikariNoSanmiIttai'].forEach(id=>{ const i=ROLE_DEFS.findIndex(r=>r.id===id); if(i>=0) ROLE_DEFS.splice(i,1); });
+    if(typeof ROLE_MERGES!=='undefined') ROLE_MERGES.forEach(mg=>{
+      const keep=ROLE_DEFS.find(r=>r.id===mg.keep); if(!keep) return;
+      const pair=mg.pair.map(id=>MD[id]?MD[id].name:id).join('と');
+      mg.drop.forEach(id=>{ const d=ROLE_DEFS.find(r=>r.id===id); if(d&&d.desc&&d.desc.indexOf('にまとまる')<0) d.desc+='（'+pair+'の2枚だけの時は「'+keep.name+'」にまとまる。ほかの仲間でも揃っている時は、こちらも成立）'; });
+      if(keep.desc&&keep.desc.indexOf('攻撃 +20')<0) keep.desc+='（'+pair+'の2枚で揃った時は、まとめた役の分として2体の攻撃 +20）';
+    });
+  }catch(e){ console.warn('role tidy',e); }
+})();
+</script>
+
 
 <style id="public-test-badge">
 #pt-badge{position:fixed;left:8px;bottom:8px;z-index:99990;display:flex;gap:6px;align-items:center;font:12px/1.2 "Hiragino Sans",sans-serif}
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.72</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.72%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.73</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.73%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.72";
+  var FORM="", PRE={}, V="0.1.73";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
