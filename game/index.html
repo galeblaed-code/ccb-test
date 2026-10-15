@@ -25598,6 +25598,8 @@ async function aiCrystalActions(side){
 #beast-cine .bc-target{font-size:clamp(14px,1.6vw,20px);color:#f4dcb0;text-shadow:0 2px 0 #000;letter-spacing:.08em}
 #beast-cine.enemy .bc-card{box-shadow:0 0 0 3px #c0392b,0 0 60px rgba(255,80,60,.55),0 20px 60px rgba(0,0,0,.8)}
 @keyframes bcShake{0%,100%{transform:scale(1.04) translate(0,0)}20%{transform:scale(1.06) translate(-10px,4px)}40%{transform:scale(1.06) translate(9px,-5px)}60%{transform:scale(1.05) translate(-6px,3px)}80%{transform:scale(1.05) translate(4px,-2px)}}
+/* 2026-10-15 隆基「在野の一番下の段がワンクリックで出ない」：案内人の大きな吹き出しが一覧の下の段にかぶさっていた。開いている間は、一覧の下に余白を足して最後の段まで上へ出せるようにする */
+#deck-builder:has(.dbx-hint.big) .dbx-grid{padding-bottom:260px}
 </style>
 <script>
 // 召喚獣が動く時は、画面の正面に大きく寄せて見せる。終わるまでサイコロは待つ（rollBeastDiceUI が window._beastCine を待つ）
@@ -25643,10 +25645,10 @@ function beastCinema(id,el,img){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.85</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.85%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.86</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.86%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.85";
+  var FORM="", PRE={}, V="0.1.86";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
