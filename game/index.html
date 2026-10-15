@@ -25450,16 +25450,57 @@ async function aiCrystalActions(side){
 })();
 </script>
 
+<script>
+// 場から黙って消えるカードをなくす見張り（2026-10-15 隆基「何のアナウンスもなくカードがいなくなるとバグかと思う」）
+//   場のカードを見張り、いなくなったのにバトルラインに名前が出ていなければ、行き先を調べて知らせる
+(function(){
+  const said=[];   // 最近バトルラインに出た文 [時刻, 文]
+  const bp=btPush;
+  btPush=function(side,text){ try{ said.push([Date.now(),String(text||'')]); if(said.length>80) said.shift(); }catch(e){} return bp.apply(this,arguments); };
+  let snap=null, game=null;
+  const take=()=>{ const o={}; ['p','e'].forEach(sd=>{ const pd=sd==='p'?G.p:G.e; (pd.monsterField||[]).forEach(m=>{ if(m&&m.def) o[m.uid]={side:sd,id:m.id,name:m.def.name,t:Date.now(),deckN:pd.deck.filter(c=>c&&c.id===m.id).length,oppDeckN:(sd==='p'?G.e:G.p).deck.filter(c=>c&&c.id===m.id).length}; }); }); return o; };
+  setInterval(()=>{
+    try{
+      if(!G||G.phase!=='battle'||!G.p||!G.e){ snap=null; return; }
+      if(game!==G){ game=G; snap=take(); return; }
+      const now=take();
+      Object.keys(snap).forEach(uid=>{
+        if(now[uid]) return;
+        const was=snap[uid], gone=Date.now(), g=G;
+        // 効果の知らせが少し遅れて出ることがあるので、待ってから確かめる
+        setTimeout(()=>{
+          try{
+            if(G!==g||G.phase!=='battle') return;
+            const pd=was.side==='p'?G.p:G.e;
+            if(pd.monsterField.some(m=>m&&String(m.uid)===String(uid))) return;   // 場に戻っている
+            if(said.some(([t,x])=>t>=gone-1500&&x.includes(was.name)&&!/＝ 役「|をドロー$/.test(x))) return;    // もう知らせてある（役の成立やドローの行は、離れた知らせに数えない）
+            let where;
+            const gc=pd.graveyard.find(c=>c&&String(c.uid)===String(uid));
+            if(gc) where=gc.noKill?'墓場へ送られた':'倒れた（墓場へ）';
+            else if(pd.deck.filter(c=>c&&c.id===was.id).length>was.deckN) where='デッキへ戻った';
+            else { const op=was.side==='p'?G.e:G.p; where=op.graveyard.some(c=>c&&String(c.uid)===String(uid))||op.deck.filter(c=>c&&c.id===was.id).length>was.oppDeckN||op.monsterField.some(c=>c&&String(c.uid)===String(uid))?'相手の手に渡った':'この試合から姿を消した'; }
+            const who=was.side==='p'?'':'相手の';
+            btPush(was.side,who+was.name+' が場を離れた——'+where,'bad');
+            try{ log((was.side==='p'?'':'[敵] ')+was.name+' が場を離れた——'+where,'sys'); }catch(e){}
+          }catch(e){}
+        },1600);
+      });
+      snap=now;
+    }catch(e){}
+  },250);
+})();
+</script>
+
 
 <style id="public-test-badge">
 #pt-badge{position:fixed;left:8px;bottom:8px;z-index:99990;display:flex;gap:6px;align-items:center;font:12px/1.2 "Hiragino Sans",sans-serif}
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.79</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.79%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.80</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.80%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.79";
+  var FORM="", PRE={}, V="0.1.80";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
