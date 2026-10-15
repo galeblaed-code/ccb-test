@@ -4414,8 +4414,12 @@ img[src*="ゼネラルデビル"]{object-fit:fill!important;}
 .dbx-hint.big{position:relative!important;left:auto!important;bottom:auto!important;width:auto!important;max-height:66px!important;overflow:hidden!important;}
 .dbx-card.picked{outline:3px solid #ffd27a;outline-offset:2px;border-radius:8px;}
 #deck-builder .dbx-guide img{height:150px!important;}
-.dbx-zoom .dd-advice{margin-top:10px;background:rgba(245,232,200,.95);color:#2b1a0b;border-radius:10px;padding:8px 12px;font-size:13px;line-height:1.55;}
-.dbx-zoom .dd-advice .dbx-adv-close{display:none}
+/* 助言は能力の窓のすぐ右に、別の窓で出す（2026-10-15 隆基「役割の下が見えないから別のウインドウにして右に」） */
+#dbx-adv-win{position:fixed;z-index:1001;pointer-events:none;opacity:0;transition:opacity .15s;overflow:hidden;
+  background:rgba(245,232,200,.97);color:#2b1a0b;border:2px solid #d9a441;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.6;box-shadow:0 12px 30px rgba(0,0,0,.8);}
+#dbx-adv-win.show{opacity:1}
+#dbx-adv-win .dbx-adv-close{display:none}
+#dbx-adv-win .dbx-adv-title{font-size:17px;font-weight:bold;margin-bottom:6px;}
 </style>
 <style id="builder-skin-20261005">
 /* ══ デッキ編成の着せ替え（2026-10-05 隆基のレイアウト案）：カードショップの背景、革の本のMY DECK、紋章から選ぶ、画像のボタン ══ */
@@ -25648,9 +25652,11 @@ function beastCinema(id,el,img){
 </script>
 
 <script>
-// デッキ編成（2026-10-15）：カードの助言は大きな吹き出しではなく、能力の窓の中に出す。選んだカードに印
+// デッキ編成（2026-10-15）：カードの助言は大きな吹き出しではなく、能力の窓のすぐ右の別の窓に出す。選んだカードに印
 (function(){
   let advHtml='';
+  const win=()=>{ let w=document.getElementById('dbx-adv-win'); if(!w){ w=document.createElement('div'); w.id='dbx-adv-win'; (document.getElementById('deck-builder')||document.body).appendChild(w); } return w; };
+  const hideAdv=()=>{ const w=document.getElementById('dbx-adv-win'); if(w) w.classList.remove('show'); };
   const ti=builderTileInfo;
   builderTileInfo=function(el){ document.querySelectorAll('.dbx-card.picked').forEach(x=>x.classList.remove('picked')); if(el) el.classList.add('picked'); return ti.apply(this,arguments); };
   const ra=builderRenderAdvice;
@@ -25664,13 +25670,22 @@ function beastCinema(id,el,img){
     }catch(e){}
     return ra.apply(this,arguments);
   };
-  const bz=builderZoom;
-  builderZoom=function(el,id,wait){
-    const r=bz.apply(this,arguments);
-    const w=(wait==null?320:wait)+30;
-    setTimeout(()=>{ try{ const st=document.querySelector('#dbx-zoom .dz-stats'); if(st&&advHtml&&!st.querySelector('.dd-advice')) st.insertAdjacentHTML('beforeend','<div class="dd-advice">'+advHtml+'</div>'); }catch(e){} },w);
-    return r;
+  const place=()=>{
+    const z=document.getElementById('dbx-zoom'); if(!z||!z.classList.contains('show')||!advHtml){ hideAdv(); return; }
+    const r=z.getBoundingClientRect(), w=win(), room=window.innerWidth-r.right-16;
+    w.innerHTML=advHtml;
+    if(room>=240){ Object.assign(w.style,{left:(r.right+10)+'px',top:r.top+'px',width:Math.min(400,room)+'px',maxHeight:(window.innerHeight-r.top-12)+'px'}); }
+    else { Object.assign(w.style,{left:r.left+'px',top:(r.bottom+8)+'px',width:r.width+'px',maxHeight:(window.innerHeight-r.bottom-16)+'px'}); }
+    // それでも入りきらない時は、字を少しずつ小さくする
+    let fs=14; w.style.fontSize=fs+'px'; while(w.scrollHeight>w.clientHeight+2&&fs>11){ fs-=0.5; w.style.fontSize=fs+'px'; }
+    w.classList.add('show');
   };
+  const bz=builderZoom;
+  builderZoom=function(el,id,wait){ const r=bz.apply(this,arguments); hideAdv(); setTimeout(place,(wait==null?320:wait)+260); return r; };   // 窓が開ききってから位置を測る
+  const bh=builderZoomHide;
+  builderZoomHide=function(){ hideAdv(); return bh.apply(this,arguments); };
+  const st=setBuilderTab;
+  setBuilderTab=function(){ hideAdv(); advHtml=''; return st.apply(this,arguments); };
 })();
 </script>
 
@@ -25680,10 +25695,10 @@ function beastCinema(id,el,img){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.88</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.88%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.89</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.89%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.88";
+  var FORM="", PRE={}, V="0.1.89";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
