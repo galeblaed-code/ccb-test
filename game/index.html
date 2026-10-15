@@ -22840,7 +22840,8 @@ function btFromLog(raw,ctx){
   if(/待機圧迫|WARNING|危険域|開幕配置|先攻|開始！|召喚獣3体セット|サイコロを|【役発見】|【\d+翻|【接近】|【臨界】|ダメージ|を攻撃$|サイズ相性|がガード|クリスタルで受けた|を使用しました。|の攻撃。$/.test(t)) return null;
   if(Object.values(ENTRY_GIFTS).some(g=>t.includes('【'+g.tag+'】'))) return null;   // 手土産は召喚石の行（ゴブリン【拾い物】で召喚石 +1）で知らせる
   const src=ctx&&ctx.source||'';
-  if(/^役「/.test(src)) return null;     // 役の効果は、役の成立として知らせる
+  // 役の効果は、役の成立の行のすぐ後に「→ 起きたこと」として出す（2026-10-15 隆基「効果で何がおきたのかアナウンスしてほしい」）
+  if(/^役「/.test(src)){ const rm=t.match(/^【[^】]+】\s*(.+)$/); return rm?'【'+src.replace(/^役「(.+)」.*$/,'$1')+'】'+btBrief(rm[1]):null; }
   let m;
   // 2026-10-04 隆基：「賢者をドロー→賢者を召喚」は重ねない。場に出ただけで何かが起きた時だけ、その出来事を知らせる
   if(/^(.+?) 召喚。/.test(t)) return null;
@@ -22848,16 +22849,26 @@ function btFromLog(raw,ctx){
   if(src&&act&&/ドロー/.test(act.label||'')&&!/【/.test(t)&&!/^(?:召喚|連鎖)/.test(src)){
     const body=t.replace(new RegExp('^'+src.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:降臨|登場)?！?\\s*'),'');
     const name=(body.match(/^([^：——！。]{1,14})(?:：|——)/)||[])[1];
-    return src+'の効果により'+(name?'【'+name.trim()+'】発動':'：'+(body.length>26?body.slice(0,26)+'…':body));
+    // 2026-10-15 隆基「効果で何がおきたのかアナウンスしてほしい」：効果の名前だけでなく、起きたことも続けて出す
+    if(name){ const rest=btBrief(body.slice(body.indexOf(name)+name.length).replace(/^\s*(?:：|——)\s*/,'')); return src+'の【'+name.trim()+'】'+(rest?'——'+rest:'発動'); }
+    return src+'の効果：'+btBrief(body);
   }
+  // 2026-10-15 隆基「ラミアをドローで場にいた2体が消えたが理由は？」：引き直しで出た時も、登場時の効果（ギガスの威圧など）を必ず見せる
+  if((m=t.match(/^(.+?)降臨！\s*([^——：！。]{1,12})——(.+)$/))&&Object.values(MD).some(d=>d&&d.name===m[1].trim())) return m[1]+'の【'+m[2].trim()+'】——'+(r=>r.length>30?r.slice(0,30)+'…':r)(m[3].replace(/（[^）]*）$/,''));
   if((m=t.match(/^(.+?) 撃破！/))) return m[1]+' 撃破';
   if((m=t.match(/CRYSTAL LV (\d+) へ上昇/))) return 'クリスタル Lv'+m[1]+' に上昇';
   if((m=t.match(/^\[([^\]]+)\]\s*([^！!。（(]+)/))) return m[1]+'の「'+m[2].trim()+'」';
   if((m=t.match(/【([^】]+)】/))){
     const who=src.replace(/の(?:召喚時効果|反動|失敗時効果)$/,'').replace(/【[^】]*】$/,'');
-    return (who&&!who.includes(m[1])&&!/継続毒/.test(who)?who+'の効果により':'')+'【'+m[1]+'】発動';
+    const rest=btBrief(t.slice(t.indexOf('】')+1).replace(/^[\s：——、。]+/,''));
+    return (who&&!who.includes(m[1])&&!/継続毒/.test(who)?who+'の':'')+'【'+m[1]+'】'+(rest?rest:'発動');
   }
   return null;
+}
+// バトルラインに出す「起きたこと」を短くまとめる：最後の長い補足（　）は外し、長すぎる時は切る
+function btBrief(r){
+  r=String(r||'').trim().replace(/（[^）]{12,}）$/,'').replace(/[。！]+$/,'');
+  return r.length>40?r.slice(0,40)+'…':r;
 }
 function btSideOf(raw,ctx){
   if(/^\[敵\]/.test(String(raw))) return 'e';
@@ -25445,10 +25456,10 @@ async function aiCrystalActions(side){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.77</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.77%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.78</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.78%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.77";
+  var FORM="", PRE={}, V="0.1.78";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
