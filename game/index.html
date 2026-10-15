@@ -12679,6 +12679,10 @@ const EXTRA_ROLES=[
    meaning:'王家の紋章を刻んだ盾は、王族の前でだけ本当の重さになる。',desc:'イージスの盾と、キング・クイーン・王子のいずれかが同時に場にいる。場にいる間、イージスの盾の最大HP +150（王族への攻撃を一身に受け止める）。',hint:'王族の前に、聖なる大盾が立つ'},
   {id:'xRyuugoroshiNoEiyuu',name:'竜殺しの英雄',reading:'リュウゴロシノエイユウ',cards:[['dragonslave'],['warrior','paladin','dragoon']],
    meaning:'竜を屠る剣は、それだけでは鉄の塊だ。振るう者がいて、初めて伝説になる。',desc:'ドラゴンスレイブと、戦士・パラディン・ドラグナイトのいずれかが同時に場にいる。その英雄が竜系のモンスターを攻撃する時、ダメージ2倍。',hint:'英雄が、竜殺しの剣を手に取る'},
+  // 裁定者の権限（2026-10-15 隆基）：相手の場を全部デッキへ戻させ、代わりは1枚だけ
+  {id:'xSaiteishaNoKengen',name:'裁定者の権限',reading:'サイテイシャノケンゲン',cards:[['arbiter'],['pope','chancellor']],once:{arbiterAuthority:true},
+   onceReady:side=>(side==='p'?G.e:G.p).monsterField.filter(x=>x&&x.hp>0).length>=2,   // 相手の場に2体以上いる時まで待つ
+   meaning:'天秤の杖が振り下ろされた。裁定は下った。戦場にいる資格のある者は、ひとりだけだ。',desc:'裁定者の杖と、教皇か宰相が同時に場にいる。1ゲームに1度、相手の場のモンスターを全員デッキに戻させ（シャッフル）、代わりにデッキから1枚だけ引かせる（相手の場に2体以上いる時まで待つ）。',hint:'天秤の杖を、権力者が掲げる'},
   // 兵站（2026-10-14 隆基「パン屋も強いぞ。兵站の担い手だし」）
   {id:'xHeitan',name:'兵站',reading:'ヘイタン',cards:[['baker'],['platoon','archer','knight','mercenary','oceanknight']],aura:{platoon:{atk:40,hp:40},archer:{atk:40,hp:40},knight:{atk:40,hp:40},mercenary:{atk:40,hp:40},oceanknight:{atk:40,hp:40}},
    meaning:'腹が減っては戦はできぬ。夜明け前の窯の火が、昼の戦線を支えている。',desc:'パン職人と、兵士（小隊・弓兵・騎士・傭兵・海洋騎士のいずれか）が同時に場にいる。場にいる間、兵士の攻撃 +40・最大HP +40。',hint:'パン職人が、兵士に焼きたてを配る'},
@@ -13286,6 +13290,14 @@ function applyOnceEffects(side,o,label){
     parts.push('旗艦が港を出た——敵モンスター'+n+'体に砲撃（海の怪物には2倍）'); try{ recEvent(side,'role','艦隊出撃：旗艦が港を出て、敵の場を砲撃した'); }catch(e){} }
   if(o.koan){ const fs=od.monsterField.filter(x=>x&&x.hp>0).sort((a,b)=>(b.def.atk||0)-(a.def.atk||0)); const t=fs[0];
     if(t){ t.frozen=true; t._koan=true; parts.push('「片手の拍手は、どんな音がする」——'+t.def.name+' は答えを考え込み、次の番は動けない'); try{ showCenterNotice(label,t.def.name+' が考え込んだ',side,1600); }catch(e){} } }
+  if(o.arbiterAuthority){
+    const back=[]; od.monsterField.forEach((m,i)=>{ if(!m) return; od.deck.push({type:'monster',id:m.id}); od.monsterField[i]=null; back.push(m.def.name); });
+    od.deck=shuffle(od.deck);
+    let drawn='なし'; const ci=od.deck.findIndex(c=>c&&c.type==='monster');
+    if(ci>=0){ const card=od.deck.splice(ci,1)[0], slot=od.monsterField.findIndex(x=>!x); if(slot>=0){ addReveal(os,card,'forced-draw'); od.monsterField[slot]=makeMonsterInst(card.id,false,os); handleMonsterEnter(os,od.monsterField[slot]); markMonsterFlip(os,slot); drawn=MD[card.id].name; } }
+    parts.push('裁定は下った——相手の場の'+(back.join('・')||'なし')+'がデッキへ戻り、代わりは'+drawn+'の1枚だけ');
+    try{ showCenterNotice(label,'相手の場 '+back.length+'体 → 1体',side,1700); }catch(e){}
+  }
   if(o.catSnack){ const FS=['porkfish','lardfish','jewelfish']; const i=pd.monsterField.findIndex(x=>x&&x.hp>0&&FS.includes(x.id)), cat=pd.monsterField.find(x=>x&&x.hp>0&&x.id==='aquacat');
     if(i>=0&&cat){ const f=pd.monsterField[i]; pd.graveyard.push({uid:f.uid,id:f.id,def:f.def,maxHp:f.maxHp,noKill:true}); pd.monsterField[i]=null; cat.hp=cat.maxHp; grantPts(side,1); parts.push('アクアキャットが'+f.def.name+'をこっそり食べた——'+f.def.name+'は墓場へ、アクアキャットはHP全快、召喚石 +1'); } }
   if(o.drunkFoes){ let n=0; od.monsterField.forEach(x=>{ if(x&&x.hp>0){ x.def=Object.assign({},x.def,{atk:Math.max(0,(x.def.atk||0)-o.drunkFoes)}); n++; } }); parts.push('相手の'+n+'体が酔い潰れた（攻撃 -'+o.drunkFoes+'、ずっと）'); }
@@ -25560,10 +25572,10 @@ async function aiCrystalActions(side){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.81</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.81%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.82</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.82%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.81";
+  var FORM="", PRE={}, V="0.1.82";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
