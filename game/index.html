@@ -4408,6 +4408,29 @@ img[src*="ゼネラルデビル"]{object-fit:fill!important;}
 @keyframes btPop{from{opacity:0;transform:translateX(18px);}to{opacity:1;transform:none;}}
 
 </style>
+
+<style id="builder-detail-20261015">
+/* ══ デッキ編成：詳細欄を常設（2026-10-15）══ 一覧｜詳細欄｜MY DECK の三列。拡大窓は一覧に重ねない */
+.db-shell.dbx{grid-template-columns:minmax(0,1fr) 340px 500px!important;}
+.dbx-head{grid-column:1/3!important;}
+.dbx-collection{grid-column:1/2!important;}
+.dbx-deck{grid-column:3!important;}
+.dbx-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important;}
+.dbx-detail{grid-column:2;grid-row:2;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:12px;
+  background:rgba(14,10,6,.93);border:1px solid #7a6034;box-shadow:0 6px 22px rgba(0,0,0,.6),inset 0 0 40px rgba(0,0,0,.55);color:#f1e3c2;}
+.dbx-detail .dbx-zoom{position:static!important;left:auto;top:auto;transform:none!important;opacity:1!important;width:auto;max-height:none;overflow:visible;display:flex;flex-direction:column;gap:10px;
+  pointer-events:auto;background:none;border:0;box-shadow:none;padding:0;z-index:auto!important;}
+.dbx-detail .dbx-zoom img{max-height:300px;}
+.dbx-detail .dbx-zoom .dz-art h3{font-size:20px;}
+.dbx-detail .dbx-zoom dl{font-size:13.5px;}
+.dbx-detail .dd-empty{margin:auto 0;padding:24px 8px;text-align:center;font-size:15px;line-height:1.9;color:#cdb68a;}
+.dbx-detail .dd-empty b{color:#ffe3a3;}
+.dbx-detail .dd-advice:empty{display:none;}
+.dbx-detail .dd-advice{background:rgba(245,232,200,.95);color:#2b1a0b;border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.6;}
+.dbx-card.picked{outline:3px solid #ffd27a;outline-offset:2px;border-radius:8px;}
+#deck-builder .dbx-guide img{height:150px!important;}   /* 案内人の絵が一覧の左下にかぶらない高さ */
+.dbx-hint.big{position:relative!important;left:auto!important;bottom:auto!important;width:auto!important;max-height:66px!important;overflow:hidden!important;}
+</style>
 <style id="builder-skin-20261005">
 /* ══ デッキ編成の着せ替え（2026-10-05 隆基のレイアウト案）：カードショップの背景、革の本のMY DECK、紋章から選ぶ、画像のボタン ══ */
 .deck-builder{background:#120d08 url('UI素材/編成/背景.webp') center/cover no-repeat!important;}
@@ -4504,12 +4527,16 @@ img[src*="ゼネラルデビル"]{object-fit:fill!important;}
     <section class="dbx-collection" id="dbx-collection">
       <div class="dbx-filter" id="dbx-filter"></div>
       <div class="dbx-grid" id="db-list"></div>
-      <div class="dbx-zoom" id="dbx-zoom"></div>
       <aside class="dbx-drawer" id="dbx-drawer">
         <div class="dbx-drawer-head"><b>案内人のデッキ評価</b><button id="db-guide-toggle" type="button" onclick="toggleBuilderGuide(event)">閉じる</button></div>
         <div class="dbx-drawer-body"><div id="db-guide-text"></div><div id="db-diag" class="db-diag"></div></div>
       </aside>
     </section>
+    <!-- 2026-10-15 隆基「デッキ編成画面を練り直したい」→ 詳細欄を常設。1クリックでここに絵と能力、ダブルクリックでデッキへ -->
+    <aside class="dbx-detail" id="dbx-detail">
+      <div class="dbx-zoom" id="dbx-zoom"><div class="dd-empty"><b>カードを1回クリック</b>すると、ここに絵と能力が出ます。<br><b>ダブルクリック</b>でデッキに入ります。</div></div>
+      <div class="dd-advice" id="dd-advice"></div>
+    </aside>
     <aside class="dbx-deck">
       <div class="dbx-deck-head"><span>MY DECK</span><b id="dbx-total">0 / 33</b></div>
       <div class="dbx-sec"><div class="dbx-sec-title">召喚獣<small>左端が最初に顕現する</small><em id="dbx-sec-beast">0/3</em></div><div class="dbx-slots beast" id="dbx-slots-beast"></div></div>
@@ -25599,7 +25626,6 @@ async function aiCrystalActions(side){
 #beast-cine.enemy .bc-card{box-shadow:0 0 0 3px #c0392b,0 0 60px rgba(255,80,60,.55),0 20px 60px rgba(0,0,0,.8)}
 @keyframes bcShake{0%,100%{transform:scale(1.04) translate(0,0)}20%{transform:scale(1.06) translate(-10px,4px)}40%{transform:scale(1.06) translate(9px,-5px)}60%{transform:scale(1.05) translate(-6px,3px)}80%{transform:scale(1.05) translate(4px,-2px)}}
 /* 2026-10-15 隆基「在野の一番下の段がワンクリックで出ない」：案内人の大きな吹き出しが一覧の下の段にかぶさっていた。開いている間は、一覧の下に余白を足して最後の段まで上へ出せるようにする */
-#deck-builder:has(.dbx-hint.big) .dbx-grid{padding-bottom:260px}
 </style>
 <script>
 // 召喚獣が動く時は、画面の正面に大きく寄せて見せる。終わるまでサイコロは待つ（rollBeastDiceUI が window._beastCine を待つ）
@@ -25639,16 +25665,37 @@ function beastCinema(id,el,img){
 }
 </script>
 
+<script>
+(function(){
+  builderZoomHide=function(){ clearTimeout(_builderZoomTimer); };   // 詳細欄は出したまま
+  const ti=builderTileInfo;
+  builderTileInfo=function(el,tab,id){ document.querySelectorAll('.dbx-card.picked').forEach(x=>x.classList.remove('picked')); if(el) el.classList.add('picked'); return ti.apply(this,arguments); };
+  const ra=builderRenderAdvice;
+  builderRenderAdvice=function(){
+    try{
+      if(DB&&DB.advice&&!DB.advice.small){
+        const d=document.getElementById('dd-advice'); if(d){ d.innerHTML='<div class="dbx-adv-sub">案内人より</div>'+DB.advice.html; }
+        const img=document.getElementById('db-guide-img'); if(img&&DB.advice.face) img.src=DB.advice.face;
+        return;
+      }
+    }catch(e){}
+    return ra.apply(this,arguments);
+  };
+  const st=setBuilderTab;
+  setBuilderTab=function(){ const r=st.apply(this,arguments); try{ const z=document.getElementById('dbx-zoom'), d=document.getElementById('dd-advice'); if(z) z.innerHTML='<div class="dd-empty"><b>カードを1回クリック</b>すると、ここに絵と能力が出ます。<br><b>ダブルクリック</b>でデッキに入ります。</div>'; if(d) d.innerHTML=''; }catch(e){} return r; };
+})();
+</script>
+
 
 <style id="public-test-badge">
 #pt-badge{position:fixed;left:8px;bottom:8px;z-index:99990;display:flex;gap:6px;align-items:center;font:12px/1.2 "Hiragino Sans",sans-serif}
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.86</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.86%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.87</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.87%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.86";
+  var FORM="", PRE={}, V="0.1.87";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
