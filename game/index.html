@@ -25596,6 +25596,16 @@ async function aiCrystalActions(side){
 </script>
 
 <style>
+/* 2026-10-16 隆基「相変わらず召喚獣の行動が右の空間にアタックのまま。画面に向かって迫ってくるように」：
+   サイコロの窓で召喚獣の攻撃が当たった時、モンスター用の『右へ体当たり』（右に相手のカードがある前提）を使っていた。召喚獣は手前へ迫る */
+.dice-window.beast-mode .dice-card-focus.impact .dice-attacker-card,
+.dice-window.beast-mode .dice-card-focus.crystal-assault.impact .dice-attacker-card{animation:beastFaceLunge .7s cubic-bezier(.16,.86,.22,1) 1!important;}
+@keyframes beastFaceLunge{
+  0%{transform:scale(1);filter:brightness(1);}
+  40%{transform:scale(1.42);filter:brightness(1.45) drop-shadow(0 0 30px rgba(255,210,120,.9));}
+  62%{transform:scale(1.32) translateY(4px);filter:brightness(1.25);}
+  100%{transform:scale(1);filter:brightness(1);}
+}
 /* 召喚獣のカットイン（2026-10-15） */
 #beast-cine{position:fixed;inset:0;z-index:9992;pointer-events:none;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;
   background:radial-gradient(ellipse at center,rgba(20,10,0,.55) 0%,rgba(0,0,0,.88) 70%);opacity:0;transition:opacity .18s ease}
@@ -25692,10 +25702,10 @@ function beastCinema(id,el,img){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.93</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.93%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.94</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.94%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.93";
+  var FORM="", PRE={}, V="0.1.94";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
