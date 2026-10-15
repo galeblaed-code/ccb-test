@@ -5736,8 +5736,10 @@ try{ BEAST_SE.grimbulsti=BEAST_SE.titan; BEAST_SE.fenrir=BEAST_SE.odin; if(BEAST
 function showBeastEffect(id,el){
   playBattleSe(BEAST_SE,id);
   const img=BEAST_EFFECT_IMG[id];
+  // 2026-10-15 隆基「召喚獣の攻撃は右の何もない空間に攻撃する。画面正面に大きくズームする感じに」：盤面の位置ではなく、正面のカットインで見せる
+  try{ beastCinema(id,el,img); }catch(e){ if(img) showCenterEffect(img,el); }
   if(!img) return;
-  showCenterEffect(img,el);
+  if(window._beastCine) return;   // カットインの中で見せたので、盤面の端に飛ぶ演出は出さない
   const eRow=document.querySelector('.e-field-row .m-row');
   const pRow=document.querySelector('.p-field-row .m-row');
   const big=BEAST_BOTH_FIELDS.has(id);
@@ -8057,6 +8059,7 @@ async function rollDicePopup(dc,label,resultTextFn,goodFn,focusCardId,targetCard
 }
 
 async function rollBeastDiceUI(dc,dt,label,focusCardId){
+  try{ if(window._beastCine) await window._beastCine; }catch(e){}   // 正面のカットインが終わってからサイコロ
   const ov=document.getElementById('dice-ov');
   const win=document.querySelector('.dice-window');
   const row=document.getElementById('dice-ov-row');
@@ -23779,6 +23782,9 @@ showUltimaEffect=function(){
 showBeastEffect=function(id,el){
   playBattleSe(BEAST_SE,id);
   const img=BEAST_EFFECT_IMG[id];
+  // 2026-10-15 隆基「召喚獣の攻撃は右の何もない空間に攻撃する。画面正面に大きくズームする感じに」
+  //   ダイスの窓がすぐ開かない時（ガードを選ぶ間など）に、盤面の攻撃先の座標へ飛んでいた。正面のカットインで見せる
+  try{ if(typeof beastCinema==='function'){ beastCinema(id,el,img); return; } }catch(e){}
   if(!img) return;
   setTimeout(()=>{   // ダイスの窓はこのすぐ後に開くので、一拍待ってから場所を決める
     const ov=document.getElementById('dice-ov'), card=document.getElementById('dice-card-img');
@@ -25579,16 +25585,68 @@ async function aiCrystalActions(side){
 })();
 </script>
 
+<style>
+/* 召喚獣のカットイン（2026-10-15） */
+#beast-cine{position:fixed;inset:0;z-index:9992;pointer-events:none;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;
+  background:radial-gradient(ellipse at center,rgba(20,10,0,.55) 0%,rgba(0,0,0,.88) 70%);opacity:0;transition:opacity .18s ease}
+#beast-cine.show{opacity:1}
+#beast-cine .bc-card{height:min(62vh,560px);aspect-ratio:5/7;border-radius:14px;background:center/cover no-repeat;box-shadow:0 0 0 3px #d9a441,0 0 60px rgba(255,190,90,.55),0 20px 60px rgba(0,0,0,.8);
+  transform:scale(.55);filter:brightness(.6);transition:transform .55s cubic-bezier(.2,1.4,.4,1),filter .55s}
+#beast-cine.show .bc-card{transform:scale(1.04);filter:brightness(1.08)}
+#beast-cine.hit .bc-card{animation:bcShake .32s linear}
+#beast-cine .bc-title{font-size:clamp(20px,2.6vw,34px);font-weight:900;letter-spacing:.12em;color:#ffe6a8;text-shadow:0 0 18px rgba(255,160,40,.9),0 3px 0 #000}
+#beast-cine .bc-target{font-size:clamp(14px,1.6vw,20px);color:#f4dcb0;text-shadow:0 2px 0 #000;letter-spacing:.08em}
+#beast-cine.enemy .bc-card{box-shadow:0 0 0 3px #c0392b,0 0 60px rgba(255,80,60,.55),0 20px 60px rgba(0,0,0,.8)}
+@keyframes bcShake{0%,100%{transform:scale(1.04) translate(0,0)}20%{transform:scale(1.06) translate(-10px,4px)}40%{transform:scale(1.06) translate(9px,-5px)}60%{transform:scale(1.05) translate(-6px,3px)}80%{transform:scale(1.05) translate(4px,-2px)}}
+</style>
+<script>
+// 召喚獣が動く時は、画面の正面に大きく寄せて見せる。終わるまでサイコロは待つ（rollBeastDiceUI が window._beastCine を待つ）
+function beastCinema(id,el,img){
+  if(!id||!BD[id]) return;
+  const a=CARD_ASSETS[id]||{}, b=BD[id];
+  const isP=el&&el.closest&&(el.closest('.p-field-row')||el.classList.contains('player-crystal')||el.id==='p-beast-row'||/^p-/.test(el.id||''));
+  // どちらの召喚獣か：攻撃先が自分側なら相手の召喚獣
+  let side='p'; try{ if(G&&G.e&&G.e.beasts&&G.e.beasts.activeId===id&&!(G.p&&G.p.beasts&&G.p.beasts.activeId===id&&G.activePlayer==='p')) side='e'; if(isP) side='e'; }catch(e){}
+  let tgt='';
+  try{
+    if(el){
+      if(el.classList.contains('enemy-crystal')) tgt='敵クリスタルへ';
+      else if(el.classList.contains('player-crystal')) tgt=(side==='e'?'あなたのクリスタルへ':'自分のクリスタルへ');
+      else if(/beast-row/.test(el.id||'')) tgt=(el.id[0]==='p'?'あなたの召喚獣へ':'敵の召喚獣へ');
+      else { const mm=(el.id||'').match(/^([pe])-m-(\d)$/); if(mm){ const pd=mm[1]==='p'?G.p:G.e, m=pd.monsterField[+mm[2]]; if(m) tgt=(mm[1]==='p'?'あなたの':'敵の')+m.def.name+'へ'; } }
+    }
+  }catch(e){}
+  let ov=document.getElementById('beast-cine');
+  if(!ov){ ov=document.createElement('div'); ov.id='beast-cine'; ov.innerHTML='<div class="bc-title"></div><div class="bc-card"></div><div class="bc-target"></div>'; document.body.appendChild(ov); }
+  ov.className=side==='e'?'enemy':'';
+  ov.querySelector('.bc-card').style.backgroundImage=a.img?'url("'+encodeURI(a.img)+'")':'';
+  ov.querySelector('.bc-title').textContent=(side==='e'?'[敵] ':'')+b.name+(b.atkName?' の '+b.atkName+'！':'！');
+  ov.querySelector('.bc-target').textContent=tgt?'—— '+tgt+' ——':'';
+  void ov.offsetWidth; ov.classList.add('show');
+  const card=ov.querySelector('.bc-card');
+  window._beastCine=(async()=>{
+    await delay(520);
+    ov.classList.add('hit');
+    if(img){ try{ showCenterEffect(img,card); }catch(e){} }
+    await delay(780);
+    ov.classList.remove('show','hit');
+    await delay(180);
+  })();
+  const me=window._beastCine; me.then(()=>{ if(window._beastCine===me) window._beastCine=null; });
+  return window._beastCine;
+}
+</script>
+
 
 <style id="public-test-badge">
 #pt-badge{position:fixed;left:8px;bottom:8px;z-index:99990;display:flex;gap:6px;align-items:center;font:12px/1.2 "Hiragino Sans",sans-serif}
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.84</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.84%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.85</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.85%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.84";
+  var FORM="", PRE={}, V="0.1.85";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
