@@ -12662,6 +12662,23 @@ const EXTRA_ROLES=[
   {id:'xZenMondou',name:'禅問答',reading:'ゼンモンドウ',cards:[['monk'],['pope','templar','acolyte']],once:{koan:true},aura:{monk:{atk:40,hp:40}},
    onceReady:side=>(side==='p'?G.e:G.p).monsterField.some(x=>x&&x.hp>0),   // 問いを投げる相手がいる時まで待つ
    meaning:'教義は答えを与える。修行僧は問いを与える。「片手の拍手は、どんな音がする」——聖堂の者は答えに詰まり、戦場の者は剣を止めた。',desc:'モンク僧と、教皇府の者（教皇・僧騎士・侍祭のいずれか）が同時に場にいる。1ゲームに1度、相手の場で一番攻撃の高い者に問いを投げる。その者は答えを考え込み、次の相手の番、動けない（相手の場が空の間は待つ）。場にいる間、モンク僧の攻撃 +40・最大HP +40（悟り）。',hint:'修行僧が、聖職者に問いを投げる'},
+  // ── 役の薄いカードに役を（2026-10-15 隆基「全部入れて」）──
+  {id:'xTsumamiGui',name:'つまみ食い',reading:'ツマミグイ',cards:[['aquacat'],['porkfish','lardfish','jewelfish']],once:{catSnack:true},
+   meaning:'仲間だと言われても、魚は魚だ。猫は悪くない。目の前に置いたほうが悪い。',desc:'アクアキャットと、ポークフィッシュ・ラードフィッシュ・ジュエルフィッシュのいずれかが同時に場にいる。1ゲームに1度、アクアキャットがその魚をこっそり食べる。魚は場から墓場へ（倒された扱いではない）。アクアキャットはHP全快、召喚石 +1。',hint:'猫の前に、魚を置いてはいけない'},
+  {id:'xKaisouNoKakurega',name:'海藻の森の隠れ家',reading:'カイソウノモリノカクレガ',cards:[['kelpmimic'],['jewelfish','aquacat','mermaid']],
+   meaning:'揺れる藻の陰は、小さな者たちの家だ。海藻魚は、その入口を知っている。',desc:'海藻魚と、ジュエルフィッシュ・アクアキャット・人魚のいずれかが同時に場にいる。その仲間も、最初に受ける単体攻撃を1回だけ海藻に紛れてかわす。',hint:'海藻魚が、仲間を藻の陰へ招く'},
+  {id:'xShinjuTori',name:'真珠採り',reading:'シンジュトリ',cards:[['fangedclam'],['pirate']],once:{pts:2},
+   meaning:'牙の生えた貝ほど、大きな真珠を抱いている。指を一本賭ける価値はある。',desc:'噛みつき貝と海賊が同時に場にいる。1ゲームに1度、召喚石 +2。',hint:'海賊が、牙のある貝に手を入れる'},
+  {id:'xKaiNoSakamushi',name:'貝の酒蒸し',reading:'カイノサカムシ',cards:[['fangedclam'],['cook']],once:{healAllies:60},
+   meaning:'噛みつく前に、酒をかけて蓋をする。料理人の勝ちだ。',desc:'噛みつき貝と料理人が同時に場にいる。1ゲームに1度、味方全体 HP +60。',hint:'料理人が、大貝に酒をかける'},
+  {id:'xHozonshoku',name:'保存食',reading:'ホゾンショク',cards:[['porkfish','lardfish'],['pirate']],
+   meaning:'長い航海に、塩と脂は欠かせない。海賊は、獲った魚を無駄にしない。',desc:'ポークフィッシュかラードフィッシュと、海賊が同時に場にいる。その魚が倒された時に味方を癒す力が2倍になる（海賊が場にいる間）。',hint:'海賊が、脂の乗った魚を塩漬けにする'},
+  {id:'xKuragenoGoei',name:'海月の護衛',reading:'クラゲノゴエイ',cards:[['armoredjelly'],['mermaid']],
+   meaning:'人魚のそばには、いつも硬い海月が漂っている。触れた者は、しばらく痺れて動けない。',desc:'装甲海月と人魚が同時に場にいる。人魚に単体攻撃をした者は、海月の触手に触れて毒になる。',hint:'海月が、人魚のそばを漂う'},
+  {id:'xOukeNoTate',name:'王家の盾',reading:'オウケノタテ',cards:[['aegis'],['king','queen','prince']],aura:{aegis:{hp:150}},
+   meaning:'王家の紋章を刻んだ盾は、王族の前でだけ本当の重さになる。',desc:'イージスの盾と、キング・クイーン・王子のいずれかが同時に場にいる。場にいる間、イージスの盾の最大HP +150（王族への攻撃を一身に受け止める）。',hint:'王族の前に、聖なる大盾が立つ'},
+  {id:'xRyuugoroshiNoEiyuu',name:'竜殺しの英雄',reading:'リュウゴロシノエイユウ',cards:[['dragonslave'],['warrior','paladin','dragoon']],
+   meaning:'竜を屠る剣は、それだけでは鉄の塊だ。振るう者がいて、初めて伝説になる。',desc:'ドラゴンスレイブと、戦士・パラディン・ドラグナイトのいずれかが同時に場にいる。その英雄が竜系のモンスターを攻撃する時、ダメージ2倍。',hint:'英雄が、竜殺しの剣を手に取る'},
   // 兵站（2026-10-14 隆基「パン屋も強いぞ。兵站の担い手だし」）
   {id:'xHeitan',name:'兵站',reading:'ヘイタン',cards:[['baker'],['platoon','archer','knight','mercenary','oceanknight']],aura:{platoon:{atk:40,hp:40},archer:{atk:40,hp:40},knight:{atk:40,hp:40},mercenary:{atk:40,hp:40},oceanknight:{atk:40,hp:40}},
    meaning:'腹が減っては戦はできぬ。夜明け前の窯の火が、昼の戦線を支えている。',desc:'パン職人と、兵士（小隊・弓兵・騎士・傭兵・海洋騎士のいずれか）が同時に場にいる。場にいる間、兵士の攻撃 +40・最大HP +40。',hint:'パン職人が、兵士に焼きたてを配る'},
@@ -13269,6 +13286,8 @@ function applyOnceEffects(side,o,label){
     parts.push('旗艦が港を出た——敵モンスター'+n+'体に砲撃（海の怪物には2倍）'); try{ recEvent(side,'role','艦隊出撃：旗艦が港を出て、敵の場を砲撃した'); }catch(e){} }
   if(o.koan){ const fs=od.monsterField.filter(x=>x&&x.hp>0).sort((a,b)=>(b.def.atk||0)-(a.def.atk||0)); const t=fs[0];
     if(t){ t.frozen=true; t._koan=true; parts.push('「片手の拍手は、どんな音がする」——'+t.def.name+' は答えを考え込み、次の番は動けない'); try{ showCenterNotice(label,t.def.name+' が考え込んだ',side,1600); }catch(e){} } }
+  if(o.catSnack){ const FS=['porkfish','lardfish','jewelfish']; const i=pd.monsterField.findIndex(x=>x&&x.hp>0&&FS.includes(x.id)), cat=pd.monsterField.find(x=>x&&x.hp>0&&x.id==='aquacat');
+    if(i>=0&&cat){ const f=pd.monsterField[i]; pd.graveyard.push({uid:f.uid,id:f.id,def:f.def,maxHp:f.maxHp,noKill:true}); pd.monsterField[i]=null; cat.hp=cat.maxHp; grantPts(side,1); parts.push('アクアキャットが'+f.def.name+'をこっそり食べた——'+f.def.name+'は墓場へ、アクアキャットはHP全快、召喚石 +1'); } }
   if(o.drunkFoes){ let n=0; od.monsterField.forEach(x=>{ if(x&&x.hp>0){ x.def=Object.assign({},x.def,{atk:Math.max(0,(x.def.atk||0)-o.drunkFoes)}); n++; } }); parts.push('相手の'+n+'体が酔い潰れた（攻撃 -'+o.drunkFoes+'、ずっと）'); }
   if(o.jointOp){
     if(pd.beasts.summonPts<3){ parts.push('召喚石が足りず、作戦は机の上で終わった（この試合ではもう発動しない）'); try{ showCenterNotice(label,'作戦不成立',side,1500); }catch(e){} }
@@ -25491,16 +25510,60 @@ async function aiCrystalActions(side){
 })();
 </script>
 
+<script>
+// 役の薄いカードの役（2026-10-15）：海藻の森の隠れ家・海月の護衛・竜殺しの英雄（攻撃が当たる前）、保存食（魚が倒れた時）
+(function(){
+  const R=id=>EXTRA_ROLES.find(x=>x.id===id);
+  const core=applyAttackResolveCore;
+  applyAttackResolveCore=async function(side,attacker,result,targetType,targetSlot){
+    try{
+      if(targetType==='monster'&&result&&result.atk>0&&attacker){
+        const pre=side==='p'?'':'[敵] ', os=side==='p'?'e':'p', od=os==='p'?G.p:G.e, tg=od.monsterField[targetSlot];
+        if(tg&&tg.hp>0){
+          const ry=R('xRyuugoroshiNoEiyuu');
+          if(['warrior','paladin','dragoon'].includes(attacker.id)&&DRAGON_KIND_MONSTERS.has(tg.id)&&ry&&extraRoleHolds(side,ry)){ result.atk*=2; log(pre+'【竜殺しの英雄】'+attacker.def.name+'が竜殺しの剣で'+tg.def.name+'に斬りかかる（ダメージ2倍）','gold'); }
+          const kk=R('xKaisouNoKakurega');
+          if(['jewelfish','aquacat','mermaid'].includes(tg.id)&&!tg._kelpDodged&&kk&&extraRoleHolds(os,kk)){ tg._kelpDodged=true; result.atk=0; result.label=(result.label||'')+'（藻の陰に隠れてかわされた）'; log((os==='p'?'':'[敵] ')+'【海藻の森の隠れ家】'+tg.def.name+'が藻の陰に隠れ、攻撃をかわした','bad'); }
+          const kg=R('xKuragenoGoei');
+          if(tg.id==='mermaid'&&!attacker.poison&&kg&&extraRoleHolds(os,kg)){ const ap=side==='p'?G.p:G.e, i=ap.monsterField.indexOf(attacker); if(i>=0){ poisonMonster(side,i,1,true); log(pre+'【海月の護衛】'+attacker.def.name+'は人魚のそばの海月に触れた——毒','bad'); } }
+        }
+      }
+    }catch(e){}
+    return core.apply(this,arguments);
+  };
+  const cd=checkDeathDraws;
+  checkDeathDraws=function(side){
+    const pd=side==='p'?G.p:G.e; let fish=[];
+    try{
+      if(!pd._ddBusy&&pd.monsterField.some(m=>m&&m.hp>0&&m.id==='pirate')){
+        const cur=new Set(pd.monsterField.filter(Boolean).map(m=>m.uid)), prev=pd._fieldUids||cur;
+        prev.forEach(uid=>{ if(cur.has(uid)) return; const g=pd.graveyard.find(x=>x&&x.uid===uid); if(g&&!g.noKill&&(g.id==='porkfish'||g.id==='lardfish')) fish.push(g); });
+      }
+    }catch(e){ fish=[]; }
+    const r=cd.apply(this,arguments);
+    try{
+      fish.forEach(g=>{
+        const h=g.id==='lardfish'?40:(pd.monsterField.some(x=>x&&x.hp>0&&x.id==='porkfish')?60:30);
+        pd.monsterField.forEach(x=>{ if(x&&x.hp>0) x.hp=Math.min(x.maxHp,x.hp+h); });
+        try{ discoverRole('xHozonshoku',side); }catch(e){}
+        log((side==='p'?'':'[敵] ')+'【保存食】海賊が塩漬けにしておいた'+g.def.name+'で、もう一度味方を癒した（HP +'+h+'）','gold');
+      });
+    }catch(e){}
+    return r;
+  };
+})();
+</script>
+
 
 <style id="public-test-badge">
 #pt-badge{position:fixed;left:8px;bottom:8px;z-index:99990;display:flex;gap:6px;align-items:center;font:12px/1.2 "Hiragino Sans",sans-serif}
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.80</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.80%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.81</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.81%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.80";
+  var FORM="", PRE={}, V="0.1.81";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
