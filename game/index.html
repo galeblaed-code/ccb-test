@@ -22899,7 +22899,9 @@ function btFromLog(raw,ctx){
   t=t.replace(/^\[(?:敵|あなた)\]\s*/,'');
   // 2026-10-15 隆基「なんで召喚獣のHPがいきなり削れてるの？」：待機圧迫と危険域の警告は、バトルログに出す
   if(/危険域！ このまま召喚すると暴走する/.test(t)) return t.replace(/^\[(?:敵|あなた)\]\s*/,'');
-  if(/WARNING|開幕配置|先攻|開始！|召喚獣3体セット|サイコロを|【役発見】|【\d+翻|【接近】|【臨界】|ダメージ|を攻撃$|サイズ相性|がガード|クリスタルで受けた|を使用しました。|の攻撃。$/.test(t)) return null;
+  // 2026-10-15 隆基「説明のない結果はバグと同じだ」：隠すのは、ほかの場所（サイコロの窓・役のポップアップ・翻の帯・ガードの選択・カットイン）で見せているものだけ
+  if(/開幕配置|先攻|開始！|召喚獣3体セット|サイコロを|【役発見】|【\d+翻|を攻撃$|サイズ相性|がガード！|ガードせずスルー|を使用しました。|の攻撃。$|召喚。モンスターカードを引いたため|AI：/.test(t)) return null;
+  if(/^[^【]+? → [^【]+? に \d+ ダメージ/.test(t)) return null;   // 攻撃の結果：サイコロの窓とカードの上の数字で見せている
   if(Object.values(ENTRY_GIFTS).some(g=>t.includes('【'+g.tag+'】'))) return null;   // 手土産は召喚石の行（ゴブリン【拾い物】で召喚石 +1）で知らせる
   const src=ctx&&ctx.source||'';
   // 役の効果は、役の成立の行のすぐ後に「→ 起きたこと」として出す（2026-10-15 隆基「効果で何がおきたのかアナウンスしてほしい」）
@@ -22924,6 +22926,11 @@ function btFromLog(raw,ctx){
     const who=src.replace(/の(?:召喚時効果|反動|失敗時効果)$/,'').replace(/【[^】]*】$/,'');
     const rest=btBrief(t.slice(t.indexOf('】')+1).replace(/^[\s：——、。]+/,''));
     return (who&&!who.includes(m[1])&&!/継続毒/.test(who)?who+'の':'')+'【'+m[1]+'】'+(rest?rest:'発動');
+  }
+  // 決まった形に当てはまらない行も、数字やカードが動くものは必ず出す（誰の何が、どれだけ）
+  if(/HP|ATK|攻撃 ?[+\-−]|[+\-−] ?\d|クリスタル|召喚ダイヤ|召喚石|ダメージ|デッキ|墓場|回復|毒|シールド|障壁|暴走|反噬|復活|顕現|WARNING|危険|消滅|消えた|倒れた|カウンター|奪|凍|行動|ターン/.test(t)){
+    const sname=src.replace(/^役「|」$/g,'');
+    return (src&&!/^役「/.test(src)&&!t.includes(sname)?sname+'：':'')+btBrief(t);
   }
   return null;
 }
@@ -25697,10 +25704,10 @@ function beastCinema(id,el,img){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.90</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.90%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.91</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.91%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.90";
+  var FORM="", PRE={}, V="0.1.91";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
