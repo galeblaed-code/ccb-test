@@ -6016,10 +6016,11 @@ MONSTER_SIZE_TIERS.small.push('dragonslave','arbiter','muramasa');
 MONSTER_SIZE_TIERS.mid.push('aegis');
 MONSTER_SIZE_TIERS.small.push('jewelfish');
 MONSTER_SIZE_TIERS.mid.push('oceanknight','lardfish');
-MONSTER_SIZE_TIERS.large.push('poseidon','mosasaurus');
+MONSTER_SIZE_TIERS.large.push('mosasaurus');
+MONSTER_SIZE_TIERS.small.push('poseidon');   // 2026-10-17 隆基：人間なので小型
 MONSTER_SIZE_TIERS.small.push('acolyte');
 MONSTER_SIZE_TIERS.mid.push('pope','templar','femmefatale','pirate');
-MONSTER_SIZE_TIERS.large.push('swordmaster');
+MONSTER_SIZE_TIERS.small.push('swordmaster');   // 2026-10-17 隆基：人間なので小型
 MONSTER_SIZE_TIERS.mid.push('frogprince','flowermantis','myconid','moneychanger','mercenary','cook');
 MONSTER_SIZE_TIERS.large.push('deathcrab','lightningbear');
 MONSTER_SIZE_TIERS.small.push('thief','bard','tavern','aquacat','kelpmimic');
@@ -11295,7 +11296,7 @@ function applyMagicEffect(side,def,result={}){
     log('ノクターン！ 敵召喚ダイヤ -'+steal+' 自分 +'+steal,'gold');
   } else if(def.effect==='gravity'){
     const dmg=Math.floor(defPd.crystalHp*(result.gravityRate||0.25));
-    defPd.crystalHp-=dmg;
+    damageCrystal(defSide,dmg);   // 2026-10-17 隆基「どんな原因だろうがダメージ受けたら召喚石」
     log(def.name+'！ 敵クリスタル現HP'+Math.round((result.gravityRate||0.25)*100)+'% '+dmg+' ダメージ。','gold');
   } else if(def.effect==='haste'){
     const add=result.mainActions||1;
@@ -13856,6 +13857,8 @@ function evaluateRoles(){
       const tmpHp=G.p.crystalHp;
       G.p.crystalHp=G.e.crystalHp;
       G.e.crystalHp=tmpHp;
+      // 2026-10-17 隆基：減った側のクリスタルは傷ついたので召喚石 +1
+      if(G.p.crystalHp<tmpHp) grantPts('p',1,'クリスタル被弾時の獲得'); else if(G.e.crystalHp<G.p.crystalHp) grantPts('e',1,'クリスタル被弾時の獲得');
       log('【崩壊する世界】現実が反転した——両陣営のクリスタルHPが入れ替わった！','gold');
       renderCounts();
     }
@@ -15001,7 +15004,7 @@ function applyKindRoleRegen(side){
 
   // ===== 出撃承認（2026-10-04）：元老院とメタルドラゴンが並んでいる間、首都の魔導炉を回すので自クリスタル -15（首都は停電） =====
   if(!isPreparationRound()&&G.phase==='battle'&&pd.monsterField.some(m=>m&&m.hp>0&&m.id==='senate')&&pd.monsterField.some(m=>m&&m.hp>0&&m.id==='metaldragon')){
-    pd.crystalHp=Math.max(1,pd.crystalHp-15);
+    { const d=Math.min(15,Math.max(0,pd.crystalHp-1)); if(d>0) damageCrystal(side,d); }   // 2026-10-17 隆基：自傷でも召喚石
     log(pre+'【首都停電】メタルドラゴンに首都の魔導炉が回された。街の灯りが消え、自クリスタル -15','bad');
   }
 
@@ -15702,7 +15705,7 @@ function applyKindRoleRegen(side){
     if(pd.graveyard.length>0){
       const idxH=Math.floor(Math.random()*pd.graveyard.length);
       const revived=pd.graveyard.splice(idxH,1)[0];
-      pd.deck.push({type:'monster',id:revived.id});
+      pd.deck.push({type:'monster',id:revived.id}); pd.deck=shuffle(pd.deck);   // 2026-10-17：デッキに戻す時は必ずシャッフル（隆基のルール）
       log((side==='p'?'あなた':'敵')+'の墓荒らし：'+revived.def.name+' を墓場からデッキへ引き戻した','good');
     }
   }
@@ -18030,8 +18033,7 @@ function tickUltimaTurn(){
   }
   const odd=G.ultima.sum%2===1;
   if(odd){
-    G.p.crystalHp=1;
-    G.e.crystalHp=1;
+    ['p','e'].forEach(sd=>{ const q=sd==='p'?G.p:G.e; const d=q.crystalHp-1; if(d>0){ q.crystalHp=1; grantPts(sd,1,'クリスタル被弾時の獲得'); } });   // 2026-10-17 隆基：傷ついたら召喚石
     log('【アレア・ヤクタ】合計'+G.ultima.sum+'は奇数。両クリスタルが残り1になった。','bad');
     ultimaHolyLight(G.ultima.caster);
   } else {
@@ -25696,16 +25698,107 @@ function beastCinema(id,el,img){
 })();
 </script>
 
+<style>
+/* シャッフルの演出（2026-10-17 隆基「シャッフルは画面上でシャッフルするのを見せたい」） */
+.monster-deck-stack.ccb-shuffling{animation:ccbDeckShake .9s ease-in-out 1;}
+@keyframes ccbDeckShake{0%,100%{transform:none}15%{transform:translateX(-6px) rotate(-3deg)}30%{transform:translateX(6px) rotate(3deg)}45%{transform:translateX(-5px) rotate(-2deg)}60%{transform:translateX(5px) rotate(2deg)}80%{transform:translateX(-2px)}}
+.ccb-shuf-card{position:fixed;z-index:9990;pointer-events:none;border-radius:6px;background:center/cover no-repeat;box-shadow:0 4px 12px rgba(0,0,0,.7);transition:transform .22s ease-in-out;}
+.ccb-shuf-tag{position:fixed;z-index:9991;pointer-events:none;font-weight:900;letter-spacing:.2em;color:#ffe6a8;text-shadow:0 0 10px rgba(255,160,40,.9),0 2px 0 #000;font-size:15px;transform:translate(-50%,-50%);animation:ccbShufTag .95s ease-out forwards;}
+@keyframes ccbShufTag{0%{opacity:0;transform:translate(-50%,-30%)}20%{opacity:1;transform:translate(-50%,-60%)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-90%)}}
+</style>
+<script>
+// ── 召喚獣は顕現するまで名前もHPも伏せる（2026-10-17 隆基「お互いの召喚獣は顕現するまで名前HP非表示。自分の召喚獣はダブルクリックで確認可能」）──
+(function(){
+  const rb=renderBeast;
+  renderBeast=function(side,pd){
+    const r=rb.apply(this,arguments);
+    try{
+      const b=pd&&pd.beasts; if(!b||!b.activeId||b.summoned) return r;
+      const row=document.getElementById(side+'-beast-row'), meta=document.getElementById(side+'-beast-meta'), icon=document.getElementById(side+'-beast-icon');
+      if(row) row.classList.remove('beast-unstable');
+      if(icon) icon.textContent='?';
+      if(meta) meta.innerHTML='<div class="beast-name" style="color:#999;">？？？（待機中）</div>'+(side==='p'?'<div class="beast-cost-line" style="color:#b9a777">ダブルクリックで確認</div>':'');
+    }catch(e){}
+    return r;
+  };
+  const od=openBeastDetail;
+  openBeastDetail=function(side,force){
+    try{
+      const b=(side==='p'?G.p:G.e).beasts;
+      if(b&&b.activeId&&!b.summoned&&!(side==='p'&&force)){
+        const modal=document.getElementById('card-modal');
+        document.getElementById('card-preview').src='バトルフィールドパーツ/召喚獣カード裏面png.webp';
+        document.getElementById('card-detail-title').textContent='???';
+        document.getElementById('card-detail-sub').textContent=(side==='p'?'あなたの召喚獣（待機中）':'敵の召喚獣（待機中）');
+        document.getElementById('card-detail-grid').innerHTML='<div class="card-detail-k">状態</div><div class="card-detail-v">顕現するまで、名前もHPも伏せられている</div>'
+          +(side==='p'?'<div class="card-detail-k">確認</div><div class="card-detail-v">自分の召喚獣の欄をダブルクリックすると、中身を確かめられる</div>':'');
+        const ab=document.getElementById('card-detail-attack-btn'); if(ab) ab.remove();
+        modal.classList.add('show'); modal.setAttribute('aria-hidden','false');
+        return;
+      }
+    }catch(e){}
+    return od.apply(this,arguments);
+  };
+  document.getElementById('p-beast-row').addEventListener('dblclick',()=>{ try{ if(G&&G.p.beasts.activeId&&!G.p.beasts.summoned) openBeastDetail('p',true); }catch(e){} });
+  // 待機中の召喚獣のHPの警告は出さない（HPを伏せているので）
+  const cw=checkBeastHpWarning;
+  checkBeastHpWarning=function(side){ try{ const b=(side==='p'?G.p:G.e).beasts; if(b&&!b.summoned) return; }catch(e){} return cw.apply(this,arguments); };
+  // 記録の文から、待機中の召喚獣の名前を伏せる（どちらの陣営でも顕現していない名前だけ）
+  const lg=log;
+  log=function(msg,cls){
+    try{
+      if(G&&G.p&&G.e&&typeof msg==='string'){
+        const up=new Set([G.p,G.e].filter(q=>q.beasts&&q.beasts.summoned&&q.beasts.activeId).map(q=>q.beasts.activeId));
+        [G.p,G.e].forEach(q=>{ const b=q.beasts; if(b&&b.activeId&&!b.summoned&&!up.has(b.activeId)&&BD[b.activeId]){ const nm=BD[b.activeId].name; if(msg.includes(nm)) msg=msg.split('待機中の'+nm).join('待機中の召喚獣').split(nm).join('待機中の召喚獣'); } });
+      }
+    }catch(e){}
+    return lg.call(this,msg,cls);
+  };
+})();
+// ── シャッフルを画面で見せる（2026-10-17 隆基）──
+(function(){
+  const sh=shuffle; let last={p:0,e:0};
+  shuffle=function(a){
+    const r=sh.apply(this,arguments);
+    try{
+      if(G&&G.phase==='battle'&&G.p&&G.e&&a&&a.length>1){
+        const side=a===G.p.deck?'p':a===G.e.deck?'e':null;
+        if(side&&Date.now()-last[side]>700){ last[side]=Date.now(); ccbShowShuffle(side); }
+      }
+    }catch(e){}
+    return r;
+  };
+  window.ccbShowShuffle=function(side){
+    const st=document.getElementById(side+'-monster-deck-stack'); if(!st) return;
+    const rc=st.getBoundingClientRect(); if(!rc.width) return;
+    st.classList.remove('ccb-shuffling'); void st.offsetWidth; st.classList.add('ccb-shuffling'); setTimeout(()=>st.classList.remove('ccb-shuffling'),950);
+    const back=getComputedStyle(st).backgroundImage&&getComputedStyle(st).backgroundImage!=='none'?getComputedStyle(st).backgroundImage:"url('バトルフィールドパーツ/召喚獣カード裏面png.webp')";
+    const w=Math.min(rc.width*0.55,70), h=w*1.4, cx=rc.left+rc.width/2, cy=rc.top+rc.height/2;
+    for(let k=0;k<4;k++){
+      const c=document.createElement('div'); c.className='ccb-shuf-card';
+      Object.assign(c.style,{width:w+'px',height:h+'px',left:(cx-w/2)+'px',top:(cy-h/2)+'px',backgroundImage:back});
+      document.body.appendChild(c);
+      const dir=(k%2?1:-1), off=(k+1)*7;
+      setTimeout(()=>{ c.style.transform='translateX('+(dir*off*2)+'px) rotate('+(dir*8)+'deg)'; },30+k*40);
+      setTimeout(()=>{ c.style.transform='translateX('+(-dir*off)+'px) rotate('+(-dir*5)+'deg)'; },260+k*40);
+      setTimeout(()=>{ c.style.transform='none'; },500+k*40);
+      setTimeout(()=>c.remove(),820+k*40);
+    }
+    const t=document.createElement('div'); t.className='ccb-shuf-tag'; t.textContent='SHUFFLE'; Object.assign(t.style,{left:cx+'px',top:(rc.top-6)+'px'}); document.body.appendChild(t); setTimeout(()=>t.remove(),1000);
+  };
+})();
+</script>
+
 
 <style id="public-test-badge">
 #pt-badge{position:fixed;left:8px;bottom:8px;z-index:99990;display:flex;gap:6px;align-items:center;font:12px/1.2 "Hiragino Sans",sans-serif}
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.94</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.94%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.95</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.95%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.94";
+  var FORM="", PRE={}, V="0.1.95";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
