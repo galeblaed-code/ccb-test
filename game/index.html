@@ -25850,7 +25850,7 @@ function sageAdvicePick(side){
      role:'サキュバスに全部を差し出して、何も持たずに旅に出た男（サキュバスとジャックが並ぶと変身する。デッキには入れられない）。旅立ち：場に出た時にサイコロを振る。1〜3は何も起きない、4〜5は召喚石+1、6は召喚石+3。',
      t:[['miss','つまずく',0,30],['normal','ふらつく一撃',120],['normal','ふらつく一撃',120],['strong','無鉄砲',150],['strong','無鉄砲',150],['special','愚者の大跳躍',260]]},
     {id:'ladyvampire',name:'レディヴァンパイア',en:'VAMPIRE',img:'レディヴァンパイア',emoji:'🍷',hp:260,atk:150,dt:3,size:'mid',like:'vampire',female:1,dark:1,
-     role:'吟遊詩人の歌に惹かれた吸血鬼が、歌ごと詩人を飲み込んだ（ヴァンパイアと吟遊詩人が並ぶと変身する。デッキには入れられない）。魅了の歌：場に出た時、相手の場の全員の攻撃 -15（ずっと）。吸血：攻撃が当たると、自分のHPを回復する。',
+     role:'夜の酒場で出会った吸血鬼と、その血を分けた者（ヴァンパイアと、酒場の女主人かシーフが並ぶと変身する。デッキには入れられない）。魅了の歌：場に出た時、相手の場の全員の攻撃 -15（ずっと）。吸血：攻撃が当たると、自分のHPを回復する。',
      t:[['miss','グラスを傾けるだけ',0],['normal','吸血',150,0,75],['normal','吸血',150,0,75],['strong','紅の口づけ',175,0,90],['strong','紅の口づけ',175,0,90],['special','夜会の終わり',230,0,115]]},
     {id:'ashigaru',name:'足軽',en:'ASHIGARU',img:'足軽',emoji:'🗡',hp:240,atk:110,dt:2,size:'small',like:'samurai',human:1,counter:45,
      role:'侍に槍を持たされたジャック。名もない兵だが、崩れない（侍とジャックが並ぶと変身する。デッキには入れられない）。槍衾：殴られて生き残ると返す（カウンター45）。',
@@ -25893,12 +25893,12 @@ function sageAdvicePick(side){
   });
   const ROLE_TXT=Object.fromEntries(NEW.map(n=>[n.id,n.role]));
   const mrt=monsterRoleText; monsterRoleText=function(id){ return ROLE_TXT[id]||mrt.apply(this,arguments); };
-  // 変身の表（a・b は1種類でも、仲間の一覧でもよい）。レディヴァンパイアはカストラートより先に見る（吟遊詩人を取り合う時）
+  // 変身の表（a・b は1種類でも、仲間の一覧でもよい）
   const MAGES=['whitewitch','redmage','blackmage','mindflayer','sage'];
   const TF=[
     {id:'tfShadowWarrior',a:'jack',b:'ninja',to:'shadowwarrior',label:'隠密',title:'変 貌',text:'忍者の下で働いていた労働者が、影に溶ける術を覚えた'},
     {id:'tfFool',a:'jack',b:'succubus',to:'fool',label:'愚者',title:'変 貌',text:'サキュバスに全部を差し出した男は、何も持たずに旅に出た'},
-    {id:'tfLadyVampire',a:'vampire',b:'bard',to:'ladyvampire',label:'レディヴァンパイア',title:'変 貌',text:'吟遊詩人の歌に惹かれた吸血鬼が、歌ごと詩人を飲み込んだ'},
+    {id:'tfLadyVampire',a:'vampire',b:['tavern','thief'],to:'ladyvampire',label:'レディヴァンパイア',title:'変 貌',text:'夜の酒場で出会った吸血鬼と、その血を分けた者。夜会の女主人が生まれた'},   // 2026-10-17 隆基：ヴァンパイア×（酒場の女主人 か シーフ）
     {id:'tfAshigaru',a:'jack',b:'samurai',to:'ashigaru',label:'足軽',title:'変 貌',text:'侍に槍を持たされた労働者が、名もない兵になった'},
     {id:'tfWizard',a:'jack',b:'blackmage',to:'wizard',label:'ウィザード',title:'変 貌',text:'黒魔道士の荷物持ちは、いつのまにか本を全部読んでいた'},
     {id:'tfInquisitor',a:'jack',b:'cultist',to:'inquisitor',label:'異端審問官',title:'変 貌',text:'邪教の内側を知った労働者が、それを裁く側に回った'},
@@ -25910,7 +25910,7 @@ function sageAdvicePick(side){
   TF.forEach(t=>TRANSFORMS.push(t));
   const nm=(x,ids)=>Array.isArray(x)?(ids?MD[ids].name:x.map(i=>MD[i]?MD[i].name:i).slice(0,3).join('・')+'など'):MD[x].name;
   TF.forEach(t=>{ ROLE_DEFS.push({id:t.id,name:'変貌：'+t.label,hidden:'???',reading:'ヘンボウ',meaning:t.text+'。',
-    desc:'自分の場に'+(Array.isArray(t.a)?(t.id==='tfSpellblade'?'魔法使い（僧侶・ロイヤルガード・黒魔道士・グリモア・賢者）':nm(t.a)):MD[t.a].name)+'と'+(Array.isArray(t.b)?'汚染海洋生態系の仲間':MD[t.b].name)+'が揃う。'+(t.keepB?'ジャックが'+MD[t.to].name+'に変わる（相方は場に残る）。':'2体はこの試合から消え、'+MD[t.to].name+'に変わる。')+MD[t.to].name+'はデッキ編成には現れない。'}); });
+    desc:'自分の場に'+(Array.isArray(t.a)?(t.id==='tfSpellblade'?'魔法使い（僧侶・ロイヤルガード・黒魔道士・グリモア・賢者）':nm(t.a)):MD[t.a].name)+'と'+(Array.isArray(t.b)?(t.id==='tfLadyVampire'?'酒場の女主人かシーフ':'汚染海洋生態系の仲間'):MD[t.b].name)+'が揃う。'+(t.keepB?'ジャックが'+MD[t.to].name+'に変わる（相方は場に残る）。':'2体はこの試合から消え、'+MD[t.to].name+'に変わる。')+MD[t.to].name+'はデッキ編成には現れない。'}); });
   // ── 能力 ──
   const has=(pd,id)=>pd.monsterField.some(m=>m&&m.hp>0&&m.id===id);
   // 攻撃が当たる前：異端審問（魔族×1.5）・大漁（海×2）・竜殺しの魔剣（竜×2）・狂戦士（HPが減るほど強い）・影討ち（石を奪う）
@@ -25980,10 +25980,10 @@ function sageAdvicePick(side){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.98</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.98%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.99</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.99%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.98";
+  var FORM="", PRE={}, V="0.1.99";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
