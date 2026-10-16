@@ -25976,16 +25976,58 @@ function sageAdvicePick(side){
 })();
 </script>
 
+<script>
+// 変身カードの飴と鞭（2026-10-17 隆基「ダイスミスは痛いが当たれば敵陣に大ダメージ。そのヒリヒリ感。飴と鞭のバランスが大事」）
+//   前からある変身カードも、大失敗（自クリスタル大ダメージ＋相手に召喚石）と、会心（出目6の一撃）を強くする。
+//   失敗の罰は結果の側だけで出す（カードの fail 指定は外して、二重に取らない）
+(function(){
+  const TUNE={   // id: [大失敗の自クリスタル, 相手の召喚石, 会心の攻撃の下限]
+    kunoichi:[100,1,200], werewolf:[180,2,280], dullahan:[200,2,280], swordmaster:[220,3,0], devillord:[200,2,0],
+    madking:[200,2,0], prince:[150,1,240], crystaldragon:[180,2,220]
+  };
+  Object.entries(TUNE).forEach(([id,[sd,ep,sp]])=>{
+    const t=RESOLVE_TABLES[id]; if(!t||!MD[id]) return;
+    MD[id].fail='none';
+    const orig=t.resolve;
+    t.resolve=function(d){
+      const r=Object.assign({},orig.apply(this,arguments));
+      if(r.type==='fail'||r.type==='miss'){ r.selfDmg=Math.max(r.selfDmg||0,sd); r.enemyPt=Math.max(r.enemyPt||0,ep); r.label=(r.label||'')+'（大失敗）'; }
+      else if(r.type==='special'&&sp&&r.atk>0) r.atk=Math.max(r.atk,sp);
+      return r;
+    };
+  });
+  // デッキ編成：変身の素材になるカードには、変身先と「大失敗の反動が大きい」ことを書いておく（運に頼りたくない人が選べるように）
+  const adv=builderCardAdvice;
+  builderCardAdvice=function(tab,id){
+    let h=adv.apply(this,arguments);
+    try{
+      if(tab!=='monster') return h;
+      const inG=(x,i)=>Array.isArray(x)?x.includes(i):x===i;
+      const tfs=TRANSFORMS.filter(t=>MD[t.to]&&(inG(t.a,id)||inG(t.b,id)||t.c===id));
+      if(!tfs.length) return h;
+      // 2026-10-17 隆基「ゲーム中に発見したら。相手が使っても適応」：試合で一度起きた変身だけ、組み合わせと変身先を見せる
+      let found=[]; try{ found=loadFoundRoles(); }catch(e){}
+      const side=x=>Array.isArray(x)?(x.includes('dragonslave')?'ドラゴンスレイブ':x.some(i=>i==='kraken'||i==='megalodon')?'汚染海洋生態系の仲間':x.includes('sage')?'魔法使い':x.includes('tavern')?'酒場の女主人かシーフ':x.map(i=>MD[i]?MD[i].name:i).join('・')):(MD[x]?MD[x].name:x);
+      const seen=tfs.filter(t=>found.includes(t.id)), hidden=tfs.length-seen.length;
+      let body=seen.map(t=>'・'+side(t.a)+' ＋ '+side(t.b)+(t.c?' ＋ '+side(t.c):'')+' → <b>'+MD[t.to].name+'</b>（発見済み）').join('<br>');
+      if(hidden) body+=(body?'<br>':'')+'・まだ見ぬ変身が<b>'+hidden+'つ</b>。どの相手と並ぶと何になるのかは……実戦で確かめてください。';
+      h+='<div class="dbx-adv-more"><div class="dbx-adv-sub">変身の素材</div>'+body+'<br>変身すると強くなりますが、サイコロで大失敗すると自分のクリスタルに大きな反動が来ます。運に任せたくない時は、入れない手もあります。</div>';
+    }catch(e){}
+    return h;
+  };
+})();
+</script>
+
 
 <style id="public-test-badge">
 #pt-badge{position:fixed;left:8px;bottom:8px;z-index:99990;display:flex;gap:6px;align-items:center;font:12px/1.2 "Hiragino Sans",sans-serif}
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.102</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.102%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.103</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.103%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.102";
+  var FORM="", PRE={}, V="0.1.103";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
