@@ -12706,6 +12706,10 @@ const EXTRA_ROLES=[
   // 天魔外道（2026-10-15 隆基）：修行僧と邪教徒は、出会えば刺し違える
   {id:'xTenmaGedou',name:'天魔外道',reading:'テンマゲドウ',cards:[['monk'],['cultist']],once:{tenmaGedou:true},
    meaning:'道を極めようとする者と、道を外れた者。互いを見た瞬間に、どちらも引かなかった。二人が倒れた跡に、濃い魔力だけが残った。',desc:'モンク僧と邪教徒が同時に場にいる。1ゲームに1度、二人は相打ちになって墓場へ行き、召喚石を5個生む。',hint:'修行僧と邪教徒が、目を合わせる'},
+  // 賢者の知恵袋（2026-10-17 隆基、ケンジャシリーズから）：ジャック（労働者）の相談に、賢者がぶつぶつ言いながら一枚探してくる。賢者はそのカードと入れ替わりでデッキへ帰る
+  {id:'xKenjaNoChiebukuro',name:'賢者の知恵袋',reading:'ケンジャノチエブクロ',cards:[['sage'],['jack']],once:{sageAdvice:true},
+   onceReady:side=>sageAdvicePick(side).length>0,   // ジャックと役がそろうカードがデッキにある時まで待つ
+   meaning:'「ジジイ、相談がある」「誰がジジイだ！ ……で、何だ」。偏屈な賢者は文句を言いながら、結局いちばん良い答えを持ってくる。そして、面倒になって帰る。',desc:'賢者とジャックが同時に場にいる。1ゲームに1度、賢者が、場のジャックと役がそろうカードをデッキから1枚探して引いてくれる。そのカードは賢者のいた場所に出て、賢者は入れ替わりでデッキに帰る（シャッフル）。そろうカードがデッキにない間は待つ。',hint:'労働者が、偏屈な賢者に相談を持ちかける'},
   // 兵站（2026-10-14 隆基「パン屋も強いぞ。兵站の担い手だし」）
   {id:'xHeitan',name:'兵站',reading:'ヘイタン',cards:[['baker'],['platoon','archer','knight','mercenary','oceanknight']],aura:{platoon:{atk:40,hp:40},archer:{atk:40,hp:40},knight:{atk:40,hp:40},mercenary:{atk:40,hp:40},oceanknight:{atk:40,hp:40}},
    meaning:'腹が減っては戦はできぬ。夜明け前の窯の火が、昼の戦線を支えている。',desc:'パン職人と、兵士（小隊・弓兵・騎士・傭兵・海洋騎士のいずれか）が同時に場にいる。場にいる間、兵士の攻撃 +40・最大HP +40。',hint:'パン職人が、兵士に焼きたてを配る'},
@@ -13313,6 +13317,21 @@ function applyOnceEffects(side,o,label){
     parts.push('旗艦が港を出た——敵モンスター'+n+'体に砲撃（海の怪物には2倍）'); try{ recEvent(side,'role','艦隊出撃：旗艦が港を出て、敵の場を砲撃した'); }catch(e){} }
   if(o.koan){ const fs=od.monsterField.filter(x=>x&&x.hp>0).sort((a,b)=>(b.def.atk||0)-(a.def.atk||0)); const t=fs[0];
     if(t){ t.frozen=true; t._koan=true; parts.push('「片手の拍手は、どんな音がする」——'+t.def.name+' は答えを考え込み、次の番は動けない'); try{ showCenterNotice(label,t.def.name+' が考え込んだ',side,1600); }catch(e){} } }
+  if(o.sageAdvice){
+    const cands=sageAdvicePick(side), si=pd.monsterField.findIndex(x=>x&&x.hp>0&&x.id==='sage');
+    if(cands.length&&si>=0){
+      const pick=cands[Math.floor(Math.random()*cands.length)], di=pd.deck.findIndex(c=>c&&c.type==='monster'&&c.id===pick.id);
+      if(di>=0){
+        const sage=pd.monsterField[si]; pd.deck.splice(di,1);
+        pd.monsterField[si]=makeMonsterInst(pick.id,false,side);
+        pd.deck.push({type:'monster',id:'sage'}); pd.deck=shuffle(pd.deck);
+        try{ addReveal(side,{type:'monster',id:pick.id},'forced-draw'); }catch(e){}
+        handleMonsterEnter(side,pd.monsterField[si]); markMonsterFlip(side,si);
+        parts.push('賢者がぶつぶつ言いながら'+MD[pick.id].name+'を探してきた（ジャックと「'+pick.role+'」）。賢者は入れ替わりでデッキへ帰った（シャッフル）');
+        try{ showCenterNotice(label,MD[pick.id].name+' を連れてきた',side,1700); }catch(e){}
+      }
+    }
+  }
   if(o.tenmaGedou){
     const gone=[]; ['monk','cultist'].forEach(id=>{ const i=pd.monsterField.findIndex(x=>x&&x.hp>0&&x.id===id); if(i<0) return; const m=pd.monsterField[i];
       try{ animateMonsterBreakToDiamond(side,i,side); }catch(e){} pd.graveyard.push({uid:m.uid,id:m.id,def:m.def,maxHp:m.maxHp}); pd.monsterField[i]=null; gone.push(m.def.name); });
@@ -25789,16 +25808,37 @@ function beastCinema(id,el,img){
 })();
 </script>
 
+<script>
+// 賢者の知恵袋（2026-10-17）：賢者がいた場所に入った時、場のジャックと役がそろうデッキのカード（候補は {id, role}）
+function sageAdvicePick(side){
+  try{
+    const pd=side==='p'?G.p:G.e, si=pd.monsterField.findIndex(x=>x&&x.hp>0&&x.id==='sage');
+    if(si<0||!pd.monsterField.some(x=>x&&x.hp>0&&x.id==='jack')) return [];
+    const others=pd.monsterField.filter((x,i)=>x&&x.hp>0&&i!==si).map(x=>x.id);
+    const ids=[...new Set(pd.deck.filter(c=>c&&c.type==='monster'&&MD[c.id]&&!TRANSFORM_ONLY.includes(c.id)&&c.id!=='sage').map(c=>c.id))];
+    const out=[];
+    ids.forEach(id=>{
+      const have=others.concat([id]);
+      const role=ROLE_COMBOS.find(r=>{ if(!r.cards||!r.cards.includes('jack')||!r.cards.includes(id)) return false;
+        const need={}; r.cards.forEach(c=>need[c]=(need[c]||0)+1); const got={}; have.forEach(c=>got[c]=(got[c]||0)+1);
+        return Object.entries(need).every(([c,n])=>(got[c]||0)>=n); });
+      if(role) out.push({id,role:role.name});
+    });
+    return out;
+  }catch(e){ return []; }
+}
+</script>
+
 
 <style id="public-test-badge">
 #pt-badge{position:fixed;left:8px;bottom:8px;z-index:99990;display:flex;gap:6px;align-items:center;font:12px/1.2 "Hiragino Sans",sans-serif}
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.95</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.95%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.96</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.96%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.95";
+  var FORM="", PRE={}, V="0.1.96";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
