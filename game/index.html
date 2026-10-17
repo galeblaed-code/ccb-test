@@ -7508,10 +7508,10 @@ function renderBuilderDiag(){
   if(deckIds.has('blackknight')&&deckIds.has('warrior'))                               roleHits.push('光と闇（ブラックナイト×戦士）');
   if(deckIds.has('blackknight')&&deckIds.has('king'))                                  roleHits.push('愛の為に（ブラックナイト×キング）');
   if(deckIds.has('blackknight')&&deckIds.has('whitewitch')&&(deckIds.has('joker')||deckIds.has('devillord'))) roleHits.push('数奇なる運命（黒幕×騎士×僧侶）');
-  if(deckIds.has('blackmage')&&['flamefly','cockatrice','manticore'].some(i=>deckIds.has(i))) roleHits.push('イグニス（黒×炎）');
-  if(deckIds.has('blackmage')&&['myconid','aspis'].some(i=>deckIds.has(i))) roleHits.push('ポイズン（黒×毒）');
-  if(deckIds.has('blackmage')&&['ghost','icicletooth','icescorpion'].some(i=>deckIds.has(i))) roleHits.push('グラシア（黒×氷）');
-  if(deckIds.has('blackmage')&&['lightningbear','fangedclam','swordfish'].some(i=>deckIds.has(i))) roleHits.push('ヴォルト（黒×雷）');
+  if(BLACK_CASTERS.some(i=>deckIds.has(i))&&['flamefly','cockatrice','manticore'].some(i=>deckIds.has(i))) roleHits.push('イグニス（黒×炎）');
+  if(BLACK_CASTERS.some(i=>deckIds.has(i))&&['myconid','aspis'].some(i=>deckIds.has(i))) roleHits.push('ポイズン（黒×毒）');
+  if(BLACK_CASTERS.some(i=>deckIds.has(i))&&['ghost','icicletooth','icescorpion'].some(i=>deckIds.has(i))) roleHits.push('グラシア（黒×氷）');
+  if(BLACK_CASTERS.some(i=>deckIds.has(i))&&['lightningbear','fangedclam','swordfish'].some(i=>deckIds.has(i))) roleHits.push('ヴォルト（黒×雷）');
   if(deckIds.has('redmage')&&deckIds.has('flamefly'))                                  roleHits.push('イグニス（赤×炎）');
   if(deckIds.has('redmage')&&deckIds.has('flan'))                                      roleHits.push('メディア（赤×泡）');
   if(deckIds.has('whitewitch')&&(deckIds.has('redmage')||deckIds.has('blackmage')))    roleHits.push('聖晶祈祷（白×赤/黒→クリスタル回復）');
@@ -11879,10 +11879,10 @@ const ROLE_DEFS=[
   {id:'yuujouToShitto',name:'友情と嫉妬',hidden:'???',reading:'ユウジョウトシット',meaning:'戦士とドラグナイト。共に戦い、共に生き延びた。だからこそ、相手の活躍が眩しくて、時に胸が痛い。友情と嫉妬は同じ場所から生まれる。',desc:'戦士とドラグナイトが同時に場にいる。両者ATK +40。攻撃成功後25%で、もう一方が嫉妬し ATK -15。'},
   {id:'hyakujuuNoOuzoku',name:'百獣の王族',hidden:'???',reading:'ヒャクジュウノオウゾク',meaning:'グリフォン・キメラ・マンティコア——どの命名法にも収まらない異形の三者。翼と牙と毒針が並ぶ時、それは最も古い王権だ。ただし王族の血は代償を求める。',desc:'グリフォン・キメラ・マンティコアが同時に場にいる。三者ATK +60。毎ターン、自クリスタルHP -10（王血の代償）。'},
   {id:'mageOrder',name:'魔法騎士団',hidden:'???',reading:'マホウキシダン',meaning:'近衛の魔剣、僧侶の祈り、黒の魔術——三つの力が一陣に揃った。攻撃と回復と破壊。三つの魔法が共鳴する時、その軍団に抗える者はいない。',desc:'ロイヤルガード・僧侶・黒魔道士が同時に場にいる。三者ATK +35。毎ターン、最もHPの低い味方モンスターを回復+30。'},
-  {id:'blackFire',name:'イグニス',hidden:'???',reading:'イグニス',meaning:'黒魔道士とフレイムフライが共鳴する。小さな炎の精霊が大魔術師の呪文を増幅させ、一瞬だけ灼熱の炎が召喚獣を焼き尽くす。',desc:'黒魔道士（またはウィザード）と、フレイムフライ・コカトリス・マンティコアのどれかが同時に場にいる。そろった瞬間に敵召喚獣へ炎魔法80ダメージ。そのあとも並んでいる限り、自分の番の始めに毎回40ダメージ。イフリート召喚中はイグニア化して威力上昇。'},
-  {id:'blackBlizzard',name:'グラシア',hidden:'???',reading:'グラシア',meaning:'黒魔道士とゴーストの共鳴。死者の冷気が呪文に混ざり込む。その魔法は生者を通り抜け、召喚獣の核を一瞬で凍てつかせる。',desc:'黒魔道士（またはウィザード）と、ゴースト・アイシクルトゥース・アイススコーピオンのどれかが同時に場にいる。そろった瞬間に敵召喚獣へ氷魔法60ダメージ。そのあとも並んでいる限り、自分の番の始めに毎回30ダメージ。シヴァ召喚中はグラシアート化して威力上昇。'},
-  {id:'blackPoison',name:'ポイズン',hidden:'???',reading:'ポイズン',meaning:'黒魔道士と、毒を抱えた小さな生き物。胞子と牙の毒が呪文に溶け込み、見えない霧になって召喚獣を蝕む。',desc:'黒魔道士（またはウィザード）と、マイコニド・アスピスのどれかが同時に場にいる。そろった瞬間に敵召喚獣へ毒魔法60ダメージ、敵モンスター全体を継続毒（2ターン）。そのあとも並んでいる限り、自分の番の始めに毎回30ダメージ。'},
-  {id:'blackThunder',name:'ヴォルト',hidden:'???',reading:'ヴォルト',meaning:'黒魔道士と雷熊。熊の毛皮にまとわりつく雷が呪文に呼ばれ、術者の意図を超えて増幅される。その雷は一瞬にして召喚獣の装甲を貫く。',desc:'黒魔道士（またはウィザード）と、雷熊・噛みつき貝・ソードフィッシュのどれかが同時に場にいる。そろった瞬間に敵召喚獣へ雷魔法100ダメージ。そのあとも並んでいる限り、自分の番の始めに毎回50ダメージ。雷帝召喚中はガンヴォルト化して威力上昇。'},
+  {id:'blackFire',name:'イグニス',hidden:'???',reading:'イグニス',meaning:'黒魔道士とフレイムフライが共鳴する。小さな炎の精霊が大魔術師の呪文を増幅させ、一瞬だけ灼熱の炎が召喚獣を焼き尽くす。',desc:'魔法使い（黒魔道士・ウィザード・賢者・グリモア・邪教徒・ダークエルフ）と、フレイムフライ・コカトリス・マンティコアのどれかが同時に場にいる。そろった瞬間に敵召喚獣へ炎魔法80ダメージ。そのあとも並んでいる限り、自分の番の始めに毎回40ダメージ。イフリート召喚中はイグニア化して威力上昇。'},
+  {id:'blackBlizzard',name:'グラシア',hidden:'???',reading:'グラシア',meaning:'黒魔道士とゴーストの共鳴。死者の冷気が呪文に混ざり込む。その魔法は生者を通り抜け、召喚獣の核を一瞬で凍てつかせる。',desc:'魔法使い（黒魔道士・ウィザード・賢者・グリモア・邪教徒・ダークエルフ）と、ゴースト・アイシクルトゥース・アイススコーピオンのどれかが同時に場にいる。そろった瞬間に敵召喚獣へ氷魔法60ダメージ。そのあとも並んでいる限り、自分の番の始めに毎回30ダメージ。シヴァ召喚中はグラシアート化して威力上昇。'},
+  {id:'blackPoison',name:'ポイズン',hidden:'???',reading:'ポイズン',meaning:'黒魔道士と、毒を抱えた小さな生き物。胞子と牙の毒が呪文に溶け込み、見えない霧になって召喚獣を蝕む。',desc:'魔法使い（黒魔道士・ウィザード・賢者・グリモア・邪教徒・ダークエルフ）と、マイコニド・アスピスのどれかが同時に場にいる。そろった瞬間に敵召喚獣へ毒魔法60ダメージ、敵モンスター全体を継続毒（2ターン）。そのあとも並んでいる限り、自分の番の始めに毎回30ダメージ。'},
+  {id:'blackThunder',name:'ヴォルト',hidden:'???',reading:'ヴォルト',meaning:'黒魔道士と雷熊。熊の毛皮にまとわりつく雷が呪文に呼ばれ、術者の意図を超えて増幅される。その雷は一瞬にして召喚獣の装甲を貫く。',desc:'魔法使い（黒魔道士・ウィザード・賢者・グリモア・邪教徒・ダークエルフ）と、雷熊・噛みつき貝・ソードフィッシュのどれかが同時に場にいる。そろった瞬間に敵召喚獣へ雷魔法100ダメージ。そのあとも並んでいる限り、自分の番の始めに毎回50ダメージ。雷帝召喚中はガンヴォルト化して威力上昇。'},
   {id:'redFire',name:'イグニス',hidden:'???',reading:'イグニス',meaning:'ロイヤルガードとフレイムフライ。炎を操る者と炎そのものが共鳴する時、その火は敵の核心——クリスタルへと向かう。',desc:'ロイヤルガード・フレイムフライが同時に場にいる。毎ターン開始時、敵クリスタルに炎魔法30ダメージ。イフリート召喚中はイグニア化して威力上昇。'},
   {id:'redCure',name:'メディア',hidden:'???',reading:'メディア',meaning:'ロイヤルガードとグリーンジャムの回復の共鳴。グリーンジャムの癒しの波動をロイヤルガードが増幅させる。傷ついたクリスタルに光が流れ込む。',desc:'ロイヤルガード・グリーンジャムが同時に場にいる。毎ターン開始時、自クリスタルを25回復。'},
   {id:'deathSpell',name:'デス',hidden:'???',reading:'デス',meaning:'ロイヤルガード・ダークエルフ・スカウト。王の魔剣と影の刃と千里を見張る目。三者が揃う場に、生者は立てない。ただし術者は自分もその輪の中にいることを知らない。',desc:'ロイヤルガード・ダークエルフ・スカウトが同時に場にいる。役成立時に一度だけ発動：敵モンスター1体を即死させ墓場へ送る。敵の場が空ならロイヤルガードが呪文に巻き込まれ自滅する。'},
@@ -14280,10 +14280,12 @@ function hasSouruEetar(side){ const ids=new Set((side==='p'?G.p:G.e).monsterFiel
 function hasHikariToYami(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('blackknight')&&ids.has('warrior'); }
 function hasAiNoTameni(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('blackknight')&&ids.has('king'); }
 function hasSukiNaruUnmei(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('blackknight')&&ids.has('whitewitch')&&(ids.has('joker')||ids.has('devillord')); }
-function hasBlackFire(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return (ids.has('blackmage')||ids.has('wizard'))&&['flamefly','cockatrice','manticore'].some(i=>ids.has(i)); }   // 2026-10-17 隆基：コカトリス・マンティコアも炎   // 2026-10-17 ウィザードも黒魔道士と同じ相方で撃てる
-function hasBlackBlizzard(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return (ids.has('blackmage')||ids.has('wizard'))&&['ghost','icicletooth','icescorpion'].some(i=>ids.has(i)); }   // 2026-10-17 隆基：アイシクルトゥース・アイススコーピオンも氷
-function hasBlackPoison(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return (ids.has('blackmage')||ids.has('wizard'))&&['myconid','aspis'].some(i=>ids.has(i)); }   // 2026-10-17 隆基：マイコニド・アスピス＝毒魔法
-function hasBlackThunder(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return (ids.has('blackmage')||ids.has('wizard'))&&['lightningbear','fangedclam','swordfish'].some(i=>ids.has(i)); }   // 2026-10-17 隆基：噛みつき貝・ソードフィッシュも雷   // 2026-10-17 隆基「黒魔道士のヴォルトは雷熊」（鋼鉄巨人は隆基の案ではなかった）
+// 黒魔道士の魔法の役を撃てる魔法使い（2026-10-17 ウィザード、2026-10-18 隆基：賢者・グリモア・邪教徒・ダークエルフ）
+const BLACK_CASTERS=['blackmage','wizard','sage','mindflayer','cultist','tonberry'];
+function hasBlackFire(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return BLACK_CASTERS.some(i=>ids.has(i))&&['flamefly','cockatrice','manticore'].some(i=>ids.has(i)); }   // 2026-10-17 隆基：コカトリス・マンティコアも炎   // 2026-10-17 ウィザードも黒魔道士と同じ相方で撃てる
+function hasBlackBlizzard(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return BLACK_CASTERS.some(i=>ids.has(i))&&['ghost','icicletooth','icescorpion'].some(i=>ids.has(i)); }   // 2026-10-17 隆基：アイシクルトゥース・アイススコーピオンも氷
+function hasBlackPoison(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return BLACK_CASTERS.some(i=>ids.has(i))&&['myconid','aspis'].some(i=>ids.has(i)); }   // 2026-10-17 隆基：マイコニド・アスピス＝毒魔法
+function hasBlackThunder(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return BLACK_CASTERS.some(i=>ids.has(i))&&['lightningbear','fangedclam','swordfish'].some(i=>ids.has(i)); }   // 2026-10-17 隆基：噛みつき貝・ソードフィッシュも雷   // 2026-10-17 隆基「黒魔道士のヴォルトは雷熊」（鋼鉄巨人は隆基の案ではなかった）
 function hasRedFire(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('redmage')&&ids.has('flamefly'); }
 function hasRedCure(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('redmage')&&ids.has('flan'); }
 function hasSeishouKitou(side){ const ids=new Set((side==='p'?G.p:G.e).monsterField.filter(Boolean).map(m=>m.id)); return ids.has('whitewitch')&&(ids.has('redmage')||ids.has('blackmage')); }
@@ -26353,10 +26355,10 @@ function startTradePick(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.124</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.124%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.125</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.125%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.124";
+  var FORM="", PRE={}, V="0.1.125";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
