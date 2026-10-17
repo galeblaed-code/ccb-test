@@ -25849,9 +25849,10 @@ function sageAdvicePick(side){
     {id:'shadowwarrior',name:'隠密',en:'SHADOW WARRIOR',img:'隠密',emoji:'🥷',hp:200,atk:140,dt:3,size:'small',like:'ninja',human:1,
      role:'忍者の下で働いていた男が、影に溶ける術を覚えた（忍者とジャックが並ぶと変身する。デッキには入れられない）。影討ち：攻撃が当たると、相手の召喚石を1つ奪う。',
      t:[['miss','気配を読まれ、逆に盗まれる',0,120,2],['normal','影討ち',140],['normal','影討ち',140],['strong','影縫い',165],['strong','影縫い',165],['special','闇の一太刀',220]]},
-    {id:'fool',name:'愚者',en:'FOOL',img:'愚者',emoji:'🃏',hp:220,atk:120,dt:2,size:'small',like:'joker',human:1,
+    {id:'fool',name:'愚者',en:'FOOL',img:'愚者',emoji:'🃏',hp:120,atk:80,dt:2,   // 2026-10-17 隆基「愚者は合体カードの割に低めでOK。HPがあんま高くないとか」
+    size:'small',like:'joker',human:1,
      role:'サキュバスに全部を差し出して、何も持たずに旅に出た男（サキュバスとジャックが並ぶと変身する。デッキには入れられない）。惑わし：場にいる間、相手がデッキから出すモンスターは弱って現れる（攻撃 -25・最大HP -30）。',
-     t:[['miss','派手にすっ転ぶ',0,150,1],['normal','ふらつく一撃',120],['normal','ふらつく一撃',120],['strong','無鉄砲',150],['strong','無鉄砲',150],['special','愚者の大跳躍',260]]},
+     t:[['miss','派手にすっ転ぶ',0,100,1],['normal','ふらつく一撃',80],['normal','ふらつく一撃',80],['strong','無鉄砲',100],['strong','無鉄砲',100],['special','愚者の大跳躍',170]]},
     {id:'ladyvampire',name:'レディヴァンパイア',en:'VAMPIRE',img:'レディヴァンパイア',emoji:'🍷',hp:260,atk:150,dt:3,size:'mid',like:'vampire',female:1,dark:1,
      role:'夜の酒場で出会った吸血鬼と、その血を分けた者（ヴァンパイアと、酒場の女主人かシーフが並ぶと変身する。デッキには入れられない）。魅了の歌：場に出た時、相手の場の全員の攻撃 -15（ずっと）。吸血：攻撃が当たると、自分のHPを回復する。',
      t:[['miss','渇きの暴走',0,150,2],['normal','吸血',150,0,75],['normal','吸血',150,0,75],['strong','紅の口づけ',175,0,90],['strong','紅の口づけ',175,0,90],['special','夜会の終わり',230,0,115]]},
@@ -26036,10 +26037,10 @@ function sageAdvicePick(side){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.106</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.106%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.107</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.107%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.106";
+  var FORM="", PRE={}, V="0.1.107";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
