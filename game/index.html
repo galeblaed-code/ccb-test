@@ -26296,7 +26296,7 @@ function startTradePick(){
   const ready=side=>{ try{ if(!G||G.phase!=='battle') return false; const pd=side==='p'?G.p:G.e, dp=side==='p'?G.e:G.p;
     return !!dp.beasts.activeId&&SP.some(r=>!(pd.roleOnce||{})[r.key]&&r.has(side)); }catch(e){ return false; } };
   // 撃つものがある時だけ、1回だけ予約する（描き直しから役の判定が呼ばれても、輪にならないように）
-  const schedule=side=>{ if(busy||queued[side]||!ready(side)) return; queued[side]=true; setTimeout(()=>{ queued[side]=false; fireSpellRoles(side); },0); };
+  const schedule=side=>{ if(busy||queued[side]||!ready(side)) return; queued[side]=true; setTimeout(()=>{ const go=()=>{ queued[side]=false; fireSpellRoles(side); }; if(typeof ccbAfterPlate==='function') ccbAfterPlate(go); else go(); },0); };   // 2026-10-18 掲示板のあとに撃つ
   function fireSpellRoles(side){
     if(busy||!ready(side)) return; busy=true;
     try{
@@ -26350,16 +26350,50 @@ function startTradePick(){
 })();
 </script>
 
+<script>
+// ══════════════════════════════════════════════════════
+//   役の順番：カードが出る → 役の掲示板が出る → 役の効果（ダメージなど）（2026-10-18 隆基「カードが出て役が揃う前にダメージ。順番が逆。
+//   カードがドローされて場に役が掲示されダメージにしてほしい」）
+//   役が成立した時の一回きりの効果は、掲示板が出てから0.5秒後に起こす。その間、試合の進行（delay）は待つ
+// ══════════════════════════════════════════════════════
+function ccbAfterPlate(fn){
+  const game=G; if(!game) return fn();
+  const step=async()=>{
+    const w=ms=>new Promise(r=>setTimeout(r,ms));
+    let shownAt=0;
+    for(let k=0;k<55;k++){
+      const queued=typeof BT!=='undefined'&&BT.q.some(x=>x&&x.plate);
+      const showing=!!document.querySelector('#role-plate.show');
+      if(showing&&!shownAt) shownAt=k;
+      if(!queued&&(!showing||k-shownAt>=5)) break;
+      await w(100);
+    }
+    if(G!==game||!G||G.phase==='gameover') return;
+    try{ fn(); }catch(e){}
+    try{ renderAll(); }catch(e){}
+  };
+  game._fxN=(game._fxN||0)+1; const my=game._fxN, prev=game._fxHold||Promise.resolve();
+  game._fxHold=prev.then(step).catch(()=>{}).then(()=>{ if(game._fxN===my) game._fxHold=null; });
+}
+(function(){
+  const aero=applyExtraRoleOnce;
+  applyExtraRoleOnce=function(side,r){
+    if(!G||G.spectateFast) return aero.apply(this,arguments);
+    const args=arguments, self=this; ccbAfterPlate(()=>aero.apply(self,args));
+  };
+})();
+</script>
+
 
 <style id="public-test-badge">
 #pt-badge{position:fixed;left:8px;bottom:8px;z-index:99990;display:flex;gap:6px;align-items:center;font:12px/1.2 "Hiragino Sans",sans-serif}
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.126</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.126%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.127</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.127%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.126";
+  var FORM="", PRE={}, V="0.1.127";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
