@@ -23532,7 +23532,7 @@ function flyDiamond(side,amount){
   setTimeout(()=>{
     DIA_FX.queue=Math.max(0,DIA_FX.queue-1);
     const el=document.createElement('div'); el.className='dia-fly'+(side==='e'?' enemy':'');
-    el.innerHTML='<img src="UI素材/召喚石_小.webp" alt="">'+(amount>1?'<b>+'+amount+'</b>':'');
+    el.innerHTML='<img src="UI素材/召喚ダイヤ_小.webp" alt="">'+(amount>1?'<b>+'+amount+'</b>':'');
     Object.assign(el.style,{left:(cx-size/2)+'px',top:(cy-lift-size/2)+'px',width:size+'px',height:size+'px'});
     document.body.appendChild(el);
     const tx=(b.left+b.width*0.62)-cx, ty=(b.top+b.height/2)-(cy-lift);
@@ -25309,21 +25309,22 @@ function queueCounterFx(defenderSide,defender,attackerSide,attacker,dmg){
 // クリスタルの力・引き直し（2026-10-14 隆基とゲイルの案。数字と操作はヴァッシュのおすすめで様子見）
 //  ① 力を取り出す：主行動を1つ使う。自分のクリスタルに150（画面では1500）。召喚石+1、場の仲間のHPを最大HPの1割回復。
 //     削った結果が0以下になるなら使えない。
-//  ② 引き直し：1ターン1回、召喚石1個。主行動は減らない。場の自分のモンスター1体をデッキに戻してシャッフルし、1枚引いて同じ場所に出す。
+//  ② 引き直し：1ターン1回、召喚石2個（2026-10-18 隆基、もとは1個）。主行動は減らない。場の自分のモンスター1体をデッキに戻してシャッフルし、1枚引いて同じ場所に出す。
 //     同じカードが戻ってくることもある。役は普通に判定する。変身カードも戻せる（2026-10-17）。
 //  AIも派閥の性格に合わせて使う（賽狂いは引き直しに賭ける、獣断ち・厄災狩りは顕現を遅らせる、荒神は削って厄災を急ぐ、など）
 // ══════════════════════════════════════════════════════
 const CRYSTAL_DRAW_COST=150;
+const REDRAW_COST=2;   // 2026-10-18 隆基「引き直しは召喚石2個に。連発できないし、魔法用にも召喚石がほしいから」
 function canCrystalExtract(side){ const pd=side==='p'?G.p:G.e; return !!(pd&&pd.crystalHp-CRYSTAL_DRAW_COST>0&&!isPreparationRound()); }
 function redrawTargets(side){ const pd=side==='p'?G.p:G.e; return pd.monsterField.map((m,i)=>({m,i})).filter(({m})=>m&&m.hp>0); }
 function canRedraw(side){ const pd=side==='p'?G.p:G.e;
-  return !!(pd&&!isPreparationRound()&&pd._redrawTurn!==pd.turnCount&&pd.beasts.summonPts>=1&&pd.deck.some(c=>c&&c.type==='monster')&&redrawTargets(side).length); }
+  return !!(pd&&!isPreparationRound()&&pd._redrawTurn!==pd.turnCount&&pd.beasts.summonPts>=REDRAW_COST&&pd.deck.some(c=>c&&c.type==='monster')&&redrawTargets(side).length); }
 function crystalExtraBtns(btns){
   if(isPreparationRound()) return;
   btns.push(canCrystalExtract('p')?{label:'力を取り出す（クリスタル -'+CRYSTAL_DRAW_COST+'／召喚石+1・仲間のHP回復／主行動を使う）',cls:'red',fn:()=>doCrystalExtract('p')}
     :{label:'力を取り出す（クリスタルが足りない）',disabled:true});
   const used=G.p._redrawTurn===G.p.turnCount;
-  btns.push(canRedraw('p')?{label:'引き直し（召喚石1／1ターン1回／主行動は減らない）',cls:'blue',fn:startRedrawPick}
+  btns.push(canRedraw('p')?{label:'引き直し（召喚石'+REDRAW_COST+'／1ターン1回／主行動は減らない）',cls:'blue',fn:startRedrawPick}
     :{label:used?'引き直しは使用済み（1ターン1回）':'引き直しできない（召喚石・デッキ・場が足りない）',disabled:true});
 }
 async function doCrystalExtract(side){
@@ -25357,11 +25358,11 @@ async function doRedraw(side,slot){
   if(false){ if(side==='p') setInfo(m.def.name+' は変身でしか現れない存在。デッキには戻せない。'); return false; }
   if(side==='p'){ G.mode=null; setBtns([]); G.acting=true; }
   pd._redrawTurn=pd.turnCount;
-  pd.beasts.summonPts=Math.max(0,pd.beasts.summonPts-1);
+  pd.beasts.summonPts=Math.max(0,pd.beasts.summonPts-REDRAW_COST);
   renderSummonBar(side,pd);
   try{ captureAnnouncementStones('引き直しの代償'); }catch(e){}
-  btPush(side,'召喚石を 1つ 使って '+m.def.name+'を デッキへ 戻した');
-  log((side==='p'?'':'[敵] ')+'【引き直し】'+m.def.name+' をデッキに戻してシャッフル（召喚石 -1）。','sys');
+  btPush(side,'召喚石を '+REDRAW_COST+'つ 使って '+m.def.name+'を デッキへ 戻した');
+  log((side==='p'?'':'[敵] ')+'【引き直し】'+m.def.name+' をデッキに戻してシャッフル（召喚石 -'+REDRAW_COST+'）。','sys');
   pd.monsterField[slot]=null;
   pd.deck.push({type:'monster',id:m.id}); pd.deck=shuffle(pd.deck);
   renderAll();
@@ -26393,10 +26394,10 @@ function ccbAfterPlate(fn){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.128</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.128%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.129</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.129%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.128";
+  var FORM="", PRE={}, V="0.1.129";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
