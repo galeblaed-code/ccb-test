@@ -14748,6 +14748,7 @@ function checkTransforms(side){
       if(ia<0||ib<0) return;
       const ic=t.c?pd.monsterField.findIndex((m,i)=>i!==ia&&i!==ib&&_hit(t.c)(m)):-1;   // 2026-10-17：3枚の変身（根源の竜（覚醒））
       if(t.c&&ic<0) return;
+      if(t.to==='chaosawaken'&&[...G.p.monsterField,...G.e.monsterField].some(x=>x&&x.id==='fatetwins'&&x.hp>0)) return;   // 運命の双子がいる間は目覚めない（2026-10-17 隆基）
       const A=pd.monsterField[ia].id, B=pd.monsterField[ib].id, C=ic>=0?pd.monsterField[ic].id:null;
       const slot=t.keepB?ia:Math.min(ia,ib,ic>=0?ic:9);
       pd.monsterField[ia]=null; if(!t.keepB) pd.monsterField[ib]=null; if(ic>=0) pd.monsterField[ic]=null;   // 試合から消える（keepB＝相方は残る）
@@ -26053,7 +26054,7 @@ function sageAdvicePick(side){
   ROLE_DEFS.push({id:'tfChaosAwaken',name:'変貌：根源の竜（覚醒）',hidden:'???',reading:'ヘンボウ',meaning:'竜の子と禁書が、根源の竜の眠っていた記憶を呼び起こした。目覚めたものは、世界の始まりと同じ形をしていた。',
     desc:'自分の場に根源の竜とドラゴンベビーとグリモアが揃う。3体はこの試合から消え、根源の竜（覚醒）に変わる。根源の竜（覚醒）はデッキ編成には現れない。'});
   const mrt=monsterRoleText;
-  monsterRoleText=function(id){ return id===ID?'目覚めた根源の竜。全カードで最強（根源の竜とドラゴンベビーとグリモアが並ぶと変身する。デッキには入れられない）。サイコロの行動はすべて敵への全体攻撃。ただし大失敗（出目1）は敵味方両方への全体攻撃。厄災：自分の番の始めに、自分のデッキからランダムに1枚を墓場へ送り続ける。':mrt.apply(this,arguments); };
+  monsterRoleText=function(id){ return id===ID?'目覚めた根源の竜。全カードで最強（根源の竜とドラゴンベビーとグリモアが並ぶと変身する。デッキには入れられない）。サイコロの行動はすべて敵への全体攻撃。ただし大失敗（出目1）は敵味方両方への全体攻撃。厄災：自分の番の始めに、自分のデッキからランダムに1枚を墓場へ送り続ける（運命の双子だけは呑めない）。運命の双子がどちらかの場にいる間は場にいられず、デッキへ還る。':mrt.apply(this,arguments); };
   // 大失敗：味方と自分のクリスタルまで巻き込む
   const core=applyAttackResolveCore;
   applyAttackResolveCore=async function(side,attacker,result){
@@ -26076,11 +26077,31 @@ function sageAdvicePick(side){
       if(!G||G.phase!=='battle') return r;
       const pd=side==='p'?G.p:G.e, pre=side==='p'?'':'[敵] ';
       pd.monsterField.filter(m=>m&&m.hp>0&&m.id===ID).forEach(()=>{
-        const idx=pd.deck.map((c,i)=>c&&c.type==='monster'?i:-1).filter(i=>i>=0); if(!idx.length) return;
+        const idx=pd.deck.map((c,i)=>c&&c.type==='monster'&&c.id!=='fatetwins'?i:-1).filter(i=>i>=0); if(!idx.length) return;   // 運命の双子だけは呑めない（2026-10-17 隆基）
         const k=idx[Math.floor(Math.random()*idx.length)], c=pd.deck.splice(k,1)[0];
         pd.graveyard.push({id:c.id,def:MD[c.id],maxHp:MD[c.id]?MD[c.id].hp:1,noKill:true});
         log(pre+'【厄災】目覚めた根源の竜の気配に、デッキの'+(MD[c.id]?MD[c.id].name:'カード')+'が呑まれて墓場へ落ちた','bad');
       });
+    }catch(e){}
+    return r;
+  };
+  // 運命の双子には干渉できない（2026-10-17 隆基）：双子がどちらかの場にいる間、覚醒は場にいられない。デッキへ還ってシャッフル
+  const twinsOut=()=>[...G.p.monsterField,...G.e.monsterField].some(x=>x&&x.id==='fatetwins'&&x.hp>0);
+  const bounce=(sd,i)=>{ const q=sd==='p'?G.p:G.e; q.monsterField[i]=null; q.deck.push({type:'monster',id:ID}); q.deck=shuffle(q.deck); };
+  const hme=handleMonsterEnter;
+  handleMonsterEnter=function(side,m){
+    try{
+      if(m&&m.id===ID&&twinsOut()){
+        const q=side==='p'?G.p:G.e, i=q.monsterField.indexOf(m);
+        if(i>=0){ bounce(side,i); log((side==='p'?'':'[敵] ')+'根源の竜（覚醒）が目覚めようとした——だが運命の双子の光が、それを拒んだ。根源の竜（覚醒）はデッキへ還った。','bad'); try{ renderAll(); }catch(e){} return; }
+      }
+    }catch(e){}
+    const r=hme.apply(this,arguments);
+    try{
+      if(m&&m.id==='fatetwins'){
+        let n=0; ['p','e'].forEach(sd=>{ const q=sd==='p'?G.p:G.e; q.monsterField.forEach((x,i)=>{ if(x&&x.id===ID){ bounce(sd,i); n++; } }); });
+        if(n){ log((side==='p'?'':'[敵] ')+'運命の双子が目を開いた——根源の竜（覚醒）'+(n>1?n+'体':'')+'がデッキへ強制帰還。','gold'); try{ renderAll(); }catch(e){} }
+      }
     }catch(e){}
     return r;
   };
@@ -26093,10 +26114,10 @@ function sageAdvicePick(side){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.109</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.109%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.110</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.110%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.109";
+  var FORM="", PRE={}, V="0.1.110";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
