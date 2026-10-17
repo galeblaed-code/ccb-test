@@ -21515,7 +21515,8 @@ function openCardDetail(side,slotIdx){
   const canAttack=side==='p'&&G.phase==='battle'&&G.activePlayer==='p'&&!isPreparationRound()&&G.p.mainActionsRem>0&&!acted&&!m.暴発;
   const rows=[
     ['現在HP',dn(m.hp)+' / '+dn(m.maxHp)],
-    ['攻撃力',dn(m.def.atk)],
+    // 2026-10-17 隆基「ドラゴンベビーの成長、上がった攻撃力を表示して」：成長・役・召喚獣の加護など、場の効果を足した数字を出す（攻撃が当たった時に足される分）
+    ['攻撃力',(()=>{ let au=0; try{ au=beastAuraFor(side,m).atk||0; }catch(e){} return au?dn(m.def.atk+au)+'（元 '+dn(m.def.atk)+(au>0?' ＋ 場の効果 '+dn(au):' − 場の効果 '+dn(-au))+(m.id==='dragonbaby'&&m._grow?'、うち成長 +'+dn(m._grow):'')+'）':dn(m.def.atk); })()],
     ['サイズ階級',sizeTierName(m.def.sizeTier)+(m.def.magicUser?' / 魔法使い特殊枠':'')],
     ['攻撃対象',attackTargetsText(m.def)],
     ['特殊能力',specialText(m.def)],
@@ -26355,10 +26356,10 @@ function startTradePick(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.125</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.125%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.126</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.126%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.125";
+  var FORM="", PRE={}, V="0.1.126";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
