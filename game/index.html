@@ -12435,8 +12435,8 @@ const EXTRA_ROLES=[
    meaning:'料理人は言った。「火を通せば、たぶん大丈夫」。',desc:'料理人とマイコニドが同時に場にいる。1ゲームに1度、味方全体 HP +100。ただし自クリスタル -40（お腹を壊す）。',hint:'料理人が、歩く茸をじっと見ている'},
   {id:'xUmiNoSachi',name:'海の幸',reading:'ウミノサチ',cards:[['cook'],['deathcrab','megalodon','kraken','sahagin']],once:{healAllies:60,selfCrystalHeal:60},
    meaning:'今夜の献立は決まった。問題は、どちらが食べられる側かだ。',desc:'料理人と、デスクラブ・メガロドン・クラーケン・トライデントソルジャーのいずれかが同時に場にいる。1ゲームに1度、味方全体 HP +60、自クリスタル +60。',hint:'料理人が、海の者を見て包丁を研ぐ'},
-  {id:'xTouhinKaitori',name:'盗品買い取り',reading:'トウヒンカイトリ',cards:[['moneychanger'],['graverobber','assassin']],once:{pts:3},
-   meaning:'両替商は、品の出どころを聞かない。聞かないことが、この商売の信用だ。',desc:'両替商と、墓荒らしかアサシンが同時に場にいる。1ゲームに1度、召喚ダイヤ +3。',hint:'両替商の店に、訳ありの客が来る'},
+  {id:'xTouhinKaitori',name:'盗品買い取り',reading:'トウヒンカイトリ',cards:[['moneychanger'],['assassin']],once:{pts:3},   // 2026-10-17 隆基「墓荒らしは外して。セメタリーロンダリングと2重発生だと強すぎる」
+   meaning:'両替商は、品の出どころを聞かない。聞かないことが、この商売の信用だ。',desc:'両替商とアサシンが同時に場にいる。1ゲームに1度、召喚ダイヤ +3。',hint:'両替商の店に、訳ありの客が来る'},
   {id:'xKaneDeUgoku',name:'金で動く者',reading:'カネデウゴクモノ',cards:[['mercenary'],['moneychanger','armsdealer']],aura:{mercenary:{atk:60}},
    meaning:'傭兵の忠誠は、金袋の重さで決まる。今日の金袋は、ずいぶん重い。',desc:'傭兵と、両替商か武器商人が同時に場にいる。場にいる間、傭兵の攻撃 +60。',hint:'金の匂いに、狼の傭兵が鼻を鳴らす'},
   {id:'xYatowareNoHokori',name:'雇われの誇り',reading:'ヤトワレノホコリ',cards:[['mercenary'],['yojimbo','gladiator']],aura:{mercenary:{atk:40},yojimbo:{atk:40},gladiator:{atk:40}},
@@ -26276,10 +26276,10 @@ function startTradePick(){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.118</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.118%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.119</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.119%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.118";
+  var FORM="", PRE={}, V="0.1.119";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
