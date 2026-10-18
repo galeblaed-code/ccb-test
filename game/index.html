@@ -26457,16 +26457,66 @@ async function guardPreludeInDice(defSide,idx,atkId,targetType){
 }
 </script>
 
+<style>
+.rs-banner{position:fixed;left:50%;top:44%;z-index:78;pointer-events:none;transform:translate(-50%,-50%);text-align:center;width:100vw;padding:14px 0 12px;background:linear-gradient(90deg,transparent 0,rgba(0,0,0,.72) 22%,rgba(0,0,0,.72) 78%,transparent 100%);border-top:1px solid var(--rs,#ffb347);border-bottom:1px solid var(--rs,#ffb347);font:900 clamp(34px,6vw,64px)/1.1 'Hiragino Mincho ProN','Yu Mincho',serif;letter-spacing:.12em;color:#fff;
+  text-shadow:0 0 6px #000,0 0 18px var(--rs,#ffb347),0 0 42px var(--rs,#ffb347),0 4px 0 #000;animation:rsIn 1.25s cubic-bezier(.16,.9,.22,1) forwards}
+.rs-banner small{display:block;font:700 clamp(13px,1.6vw,18px)/1.4 'Hiragino Kaku Gothic ProN',sans-serif;letter-spacing:.08em;margin-top:6px;color:#fff3d8;text-shadow:0 0 6px #000,0 0 12px var(--rs,#ffb347)}
+@keyframes rsIn{0%{opacity:0;transform:translate(-50%,-50%) scale(1.9);filter:blur(6px)}18%{opacity:1;transform:translate(-50%,-50%) scale(1);filter:blur(0)}78%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}100%{opacity:0;transform:translate(-50%,-50%) scale(.92)}}
+.rs-flash{position:fixed;inset:0;z-index:77;pointer-events:none;background:radial-gradient(circle at 50% 45%,var(--rs,#ffb347) 0,transparent 60%);mix-blend-mode:screen;animation:rsFlash .7s ease-out forwards}
+@keyframes rsFlash{0%{opacity:.0}15%{opacity:.55}100%{opacity:0}}
+</style>
+<script>
+// ══════════════════════════════════════════════════════
+//   役の魔法の演出（2026-10-18 隆基「役の魔法発動も派手なエフェクトと音つけて。アナウンスだけじゃ味気ないし気がつかない」）
+//   イグニス・グラシア・ヴォルト・ポイズン（とその強化版）が役で撃たれた時：魔法の名前を画面の真ん中に大きく、効果音、
+//   画面の光と揺れ、狙った先（召喚獣・クリスタル・モンスター）に魔法のエフェクト。魔法カードの使用とは別（カードは元の演出）
+// ══════════════════════════════════════════════════════
+(function(){
+  const EL={'イグニス':['fire','#ff7a2a'],'イグニア':['fira','#ff5a1a'],'グラシア':['blizzard','#7fd8ff'],'グラシアート':['blizzara','#9fe6ff'],
+            'ヴォルト':['thunder','#ffe85a'],'ガンヴォルト':['thundara','#fff07a'],'ポイズン':['bio','#9cff6a']};
+  let nextAt=0;
+  function roleSpellFx(side,name,target,chase){
+    const e=EL[name]; if(!e||!G||G.phase==='gameover') return;
+    const wait=Math.max(0,nextAt-Date.now()); nextAt=Date.now()+wait+(chase?700:1000);
+    setTimeout(()=>{ try{
+      const [vid,col]=e;
+      try{ playBattleSe(MAGIC_SE,vid); }catch(_){}
+      const b=document.createElement('div'); b.className='rs-banner'; b.style.setProperty('--rs',col);
+      b.innerHTML=name+(chase?'（追撃）':'')+'<small>'+(side==='p'?'あなた':'敵')+'の魔法の役</small>';
+      if(chase){ b.style.fontSize='clamp(26px,4.4vw,46px)'; }
+      document.body.appendChild(b); setTimeout(()=>b.remove(),1300);
+      if(!chase){ const f=document.createElement('div'); f.className='rs-flash'; f.style.setProperty('--rs',col); document.body.appendChild(f); setTimeout(()=>f.remove(),750); try{ screenShake(1); }catch(_){} }
+      const os=side==='p'?'e':'p';
+      const el=target==='beast'?document.getElementById(os+'-beast-row'):target==='crystal'?document.querySelector(os==='e'?'.enemy-crystal':'.player-crystal'):document.querySelector(os==='e'?'.e-field-row .m-row':'.p-field-row .m-row');
+      const img=MAGIC_EFFECT_IMG[vid]; if(img&&el) showAreaEffect(img,el,chase?3:5,chase?700:900);
+    }catch(_){} },wait);
+  }
+  window.roleSpellFx=roleSpellFx;
+  // 役の魔法のログを見て演出を出す（どこから撃たれても同じ演出になる）
+  const lg=log;
+  log=function(msg,cls){
+    try{
+      if(typeof msg==='string'&&G&&G.phase==='battle'){
+        let m=msg.match(/^(?:\[敵\] )?(あなた|敵)の(イグニス|イグニア|グラシア|グラシアート|ヴォルト|ガンヴォルト|ポイズン)(（追撃）)?！/);
+        if(m){ const side=m[1]==='あなた'?'p':'e'; roleSpellFx(side,m[2],/クリスタル/.test(msg)?'crystal':/召喚獣/.test(msg)?'beast':'monster',!!m[3]); }
+        else if((m=msg.match(/^(\[敵\] )?【(グラシア|グラシアート|ヴォルト|ガンヴォルト)】/))){ roleSpellFx(m[1]?'e':'p',m[2],/召喚獣/.test(msg)?'beast':'monster',true); }
+      }
+    }catch(e){}
+    return lg.apply(this,arguments);
+  };
+})();
+</script>
+
 
 <style id="public-test-badge">
 #pt-badge{position:fixed;left:8px;bottom:8px;z-index:99990;display:flex;gap:6px;align-items:center;font:12px/1.2 "Hiragino Sans",sans-serif}
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.132</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.132%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.133</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.133%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.132";
+  var FORM="", PRE={}, V="0.1.133";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
