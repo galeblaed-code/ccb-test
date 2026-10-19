@@ -5830,7 +5830,7 @@ const MD = {
   // ── 標準型 dc:1 dt:3 (67%) ── 読みやすいが油断は禁物
   chocobo:   {id:'chocobo',   name:'ユニコーン',      emoji:'🦄', hp:100,  atk:25,  dc:1, dt:3,  pv:2, canAtkCrystal:true,  canAtkBeast:false, fail:'none', drawOnKill:true, humanAllyPower:60},
   ochu:      {id:'ochu',      name:'マンイーター',      emoji:'🌺', hp:130, atk:70,  dc:1, dt:3,  pv:1, canAtkCrystal:false, canAtkBeast:true,  fail:'enemyPt1', poisonBloom:true},
-  tonberry:  {id:'tonberry',  name:'ダークエルフ',      emoji:'🧝', hp:60,  atk:120, dc:1, dt:3,  pv:2, canAtkCrystal:true,  canAtkBeast:true,  fail:'selfCrystal50'},
+  tonberry:  {id:'tonberry',  name:'ダークエルフ',      emoji:'🧝', hp:80,  atk:120, dc:1, dt:3,  pv:2, canAtkCrystal:true,  canAtkBeast:true,  fail:'selfCrystal50'},
   mimic:     {id:'mimic',     name:'ミミック',      emoji:'📦', hp:80,  atk:35,  dc:1, dt:3,  pv:1, canAtkCrystal:true,  canAtkBeast:false, fail:'none', drawOnKill:true},
   flan:      {id:'flan',      name:'グリーンジャム',        emoji:'🫧', hp:140, atk:30,  dc:1, dt:3,  pv:1, canAtkCrystal:false, canAtkBeast:true,  fail:'none', magicResist:'ice', cleanseOnEnter:true, elementCounter:'ice', elementCounterDmg:25, elementCounterPt:1},
   coeurl:    {id:'coeurl',    name:'ハンタークロウ',      emoji:'🐆', hp:110, atk:70,  dc:1, dt:3,  pv:1, canAtkCrystal:true,  canAtkBeast:true,  fail:'selfCrystal50', magicResist:'thunder', elementCounter:'thunder', elementCounterDmg:35, elementCounterSteal:1, elementCounterPt:1},
@@ -8377,7 +8377,7 @@ const RESOLVE_TABLES = {
   queen:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'王冠が揺らぐ',atk:0,selfDmg:20};if(s<=3)return{type:'normal',label:'女王の杖',atk:40,selfHeal:25};if(s<=5)return{type:'strong',label:'ロイヤルヒール',atk:50,selfHeal:70};return{type:'special',label:'女王の号令！ 敵を弱らせる',atk:65,targetAtkDown:30,selfHeal:60};}},
   king:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'王命空振り',atk:0,selfDmg:30};if(s<=3)return{type:'normal',label:'王剣',atk:90};if(s<=5)return{type:'strong',label:'王の突撃',atk:118,selfPt:1};return{type:'special',label:'キングスオーダー！ 敵全体へ号令攻撃',atk:0,aoeEnemy:true,aoeDmg:80,selfPt:1};}},
   joker:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'道化の大事故！ 自クリスタルを削る＋敵召喚石+3',atk:0,selfDmg:200,enemyPt:3};if(s===2)return{type:'miss',label:'何も起きない',atk:0};if(s<=4)return{type:'normal',label:'道化の刃',atk:200};if(s===5)return{type:'strong',label:'札のすり替え 召喚石を奪う',atk:250,stealPt:3};return{type:'special',label:'ワイルドカード！ 敵全体を混乱させる',atk:0,aoeEnemy:true,aoeDmg:320,targetAtkDown:60,selfPt:3};}},
-  ninja:{dice:1,resolve(d){const s=diceSum(d);if(s<=3)return{type:'fail',label:'忍術失敗',atk:0,selfDmg:30};if(s<=4)return{type:'normal',label:'手裏剣',atk:45};if(s<=5)return{type:'strong',label:'背面斬り',atk:75};return{type:'special',label:'分身殺法！',atk:100};}},
+  ninja:{dice:1,resolve(d){const s=diceSum(d);if(s<=2)return{type:'fail',label:'忍術失敗',atk:0,selfDmg:30};if(s<=4)return{type:'normal',label:'手裏剣',atk:45};if(s<=5)return{type:'strong',label:'背面斬り',atk:75};return{type:'special',label:'分身殺法！',atk:100};}},
   yojimbo:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'miss',label:'報酬不足',atk:0};if(s<=4)return{type:'normal',label:'居合い',atk:70};if(s===5)return{type:'strong',label:'返し斬り',atk:95};return{type:'special',label:'必殺の一閃',atk:140};}},
   zombie:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'腐敗',atk:0,selfDmg:20};if(s<=4)return{type:'normal',label:'噛みつき',atk:45};if(s===5)return{type:'strong',label:'毒噛み',atk:55,poisonTurns:1};return{type:'special',label:'不死の執念',atk:75,selfHeal:35};}},
   frog:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'miss',label:'飛び跳ねて何も起きない',atk:0};if(s<=3)return{type:'normal',label:'舌攻撃',atk:20};if(s<=5)return{type:'strong',label:'粘液弱体',atk:30,targetAtkDown:20};return{type:'special',label:'カエルの歌！ 大幅弱体',atk:35,targetAtkDown:60};}},
@@ -8392,7 +8392,7 @@ const RESOLVE_TABLES = {
   harpy:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'羽を散らす',atk:0,enemyPt:1};if(s<=4)return{type:'normal',label:'空裂き爪',atk:60};if(s===5)return{type:'strong',label:'風切り',atk:75,targetAtkDown:15};return{type:'special',label:'急降下襲撃',atk:100};}},
   griffin:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'着地失敗',atk:0,selfDmg:30};if(s<=3)return{type:'normal',label:'鷲獅子の爪',atk:95};if(s<=5)return{type:'strong',label:'天空突撃',atk:125};return{type:'special',label:'王翼の一撃 召喚獣にも衝撃',atk:130,beastSplash:60};}},
   golem:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'miss',label:'岩に戻る',atk:0};if(s<=4)return{type:'normal',label:'岩拳',atk:90};if(s===5)return{type:'strong',label:'岩壁再生',atk:95,selfHeal:60};return{type:'special',label:'大地震',atk:0,aoeEnemy:true,aoeDmg:75};}},
-  cockatrice:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'石化視線が逸れる',atk:0,enemyPt:1};if(s<=3)return{type:'normal',label:'くちばし',atk:45};if(s<=5)return{type:'strong',label:'石化にらみ',atk:40,targetAtkDown:30};return{type:'special',label:'石化成功！ 大幅弱体',atk:55,targetAtkDown:70};}},
+  cockatrice:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'石化視線が逸れる',atk:0,enemyPt:1};if(s<=3)return{type:'normal',label:'くちばし',atk:65};if(s<=5)return{type:'strong',label:'石化にらみ',atk:80,targetAtkDown:30};return{type:'special',label:'石化成功！ 大幅弱体',atk:100,targetAtkDown:70};}},
   sahagin:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'miss',label:'足場を失う',atk:0};if(s<=4)return{type:'normal',label:'水槍',atk:65};if(s===5)return{type:'strong',label:'波突き',atk:85};return{type:'special',label:'海流強襲 召喚石+1',atk:80,selfPt:1};}},
   kraken:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'足を絡ませる',atk:0,enemyPt:1};if(s<=3)return{type:'normal',label:'触腕',atk:120};if(s<=5)return{type:'strong',label:'締め上げ',atk:140,targetAtkDown:25};return{type:'special',label:'大渦！ 敵全体を拘束',atk:0,aoeEnemy:true,aoeDmg:80,targetAtkDown:15};}},
   basilisk:{dice:1,resolve(d){const s=diceSum(d);if(s===1)return{type:'fail',label:'毒気が漏れる',atk:0,enemyPt:1};if(s<=3)return{type:'normal',label:'毒牙',atk:55,poisonTurns:1};if(s<=5)return{type:'strong',label:'石化毒',atk:60,targetAtkDown:25};return{type:'special',label:'魔眼毒',atk:75,poisonTurns:1,targetAtkDown:45};}},
@@ -26759,7 +26759,7 @@ async function guardPreludeInDice(defSide,idx,atkId,targetType){
      t:[['miss','炎が自分を呑む',0,160,2],['normal','燃える腕',120],['normal','燃える腕',120],['strong','火の檻',150],['strong','火の檻',150],['special','大焚火',210]]},
     {id:'lordunicorn',name:'ロードオブユニコーン',en:'LORD OF UNICORN',a:'paladin',b:'chocobo',hp:320,atk:150,size:'mid',like:'paladin',human:1,title:'変 貌',img:'カード絵_表示用/モンスター/ロードオブユニコーン.webp',
      txt:'一角獣は、ただ一人の聖騎士にだけ背を許した',
-     role:'聖騎行：攻撃が当たると、相手のクリスタルにもそのダメージの3割が届く。自分の番の始めに、味方全体 HP +15。',
+     role:'聖騎行：攻撃が当たると、相手のクリスタルにもそのダメージの3割が届く。自分の番の始めに、味方全体 HP +10。',
      t:[['miss','一角獣に振り落とされる',0,150,2],['normal','聖槍',150],['normal','聖槍',150],['strong','一角の突撃',180],['strong','一角の突撃',180],['special','聖騎行',250]]},
   ];
   NEW.forEach(n=>{
@@ -26790,7 +26790,7 @@ async function guardPreludeInDice(defSide,idx,atkId,targetType){
         w.hp=Math.max(1,w.hp-15);
         log(pre+'【燃える檻】ウィッカーマンの炎が敵の場を焼く（敵モンスター'+n+'体に各20ダメージ）——自分も燃えて HP -15','gold');
       });
-      live(pd).filter(m=>m.id==='lordunicorn').forEach(()=>{ live(pd).forEach(x=>{ x.hp=Math.min(x.maxHp,x.hp+15); }); log(pre+'【聖騎行】一角獣の加護——味方全体 HP +15','good'); });
+      live(pd).filter(m=>m.id==='lordunicorn').forEach(()=>{ live(pd).forEach(x=>{ x.hp=Math.min(x.maxHp,x.hp+10); }); log(pre+'【聖騎行】一角獣の加護——味方全体 HP +10','good'); });   // 2026-10-19 調査で勝率59%→15を10に
       try{ renderAll(); }catch(e){}
     } }catch(e){}
     return r;
@@ -26840,10 +26840,10 @@ async function guardPreludeInDice(defSide,idx,atkId,targetType){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.141</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.141%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.142</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.142%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.141";
+  var FORM="", PRE={}, V="0.1.142";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
