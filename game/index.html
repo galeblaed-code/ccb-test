@@ -26510,7 +26510,7 @@ async function guardPreludeInDice(defSide,idx,atkId,targetType){
 <script>
 // ══════════════════════════════════════════════════════
 //   ゴブリンの進化 8系統（2026-10-19 隆基「魔族の中のジャックはゴブリン。8系統の進化後のカードを用意した」
-//   「ゴブリン忍者の相手はブラックゴブリン」。ほかの相手と能力はヴァッシュの案を隆基採用）
+//   相手と能力はヴァッシュの案を隆基採用。忍者の相手は一度ブラックゴブリンにしたが、ゴブリン軍団とぶつかるので忍者に戻した）
 //   素材2体は消えて変身（解除なし）。大失敗の鞭あり
 // ══════════════════════════════════════════════════════
 (function(){
@@ -26522,7 +26522,8 @@ async function guardPreludeInDice(defSide,idx,atkId,targetType){
      role:'小鬼の盾：場にいる間、味方の小鬼（ゴブリンの仲間）への単体攻撃を、代わりに受け止める（全体攻撃は除く）。',t:[['miss','鎧が重くて転ぶ',0,100,1],['normal','錆びた剣',90],['normal','錆びた剣',90],['strong','盾打ち',110],['strong','盾打ち',110],['special','小鬼の誓い',150]]},
     {id:'goblinjeweler',name:'ゴブリン宝石商',en:'GOBLIN JEWELER',b:'frog',hp:120,atk:50,like:'goblin',txt:'カエルの吐く宝石を拾い集めるうちに、目利きになった小鬼',
      role:'目利き：自分の番の始めに、場の小鬼1体につき召喚石 +1（最大 +2）。',t:[['miss','偽物をつかまされる',0,80,1],['normal','宝石袋で殴る',50],['normal','宝石袋で殴る',50],['strong','値切り倒す',65],['strong','値切り倒す',65],['special','大商い',100]]},
-    {id:'goblinninja',name:'ゴブリン忍者',en:'GOBLIN NINJA',b:'blackgob',hp:140,atk:120,like:'ninja',txt:'黒い小鬼に夜の歩き方を習った小鬼',
+    {id:'goblinninja',name:'ゴブリン忍者',en:'GOBLIN NINJA',b:'ninja',hp:140,atk:120,like:'ninja',txt:'忍者に夜の歩き方を習った小鬼',   // 2026-10-19 隆基：ブラックゴブリン→忍者に戻す（ゴブリン軍団とぶつかるため）
+    
      role:'闇討ち：相手の場で今いちばんHPが低いモンスターへの攻撃は2倍。',t:[['miss','物音を立てる',0,100,1],['normal','苦無',120],['normal','苦無',120],['strong','闇討ち',145],['strong','闇討ち',145],['special','影縫い',200]]},
     {id:'goblinthief',name:'ゴブリンシーフ',en:'GOBLIN THIEF',b:'mimic',hp:120,atk:90,like:'thief',txt:'ミミックの腹から宝をくすねて生き延びた小鬼',
      role:'くすね取り：攻撃が当たるたびに、相手の召喚石を1個奪う。',t:[['miss','ミミックに噛まれる',0,100,1],['normal','かすめ取り',90],['normal','かすめ取り',90],['strong','袋叩き',110],['strong','袋叩き',110],['special','根こそぎ',160]]},
@@ -26606,10 +26607,10 @@ async function guardPreludeInDice(defSide,idx,atkId,targetType){
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.134</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.134%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.135</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.135%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.134";
+  var FORM="", PRE={}, V="0.1.135";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
