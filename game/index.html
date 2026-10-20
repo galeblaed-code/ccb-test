@@ -26909,16 +26909,73 @@ async function guardPreludeInDice(defSide,idx,atkId,targetType){
 })();
 </script>
 
+<style>
+.ccb-fly{position:fixed;z-index:62;pointer-events:none;background:center/contain no-repeat;filter:drop-shadow(0 6px 10px rgba(0,0,0,.7));border-radius:4px}
+.ccb-fly.soul{opacity:.55;filter:drop-shadow(0 0 10px rgba(180,200,255,.6)) grayscale(.6)}
+</style>
+<script>
+// ══════════════════════════════════════════════════════
+//   カードの移動を見せる（2026-10-21 隆基「カードが墓地に行く時、墓地からデッキに戻る時も。カードが移動するように表現できる？」）
+//   墓場とデッキの中身を見張り、増減があればカードが飛ぶ：場→墓場／デッキ→墓場／墓場→デッキ／墓場→場（蘇生）
+//   倒されて砕けたカードは、砕けたあとに薄い“魂”のカードが墓場へ飛ぶ。見た目だけで、ゲームの中身には触らない
+// ══════════════════════════════════════════════════════
+(function(){
+  const deckEl=sd=>document.querySelector('.battle-deck-zone.'+(sd==='p'?'player':'enemy')+'.monster-deck');
+  const graveEl=sd=>document.getElementById(sd+'-grave-zone');
+  const imgOf=id=>(CARD_ASSETS[id]&&CARD_ASSETS[id].img)||'バトルフィールドパーツ/召喚獣カード裏面png.webp';
+  const killed=new Map();   // uid → 砕けた時刻
+  const brk=animateMonsterBreakToDiamond;
+  animateMonsterBreakToDiamond=function(sd,slot){ try{ const pd=sd==='p'?G.p:G.e; const m=pd&&pd.monsterField[slot]; if(m) killed.set(m.uid,Date.now()); }catch(e){} return brk.apply(this,arguments); };
+  let stagger=0;
+  function fly(id,from,to,opt){
+    if(!from||!to) return; const a=from.getBoundingClientRect?from.getBoundingClientRect():from, b=to.getBoundingClientRect?to.getBoundingClientRect():to;
+    if(!a.width||!b.width) return;
+    const w=Math.min(a.width,90), h=w*889/640;
+    const el=document.createElement('div'); el.className='ccb-fly'+(opt&&opt.soul?' soul':''); el.style.backgroundImage="url('"+imgOf(id)+"')";
+    el.style.width=w+'px'; el.style.height=h+'px'; el.style.left=(a.left+a.width/2-w/2)+'px'; el.style.top=(a.top+a.height/2-h/2)+'px';
+    const dx=(b.left+b.width/2)-(a.left+a.width/2), dy=(b.top+b.height/2)-(a.top+a.height/2);
+    const delay=(opt&&opt.delay||0)+stagger; stagger=Math.min(stagger+110,600); setTimeout(()=>{ stagger=Math.max(0,stagger-110); },300);
+    setTimeout(()=>{ document.body.appendChild(el);
+      el.animate([{transform:'translate(0,0) rotate(0) scale(1)',opacity:opt&&opt.soul?.6:1},{transform:'translate('+dx*0.5+'px,'+(dy*0.5-40)+'px) rotate(8deg) scale(.85)',opacity:opt&&opt.soul?.5:1,offset:.5},{transform:'translate('+dx+'px,'+dy+'px) rotate(0) scale(.55)',opacity:.15}],{duration:620,easing:'cubic-bezier(.4,0,.6,1)',fill:'forwards'});
+      setTimeout(()=>el.remove(),660); },delay);
+  }
+  const keyList=arr=>{ const c={}; return (arr||[]).filter(Boolean).map(g=>{ if(g.uid!=null) return 'u'+g.uid; const k=g.id||'?'; c[k]=(c[k]||0)+1; return 'i'+k+'#'+c[k]; }); };
+  let last=null;
+  setInterval(()=>{ try{
+    if(!G||!G.p||!G.e||G.phase==='gameover'||document.hidden){ last=null; return; }
+    const now={};
+    ['p','e'].forEach(sd=>{ const pd=sd==='p'?G.p:G.e;
+      const field={}; pd.monsterField.forEach((m,i)=>{ if(m){ const el=document.getElementById(sd+'-m-'+i); field[m.uid]={i,id:m.id,rect:el?el.getBoundingClientRect():null}; } });
+      now[sd]={grave:keyList(pd.graveyard),gmap:Object.fromEntries((pd.graveyard||[]).filter(Boolean).map((g,j)=>[keyList(pd.graveyard)[j],g.id])),deck:(pd.deck||[]).length,field};
+    });
+    if(last&&last.game===G){
+      ['p','e'].forEach(sd=>{ const L=last[sd], N=now[sd]; if(!L) return;
+        const added=N.grave.filter(k=>!L.grave.includes(k)), removed=L.grave.filter(k=>!N.grave.includes(k));
+        added.forEach(k=>{ const id=N.gmap[k]; const uid=k[0]==='u'?+k.slice(1):null; const f=uid!=null?L.field[uid]:null;
+          if(f&&f.rect){ const kt=killed.get(uid); fly(id,f.rect,graveEl(sd),kt&&Date.now()-kt<3000?{soul:true,delay:900}:{}); }
+          else if(N.deck<L.deck) fly(id,deckEl(sd),graveEl(sd));
+        });
+        removed.forEach(k=>{ const id=L.gmap[k]; const uid=k[0]==='u'?+k.slice(1):null; const f=uid!=null?N.field[uid]:null;
+          if(f){ const el=document.getElementById(sd+'-m-'+f.i); fly(id,graveEl(sd),el); }
+          else if(N.deck>L.deck) fly(id,graveEl(sd),deckEl(sd));
+        });
+      });
+    }
+    now.game=G; last=now;
+  }catch(e){} },90);
+})();
+</script>
+
 
 <style id="public-test-badge">
 #pt-badge{position:fixed;left:8px;bottom:8px;z-index:99990;display:flex;gap:6px;align-items:center;font:12px/1.2 "Hiragino Sans",sans-serif}
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.144</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.144%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.145</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.145%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.144";
+  var FORM="", PRE={}, V="0.1.145";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
