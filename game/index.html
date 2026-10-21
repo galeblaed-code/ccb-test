@@ -26966,16 +26966,71 @@ async function guardPreludeInDice(defSide,idx,atkId,targetType){
 })();
 </script>
 
+<script>
+// ══════════════════════════════════════════════════════
+//   召喚獣をもっと危険な存在に（2026-10-21 隆基「召喚獣の顕現バフ効果と威力を上げてもっとやばい存在に。雑魚すら超強化。
+//   そのかわりメルトダウン時の暴走も恐ろしい事に」「先に出した方が勝ちやすいのは当然、勝ち筋の1案。召喚獣狙いの集中攻撃、
+//   メルトダウンの暴走を狙われるかも。サイコロは誰にも味方しないを利用される」）
+//   ① 顕現の加護：召喚獣が顕現している間、自分のモンスター全員に 攻撃・最大HP ＋（低位30／中位50／高位80）
+//   ② 固有の加護（味方の攻撃・HPを上げる能力）は2倍
+//   ③ メルトダウン（HP35%以下）：加護は呪いに裏返る（同じだけ下がる）。暴走の威力1.5倍、暴走の余波が自分のモンスター全員にも（威力の4割）
+// ══════════════════════════════════════════════════════
+(function(){
+  const tierOf=id=>{ const c=(BD[id]&&BD[id].cost)||5; return c>=9?'high':c>=7?'mid':'low'; };
+  const BLESS={low:30,mid:50,high:80};
+  const melting=b=>b&&b.summoned&&b.activeId&&b.activeHp<=b.activeMaxHp*MELTDOWN_THRESHOLD;
+  window.beastBlessing=function(side){ const pd=side==='p'?G.p:G.e, b=pd&&pd.beasts; if(!b||!b.summoned||!b.activeId||!BD[b.activeId]) return 0; const v=BLESS[tierOf(b.activeId)]; return melting(b)?-v:v; };
+  const passive=(side,m)=>{ const out={atk:0,hp:0}; const pd=side==='p'?G.p:G.e, b=pd.beasts; if(!b||!b.summoned||!b.activeId||!BD[b.activeId]||melting(b)) return out; const ps=BD[b.activeId].passive;
+    if(ps==='allyAtk30') out.atk+=30; if(ps==='allyAtk60') out.atk+=60; if(ps==='allyAtk20Heal20') out.atk+=20; if(ps==='allyHp80') out.hp+=80; if(ps==='allyHp50') out.hp+=50;
+    if(ps==='humanBothBuff'&&HUMAN_KIND_MONSTERS.has(m.id)){ out.hp+=35; out.atk+=25; } if(ps==='largeBothHpBuff'&&m.def&&m.def.sizeTier==='large') out.hp+=50;
+    if(ps==='allBothAtkBuff') out.atk+=35; if(ps==='godEater'&&BEAST_KIND_MONSTERS.has(m.id)) out.atk+=40; if(ps==='shield100'&&CARBUNCLE_MAGES.has(m.id)) out.atk+=40; return out; };
+  const baf=beastAuraFor;
+  beastAuraFor=function(side,m){
+    const out=baf.apply(this,arguments);
+    try{ if(m&&m.id!=='godhercules'){ const v=beastBlessing(side); out.atk+=v; out.hp+=v; const p2=passive(side,m); out.atk+=p2.atk; out.hp+=p2.hp; } }catch(e){}
+    return out;
+  };
+  // 暴走：威力1.5倍、余波は自分の軍にも
+  const cba=calcBeastAtk;
+  calcBeastAtk=function(side,bDef){ const a=cba.apply(this,arguments); return window._meltdownSide===side?Math.round(a*1.5):a; };
+  const mda=meltdownAutoAttack;
+  meltdownAutoAttack=async function(side){
+    const pd=side==='p'?G.p:G.e, b=pd.beasts;
+    const will=b&&b.summoned&&b.activeId&&b.activeHp<=b.activeMaxHp*MELTDOWN_THRESHOLD&&!((b.cagedTurns||0)>0||b._cagedNow);
+    if(!will) return mda.apply(this,arguments);
+    window._meltdownSide=side;
+    let r; try{ r=await mda.apply(this,arguments); } finally { window._meltdownSide=null; }
+    try{ if(G&&G.phase==='battle'&&pd.beasts.summoned&&pd.beasts.activeId){
+      const atk=Math.round(cba(side,{...BD[pd.beasts.activeId]})*1.5*0.4), pre=side==='p'?'あなたの':'敵の'; let n=0;
+      pd.monsterField.forEach((m,i)=>{ if(!m||m.hp<=0) return; m.hp-=atk; n++; try{ showMonsterDamage(side,i,atk); }catch(e){}
+        if(m.hp<=0){ try{ animateMonsterBreakToDiamond(side,i,side==='p'?'e':'p'); }catch(e){} pd.graveyard.push({uid:m.uid,id:m.id,def:m.def,maxHp:m.maxHp}); pd.monsterField[i]=null; grantMonsterKillPts(side==='p'?'e':'p'); log('暴走に巻き込まれ、'+m.def.name+'が倒れた','bad'); } });
+      if(n){ try{ screenShake(2); }catch(e){} log('【暴走の余波】'+pre+BD[pd.beasts.activeId].name+'の暴走は、味方の軍まで呑み込んだ——自分のモンスター'+n+'体に'+atk+'ダメージ','bad'); }
+      try{ refreshBeastAuras(); renderAll(); }catch(e){}
+    } }catch(e){}
+    return r;
+  };
+  // 加護の変化を知らせる（顕現した時・裏返った時）
+  const st={p:null,e:null};
+  setInterval(()=>{ try{ if(!G||G.phase!=='battle') return; ['p','e'].forEach(sd=>{ const v=beastBlessing(sd); if(v!==st[sd]){ const was=st[sd]; st[sd]=v;
+      const b=(sd==='p'?G.p:G.e).beasts, nm=b&&b.activeId&&BD[b.activeId]?BD[b.activeId].name:'召喚獣', who=sd==='p'?'あなたの':'敵の';
+      try{ refreshBeastAuras(); renderAll(); }catch(e){}
+      if(was===null) return;
+      if(v>0) log('【顕現の加護】'+who+nm+'の力が軍に満ちる——自分のモンスター全員の攻撃・最大HP +'+v,'gold');
+      else if(v<0) log('【加護が裏返った】'+who+nm+'が制御を失い、加護は呪いに変わった——自分のモンスター全員の攻撃・最大HP '+v,'bad');
+    } }); }catch(e){} },150);
+})();
+</script>
+
 
 <style id="public-test-badge">
 #pt-badge{position:fixed;left:8px;bottom:8px;z-index:99990;display:flex;gap:6px;align-items:center;font:12px/1.2 "Hiragino Sans",sans-serif}
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.145</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.145%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.146</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.146%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.145";
+  var FORM="", PRE={}, V="0.1.146";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
