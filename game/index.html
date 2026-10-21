@@ -27021,16 +27021,40 @@ async function guardPreludeInDice(defSide,idx,atkId,targetType){
 })();
 </script>
 
+<script>
+// ══════════════════════════════════════════════════════
+//   レベルが上がると、失敗した時の反動も重くなる（2026-10-21 隆基「レベルが上がるイコール自分に牙を向く存在もレベルが上がる。
+//   自軍のモンスターですら全てはダイス次第」「レベルが上がると失敗時のリスクも上がる。自軍の手札すら完全な味方ではない」）
+//   モンスターがサイコロで失敗した時の自分のクリスタルへのダメージ：そのカードのクリスタルLvで Lv2 ×1.2／Lv3 ×1.4／LV MAX ×1.6
+// ══════════════════════════════════════════════════════
+(function(){
+  const mul=m=>{ const lv=(m&&m.crystalLv)||1; return [1,1,1.2,1.4,1.6][Math.min(4,lv)]||1; };
+  const core=applyAttackResolveCore;
+  applyAttackResolveCore=async function(side,attacker,result,targetType,targetSlot){
+    try{ const k=mul(attacker); if(k>1&&result&&result.selfDmg>0){ const nd=Math.round(result.selfDmg*k); log((side==='p'?'':'[敵] ')+'【育った牙】'+attacker.def.name+'はCRYSTAL Lv'+attacker.crystalLv+'で育っていた——失敗の反動も重い（'+result.selfDmg+'→'+nd+'）','bad'); result=Object.assign({},result,{selfDmg:nd}); } }catch(e){}
+    return core.call(this,side,attacker,result,targetType,targetSlot);
+  };
+  const fp=applyMonsterFailPenalty;
+  applyMonsterFailPenalty=function(side,monster){
+    const k=mul(monster); if(k<=1) return fp.apply(this,arguments);
+    const dc=damageCrystal; let hit=false;
+    damageCrystal=function(sd,amt){ if(sd===side&&amt>0){ hit=true; amt=Math.round(amt*k); } return dc.call(this,sd,amt); };
+    try{ return fp.apply(this,arguments); }
+    finally{ damageCrystal=dc; if(hit) try{ log((side==='p'?'':'[敵] ')+'【育った牙】'+monster.def.name+'はCRYSTAL Lv'+monster.crystalLv+'で育っていた——失敗の反動は ×'+k,'bad'); }catch(e){} }
+  };
+})();
+</script>
+
 
 <style id="public-test-badge">
 #pt-badge{position:fixed;left:8px;bottom:8px;z-index:99990;display:flex;gap:6px;align-items:center;font:12px/1.2 "Hiragino Sans",sans-serif}
 #pt-badge span{background:rgba(10,16,28,.72);color:#e9d9b0;padding:4px 8px;border-radius:4px;border:1px solid rgba(233,217,176,.35)}
 #pt-badge a{background:#c99b3c;color:#14100a;text-decoration:none;font-weight:700;padding:4px 9px;border-radius:4px}
 </style>
-<div id="pt-badge"><span>開発中・無料テスト版 v0.1.146</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.146%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
+<div id="pt-badge"><span>開発中・無料テスト版 v0.1.147</span><a id="pt-report" href="#" target="_blank" rel="noopener">感想・不具合を送る</a><a id="pt-x" href="https://x.com/intent/post?text=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%BC%E3%83%89%E3%83%90%E3%83%88%E3%83%AB%EF%BC%88%E7%84%A1%E6%96%99%E3%83%86%E3%82%B9%E3%83%88%E7%89%88%20v0.1.147%EF%BC%89%E3%82%92%E9%81%8A%E3%82%93%E3%81%A0%EF%BC%81%0A&hashtags=CCB%E3%83%86%E3%82%B9%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4" target="_blank" rel="noopener">Xで感想を送る</a></div>
 <script>
 (function(){
-  var FORM="", PRE={}, V="0.1.146";
+  var FORM="", PRE={}, V="0.1.147";
   var a=document.getElementById('pt-report');
   if(!FORM){ a.style.display='none'; return; }
   function where(){
